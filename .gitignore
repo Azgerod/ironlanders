@@ -1,0 +1,3 @@
+*.nb.bak
+*.nb~
+.DS_Store
