@@ -1,5 +1,5 @@
 # Ironlanders
-The mechanical verification layer for my "Ironlanders" web serial.
+The mechanical verification layer for Azgerod's "Ironlanders" web serial.
 
 ## License
 
