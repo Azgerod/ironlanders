@@ -139,14 +139,6 @@ Begin["`Private`"];
 
 
 (* ::Subsection:: *)
-(*Constants*)
-
-
-stats = {Edge, Heart, Iron, Shadow, Wits}; 
-ranks = {Troublesome, Dangerous, Formidable, Extreme, Epic}; 
-
-
-(* ::Subsection:: *)
 (*Helper functions*)
 
 
@@ -156,41 +148,6 @@ ranks = {Troublesome, Dangerous, Formidable, Extreme, Epic};
 
 If[ !ValueQ[$IronLibraryPath], $IronLibraryPath = 
     If[StringQ[$InputFileName] && $InputFileName =!= "", $InputFileName, $Failed]]; 
-
-
-(* ::Subsubsection:: *)
-(*Rolling dice*)
-
-
-rollChallengeDice[] := RandomInteger[{1, 10}, 2]; 
-rollActionDie[] := RandomInteger[{1, 6}]; 
-actionRollResult[challengeDice_, actionScore_] := 
-   Replace[{0 -> "miss", 1 -> "weakHit", 2 -> "strongHit"}][
-    Count[True][(Map[actionScore > #1 & ])[challengeDice]]]; 
-
-
-(* ::Subsubsection:: *)
-(*Argument tests*)
-
-
-statQ[input_] := MemberQ[stats, input]; 
-rankQ[input_] := MemberQ[ranks, input]; 
-statValueQ[input_Integer] := 1 <= input <= 5; 
-
-
-(* ::Subsubsection:: *)
-(*Constructors*)
-
-
-constructProgressTrack[description_String, (rank_)?rankQ] := 
-   Association["rank" -> rank, "description" -> description, "progress" -> 0]; 
-
-
-(* ::Subsubsection:: *)
-(*Symbol to string conversion*)
-
-
-symString[symbol_] := ToLowerCase[SymbolName[symbol]]; 
 
 
 (* ::Subsubsection:: *)
@@ -600,6 +557,533 @@ stateForNextChapter[] := Module[{next, seed}, seed = nextChapterSeed[];
      next];
 
 
+(* ::Subsubsection:: *)
+(*Rolling dice*)
+
+
+rollChallengeDice[] := RandomInteger[{1, 10}, 2]; 
+rollActionDie[] := RandomInteger[{1, 6}]; 
+actionRollResult[challengeDice_, actionScore_] := 
+   Replace[{0 -> "miss", 1 -> "weakHit", 2 -> "strongHit"}][
+    Count[True][(Map[actionScore > #1 & ])[challengeDice]]];
+rollOracleDice = rollChallengeDice;
+oracleRollValue[{tensDie_Integer, onesDie_Integer}]:=Module[{tensValue, onesValue},
+	tensValue = If[tensDie==10, 0, tensDie*10];
+	onesValue = If[onesDie==10, 0, onesDie];
+	If[tensDie==onesDie==10, 100, tensValue+onesValue]
+];
+oracleRollOutcome[table_Association, value_Integer] := Module[{key},
+	key = First[Select[Keys[table], #>=value&]];
+	table[key]
+];
+
+
+
+(* ::Subsubsection:: *)
+(*Argument tests*)
+
+
+statQ[input_] := MemberQ[stats, input]; 
+rankQ[input_] := MemberQ[ranks, input]; 
+statValueQ[input_Integer] := 1 <= input <= 5; 
+
+
+(* ::Subsubsection:: *)
+(*Progress tracks*)
+
+
+progressTrack[(rank_)?rankQ, progress_:0] := 
+   Association["rank" -> rank, "progress" -> progress];
+progressRollResult = actionRollResult;
+
+
+(* ::Subsubsection:: *)
+(*Symbol to string conversion*)
+
+
+symString[symbol_] := ToLowerCase[SymbolName[symbol]]; 
+
+
+(* ::Subsubsection:: *)
+(*Attribute Getters*)
+
+
+getAttr[attr_String, character_:$soloCharacter] := $state[character, attr];
+getAttr[attr_, character_:$soloCharacter] := getAttr[symString[attr], character];
+
+getEdge[character_:$soloCharacter] := getAttr["edge", character];
+getHeart[character_:$soloCharacter] := getAttr["heart", character];
+getIron[character_:$soloCharacter] := getAttr["iron", character];
+getShadow[character_:$soloCharacter] := getAttr["shadow", character];
+getWits[character_:$soloCharacter] := getAttr["wits", character];
+
+getDebilities[character_:$soloCharacter] := getAttr["debilities", character];
+
+getMomentum[character_:$soloCharacter] := getAttr["momentum", character];
+getMomentumReset[character_:$soloCharacter] := Max[0, 2 - Length[getDebilities[character]]];
+getMomentumMax[character_:$soloCharacter] := 10 - Length[getDebilities[character]];
+
+getHealth[character_:$soloCharacter] := getAttr["health", character];
+getSpirit[character_:$soloCharacter] := getAttr["spirit", character];
+getSupply[character_:$soloCharacter] := getAttr["supply", character];
+
+
+(* ::Subsubsection:: *)
+(*Attribute adjusters and setters*)
+
+
+resetMomentum[character_:$soloCharacter] := ($state[character, "momentum"] = getMomentumReset[character]);
+adjustMomentum[delta_Integer, character_:$soloCharacter] := ($state[character, "momentum"] += delta);
+
+adjustHealth[delta_Integer, character_:$soloCharacter] := ($state[character, "Health"] += delta);
+adjustSpirit[delta_Integer, character_:$soloCharacter] := ($state[character, "Spirit"] += delta);
+adjustSupply[delta_Integer, character_:$soloCharacter] := ($state[character, "Supply"] += delta);
+
+
+(* ::Subsubsection:: *)
+(*Progress track getters*)
+
+
+getProgress[trackName_String, character_:$soloCharacter] := $state[character, "progressTracks", trackName, "progress"];
+getRank[trackName_String, character_:$soloCharacter] := $state[character, "progressTracks", trackName, "rank"];
+
+
+(* ::Subsubsection:: *)
+(*Shared presentation constants*)
+
+
+rollHeaderBodyGap = 3;
+rollBodyResultGap = 3;
+
+
+(* ::Subsubsection:: *)
+(*Action roll presentation*)
+
+
+dieStyle[n_] := Style[n, GrayLevel[0.255], FontSize -> 21, FontFamily -> "Futura", FontWeight -> Bold];
+mainStyle[n_] := Style[n, GrayLevel[0.255], FontSize -> 42, FontFamily -> "Futura", FontWeight -> Bold]
+emptyD6Image = Image[CompressedData["
+1:eJztnU9v03YYx6Oxw459CewdcNzNsU1Iy7+EVqTtAWhRU0TLCmqQpgGCllO6
+SyqB4ETpYblVGlKvVOMdbL1X2k69bu/A8zeppTQLjhP/7Mfx832kD1KrisrP
+x88fx5V+399/PLv6TaFQaHzn/zO7/JO9ubn889yU/8XtjcbDBxv1lZmNp/UH
+9c0f7l/wv7nq88Ln28LkRskqXXKKzisyGLfoVipWZUraU5woW+WLuBa76Pzl
+45Gh/ONYTlXa26jh36v37KL7WwbyN5H4zp9IOxwW6Nd20W7hHpXOVx5wLbco
+7bQ/MG+6tez8IZ2f3GE5n6T9BoF7z6/ljzZrOVEkHZ/tXo9tw7vXnTt3VVCp
+VEfODXKetmc8J5jYveZr896j9Udes9n03r177x0eHqqg2dzx7vq+x8lZWjMc
+95WJ3QvXub217bV/bYvnPU0ODg68Z8+ej1XTafk2tXvhGhubDXWOwd7ent/D
+fgzNz2W35FVuVry5uTlv9tas5zqXU/VtavdaWal7rVZLPOcSROnZ5SvTHb+L
+i4vnqFZvJe7b1O6FWka/Rv+SznnatNvtoT0btXv16jWvVqv9z3MA6jwp3yZ2
+r+nyTGfv+vBhTzznErz3d82oPXthYeGrnpPybXL3wm6tsZYBejaeMcJyNDM9
+0/E3zLFp3z271+9x+7XW3QsEPRs9LaxnX792PbRnJ+X77DPsj3FrWfPuBaL2
+bOxaUXq2Sd+oZe5e8cF1J9WzTfnGu9I4nrXvXgA9u9F4mmjPNuG727vH69va
+dy98LrK9/XpoLV8plTs927TjcXyPWtcady/ULmbxbmu3s3fVV1ZD6zgAz8wm
+e3Zc334fX4ozq8mA3Po9+8aNm4n07Li+bcvdlc5PnsAOFnfPTta380U6R3kB
+vVvCc1K+sVeuPVxXx9K95aG5wTsMSdcmfa+trXvHx8fe6empat68efvVHKW1
+kyXtG/e2dJ6zBJ6/+nOEZy1p16Z8f/58JJ7jrNHf37GLS7s25Vs6t1lkZ+eX
+czka9LcHk+gbc1s6t1nkbd8cz8Lspm/6pm/6pm/6pm/6JvStFfrWBX3rgr51
+Qd+6oG9d0Lcu6FsX9K0L+tYFfeuCvnVB37qgb13Qty7oWxf0rQv61gV964K+
+dUHfuqBvXdC3LuhbF/StC/rWBX3rgr51Qd+6oG9d0Lcu6FsX9K0L+tYFfeuC
+vnVB37qgb13Qty7oWxdZ9Y1zZelbj2+cqUHfOnyH9XL6zpdvnH+FM2fpO/++
+4Rrnp4S5pu98+MbvHVbXAWWrfJG+J9M3zp2NUtO9FM6CvifDN/o2zkGKWs/n
+sJx9+p4M3zhzFudU4gzakT33zW76zq5v/J84e3ZcxwE4/7nQE/SdLd/jzOZB
+FC3nb991tdAX9C3vO9ZsHux5qWJVpvpd07esb8xmnLkcZzb37GRfBtUzfcv7
+xs9jB4vtuOt5v2SVLg3zTN/p+8ZsDnunEb1n2//alr0VfIYyStB3fN9h58Vi
+NuM9ZRqzOa7v2u158dxmkX7fmMFZmM1xfYOTkxPx/GYN9L3eHMFp0NMlZ7MJ
+3zjrWjq/WeLo6MiMy9DZ7O6OM5tN+AboX9J5zgJwjR6djOfObH4SZzab8h3M
+8lcvtzrutYEe19/DjdGdzUtJOh7HNzHueb/3PUaKvj+JX7sSkp7NUQIzQzoP
+eSet2RwlcK9J5yO3pDybowY+mxPPTZ7wZ6TEbB4lMFfE8zTBdGezsy85m0cN
+3JPc30b17PyZldnMYPTGf7vRtU8=
+"], "Byte", ColorSpace -> "RGB", Interleaving -> True];
+Options[d6Image] = {Cancelled -> False};
+d6Image[n_Integer/;1<=n<=6, opts:OptionsPattern[]] := Module[{die},
+	die = ImageCompose[emptyD6Image,Rasterize[dieStyle[n], Background->None], Scaled[{0.36-If[n==4,0.01,0],0.42}]];
+	If[OptionValue[Cancelled],ImageCompose[die,Rasterize[Style["\[Times]", GrayLevel[0.255], FontSize->110], Background->None], Scaled[{0.5,0.81}]], die]
+];
+emptyD10Image = Image[CompressedData["
+1:eJztnctuFEcUhq0kiyx5BPIGWWbX7jHGmJuNHTu2FJQxwuGSQBwwCpFQ4mXI
+Jkh4DVmSVRBrLFjFSzBbkGDFFt5gMv/YbY3L3VOnLt11qvr80kE2sj1V1V/V
+X13nTM8XF36a+/6TsbGxm5/3/5lb+SW/cWPl1/kj/W8Wrt+8cun66sXp6+ur
+l1ZvfHXh0/5/3uvHH/34bEwkEo3SVDZ1NB/P/8rHO8/68aEfL/rfP5zIJsZD
+t00UVp2s0+3z0BsRz2aymSOh2ylqXnmWb2jYKOKFMNIuEdYNYaSlsmBjn5HQ
+bRfVKwc29iJ/GLoPono0mU1+6caGMJKq9tj44IcPYSQl+WdjN/petRa6byI3
+7Z59+WdjiJFu6D6K7IT70XxwFloPG8JIvLJh49b6rd7Tp1u9+/c3e6dPnTZl
+ZDZ0n0U02bLx/v37/QAnhuvIB+xzQvddpFc+PvGvybXFWvH69esDfCDu3v1T
+GElMuO803T88efLkEBsIMLO48I0wkohs2FB9RQ0Ln0G8lVwNL+XZxD3T61jl
+Kx58BiH5PCayzalU+YonnxFGGMiWDZ2vePKZASOhx6itsmWD6iuefKYnuZrm
+Rc3FTh47bu0rFJ+ZPnGy9DWEkXCi5tsWvl48dO1MfYXiMyvdFVlHmIjKxvLS
+8iB8+IrOZ8Dg6sVVEiOS861PVDbOzc711tZ+9uYrFJ/BWnX58hUqI93QY5ma
+qDmVM6fP9m7fvj3YF/j0FTXAmvra1368JowEkAkbd+7c6Z3/9nwtvqIGmFN9
+puz1RzAiOV9HmbJRp6+U+YxaBwCf2djYOLT3qQjJ1Tgq333P48hxxrxdX18f
+8FG3r1B9RhipX5R8W8EGrkdTvkL1GbQJ64kw4l+mbJT5yqNH/9TOhs5nwAm8
+j8CI5HyJoubp19bW9q+B6itXr/7QCBsUnzFgRPJ5GlFzKriPxNhX+crOzk6j
+fOh8Rhhxlw0bZb7y4MGDxtmo8hmwW7QV5zK0XI3kfFXZsMHBVyg+A4aLNmO/
+JPk8M+E5PRQ2cL9YjDMnX9H5DBgufEYYMZNJvm2YDU6+YuozBSOUOdFmRmzZ
+4Ogrpj6DMMjVtC7na1LDMTymCLXegouvmPqMISPd0NesKZnmVA6uy7cO/RwX
+X7HxGWHkoFzYQKhnCNx8xcZnyvbaIxhJNufrykYsvmLjM5LPG+RitWzgvg/n
+SOrYxeQraoBhis+0mRHTfFvsvqIGWKb4TBtzvq5sxOoraoBpis+0KedLzcVW
+sRGzr6hh4jNtyOfhXIfCxnBOJTVfUcPEZ1JmxCbfpvMVRIy+ogbVZ1LN+fpg
+o8xXNu9vBr+2PsLEZ1LL5+H8hsLGqPEo85XudyvBr6vPKPMZzImUGbHNt1F8
+Zfu/7eDX1HeoPoM5MWpcYs75+mIjZV9Ro8xnMDdGjU+MOV+XXGzbfEUNU58x
+ZKQbmo29nMpbXVurcipt9BU1TH0mFkZc8226+7hUfUUNG5+pmk8VjDSe8/XJ
+BgLPZGiTr6hh4zMIrvk8ChtVuVjxlfIo8xnK3OLGiGu+bTjwHjP1d9viK2rA
+Z9SxoOzpOTHikw3kHcrOfFI4Q7cNtZYIoTsTQHDI+fpk40rF/jv2/JtrYO0s
+GxfPjHjP5/nIxVL23XiuV+hrxJEPBPbwuv1ICEZ85NuKtqv3KWWxtbUV/DqF
+Ct1zvLE+V9UDDI8zNefryogvNrBmENs8OAtoGyNv3rzp/f7bBml8Cr8ZdW/Y
+RD6PykbVWQ44xnNB1fe6UQN7kdQ5ebXzavA8VdPPM6NwUicjLvk2tBf/T10v
+dIE1F88CwhwLfT19Bbgvu1exDfh28Tyauhlxec80sfbaKjDHMNcw50JfX9sA
+5zgbrmuMsFbj3nB4H0vN1eRZvlEHG2iPzkMmOsd6J0+e6s2cnenNz88PYnl5
+uc/TwuDr2dlzg+uPn6P0BXMvFu8Bz5sGn4k5fWL6wDgtLi7ufz13bm7wd45N
+TI78G1gzUINVeI+PfN5eTkXLBu6fkBug7DnRD/R1aWlpwAMlwMrU8ROk/nD2
+HvBL3XNiXpw5c3bAAnWcwAplnDCXsba7MELNt4EHioeg3Wg/ta9lgbUFaw6l
+T5hTmKMcvMfEQ45PTg3mQxPjhHlNPBvpqefw8B7K7+kC7UR7XfqrBtYezC2q
+92DONu09WL9MPATjVHhsqHHSxNsDfBBqfKoCHoJ2mXiIbWCuYc5R2oU5XPcz
+ULe3t2v1kCbGqbK92cT40J7U+Pd9rI22gbkX0nvAnZqPHzV/YhinQ7F3P0N9
+Plyda6NtYC425T2Fh1A/yxL3IZzGyeT+0IYP/G0u/S0LzFHdfV8RmPtU7zH1
+EFyHJjzEJrAHIPvO0HnIeJZ/pKzToftHCTCMuUudJ2AF525YG4YDZyzUtaLw
+kCb2YK4Bdil9Gq5bzbPO37qfD+WhLuNgvKYaBicPoQYY1vVrPOu8G87t4mvd
+GoKxCN032/Ew8R6Kh2APxtVDdIHzSpO1Y/hsXcdIbGuIGpjr1LPZMi5Mz4K5
+xcLCgn49zSbuVZ2xU/aqsTOCQB9M2MB6ETMXCNLetL/PqGKjEKXuw/XsnENQ
+GQEbodvKhQ0qI1ijsFaF7rdr4OxkVD+xZ5F1o72MYOxG7VtjuzexYaN/r/LS
+lI02MVKVUwM3odvmGrq9ONhwrVHWnY3EzgjWiLJ+xXIeWBW6vIsPNqiMxOzT
+VedF2JuEblsMbFAZgc/FykhKfBDYeFfbeywTZSQVPvRs5B9rf4921nmeGiMp
+8KE7z2mCDWg3V9N5qWMk9Hi1iQ8ubJgwEtO5Y8x8cGMjRUZi5YOSIwj5mVOp
+MBIjH1XnNgob3VBsFJrKpo7q6gK4MxIbH5Q8PQc2ClFqRziPd0ztjY2NQjHX
+F8XCB5ENNs/WVhUrIzHwQav9Ms/TNy3K+624McKdj7pqOEKJUoPGiRHOfKTG
+RqGYake48pEqG4ViYYQjH0Q2noe+xq6KgRGOfFDqAmP73Moq4T0VnBnhxkeI
++p7QotQphqoL4MRHG9koxLW+iAsfbWajEEdGOPDBofaLi/qMPObESGg+dO+Z
+bhMbELUGrSlGQvLBtb4ntDjVjoTiQ9gYLS6MhOCDUvtVPEOwzeLASNN84PkH
+OjY41nCEUugatCb5iLW+J7RC1qA19VrChptC1Rc1wYew4UchGKmbj1Rqv7io
+6Rq0OvnQPYNG2LBTkzVodfGRen1PaDVVO1IHH8JGM2qCEd98tKX2i4vqZsQ3
+H22q/eIi3WdcuTDikw+p4QinumrQfPEhbIRXHfVFPvgQNvjINyOufEjtFz/5
+ZMSFD6n94imfNWi2fEh9D2/5qh2x4UPYiEM+GDHlg1L7JWzwkSsjJnxI7Vec
+onyGXhUjVD6khiNu2dagUX5O2EhDNvVFOj6EjbRkysgoPlw/81HEU1RGcP2r
++JC6wLRFqUGrqv0DF8JG+qIwYhXCRjLyzkjWeRy6TyK/8sWI5OnTla4GTdgQ
+6eoChA2RKSPCRvtEZQRnKHi+QOj2ipqX7rmsWDeEjXYLz+jBWjJ81gouJJ8i
+Eun1P17oOAA=
+"], "Byte", ColorSpace -> "RGB", Interleaving -> True];
+Options[d10Image] = {Cancelled -> False};
+d10Image[n_Integer/;1<=n<=10, opts:OptionsPattern[]] := Module[{die},
+	die = ImageCompose[emptyD10Image, Rasterize[dieStyle[If[n==10,0,n]], Background->None], Scaled[{0.5-If[n==4,0.01,0],0.66}]];
+	If[OptionValue[Cancelled],ImageCompose[die,Rasterize[Style["\[Times]", GrayLevel[0.255], FontSize->150], Background->None], Scaled[{0.5,0.8}]], die]
+];
+$outcomeColors = <|
+  "miss" -> RGBColor[0.72, 0.22, 0.22],
+  "weakHit" -> RGBColor[0.78, 0.55, 0.15],
+  "strongHit" -> RGBColor[0.30, 0.55, 0.30]
+|>;
+$outcomeLabels = <|
+  "miss" -> "Miss",
+  "weakHit" -> "Weak Hit",
+  "strongHit" -> "Strong Hit"
+|>;
+
+actionRollResultDisplay[result_String, match_] := Module[{color, label},
+  color = Lookup[$outcomeColors, result, GrayLevel[0.4]];
+  label = ToUpperCase[Lookup[$outcomeLabels, result]];
+  Style[
+    label<>If[match, " (MATCH)",""],
+    FontFamily -> "Futura",
+    FontWeight -> Bold,
+    FontSize -> 42,
+    FontTracking -> "Wide",
+    color
+  ]
+]
+
+
+d10Image[3,Cancelled->True]
+
+
+scoreCircle[score_Integer /; 1 <= score <= 10] := ImageCompose[Graphics[{EdgeForm[{GrayLevel[0.255], Thickness[0.05]}], FaceForm[GrayLevel[0.9]], Disk[{0, 0}, 1]}, ImageSize -> 135], 
+    Rasterize[dieStyle[score], Background -> None]]; 
+rollColumn[actionScore_, challengeDice_List, challengeDiceCancelled_ : Automatic] := Module[
+  {cancelled, dice, sortedDice},
+
+  cancelled =
+    Replace[
+      challengeDiceCancelled,
+      Automatic :> ConstantArray[False, Length[challengeDice]]
+    ];
+
+  dice = Join[
+    {
+      {actionScore, 0, scoreCircle[actionScore]}
+    },
+    MapThread[
+      {#1, 1, d10Image[#1, Cancelled -> #2]} &,
+      {challengeDice, cancelled}
+    ]
+  ];
+
+  sortedDice =
+    Last /@ ReverseSortBy[
+      dice,
+      {#[[1]], #[[2]]} &
+    ];
+
+  Column[sortedDice]
+];
+rollFrameStyle := Directive[GrayLevel[0.25], AbsoluteThickness[4]]; 
+mathCoreWidth = 200; 
+mathOperatorWidth = 24; 
+mathValueWidth = 60; 
+mathOpValueGap = 6; 
+mathReasonGap = 0; 
+mathDieAddGap = 0; 
+mathReasonYOffset = -0.4; 
+
+mathOperator[x_] := mainStyle[x]; 
+mathValue[x_] := mainStyle[x]; 
+mathLabel[x_] := RawBoxes[AdjustmentBox[ToBoxes[Style[StringJoin["(", ToString[x], ")"], FontFamily -> "Futura", FontSize -> 32, GrayLevel[0.35]]], BoxBaselineShift -> -mathReasonYOffset]]; 
+mathCore[op_, value_] := Pane[Row[{Pane[mathOperator[op], {mathOperatorWidth, Automatic}, Alignment -> Center], Pane[mathValue[value], {mathValueWidth, Automatic}, Alignment -> Left]}, 
+     Spacer[mathOpValueGap]], {mathCoreWidth, Automatic}, Alignment -> Center]; 
+mathTermRow[op_, value_, source_] := {mathCore[op, value], mathLabel[source]}; 
+mathResultRow[actionScore_] := {mathCore["=", actionScore], Spacer[0]}; 
+mathDieXOffset = 34; 
+offsetX[expr_, dx_] := Pane[expr, ImageMargins -> {{Max[dx, 0], Max[-dx, 0]}, {0, 0}}]; 
+mathColumn[actionDie_Integer, statValue_Integer, adds_Association, actionScore_Integer, actionDieCancelled_, momentum_] := Module[{termRows, rows, dividerPosition, blankRow, dieGapRow}, 
+    blankRow = {Spacer[{0, 4}], Spacer[{0, 4}]}; dieGapRow = {Spacer[{0, mathDieAddGap}], Spacer[{0, mathDieAddGap}]}; 
+     termRows = Join[{mathTermRow["+", statValue, "Stat"]}, KeyValueMap[mathTermRow["+", #2, #1] & , adds]]; 
+     rows = Join[{{Pane[offsetX[d6Image[actionDie, Cancelled->actionDieCancelled], mathDieXOffset], {mathCoreWidth, Automatic}, Alignment -> Center], If[actionDieCancelled,mathLabel["Momentum "<>ToString[momentum]],Spacer[0]]}, dieGapRow}, termRows, {blankRow, blankRow, mathResultRow[actionScore]}]; 
+     dividerPosition = 2 + Length[termRows] + 2; Grid[rows, Alignment -> {{Center, Left}}, Spacings -> {mathReasonGap, 0.6}, Dividers -> {False, {dividerPosition -> rollFrameStyle}}]]; 
+
+
+(* ::Subsubsection:: *)
+(*Header styles*)
+
+
+titleStyle[x_] :=
+  Style[
+    x,
+    FontFamily -> "Futura",
+    FontSize -> 32,
+    FontWeight -> Bold,
+    GrayLevel[0.255]
+  ];
+  
+  
+subtitleStyle[x_]:=
+	Style[
+		x,
+		FontFamily->"Futura",
+		FontSize->26,
+		GrayLevel[0.4]
+	];
+	
+header[title_String]:=titleStyle[title];
+header[title_String, subtitle_String]:= 
+  Column[
+    {
+      titleStyle[title],
+      subtitleStyle[subtitle]
+    },
+    Alignment -> Left,
+    Spacings -> 0.5  (* tighten if the default gap is too airy *)
+  ];
+
+
+
+(* ::Subsubsection:: *)
+(*Frames*)
+
+
+ironFramed[x_]:=Framed[x,FrameStyle -> rollFrameStyle,
+      FrameMargins -> {{12, 12}, {12, 12}},
+      RoundingRadius -> 8,
+      Background -> None];
+
+
+displayActionRoll[roll_Association] :=
+  Print[
+    ironFramed[
+      Grid[
+        {
+          {
+            Item[header["Action Roll", Capitalize[symString[roll["stat"]]]], Alignment->Left],
+            SpanFromLeft
+          },
+
+          {
+            mathColumn[
+              roll["actionDie"],
+              roll["statValue"],
+              roll["adds"],
+              roll["actionScore"],
+              roll["actionDieCancelled"],
+              roll["momentum"]
+            ],
+            rollColumn[
+              roll["actionScore"],
+              roll["challengeDice"]
+            ]
+          },
+
+          {
+            Item[
+              actionRollResultDisplay[roll["result"], roll["match"]],
+              Alignment -> Center
+            ],
+            SpanFromLeft
+          }
+        },
+        Dividers -> {None, {False, False, False, False}},
+        Alignment -> {Left, Center, Center},
+        Spacings -> {2, {Automatic, rollHeaderBodyGap, rollBodyResultGap}},
+        FrameStyle -> None
+      ]
+    ]
+  ];
+
+
+(* ::Subsubsection:: *)
+(*Momentum burn presentation*)
+
+
+displayMomentumBurn[burn_Association] :=
+  Print[
+    ironFramed[
+      Column[
+        {
+          Item[header["Momentum Burn", ToString[burn["momentum"]]<>" \[Rule] "<>ToString[burn["momentumReset"]]], Alignment->Left],
+          Item[rollColumn[
+              burn["actionScore"],
+              burn["challengeDice"],
+              burn["challengeDiceCancelled"]
+            ], Alignment->Center],
+           Item[actionRollResultDisplay[burn["result"], If[AllTrue[burn["challengeDiceCancelled"],!#&],burn["match"],False]], Alignment->Center]
+        },
+        Spacings -> {2, {Automatic, rollHeaderBodyGap, rollBodyResultGap}}
+      ]
+    ]
+  ];
+
+
+(* ::Subsubsection:: *)
+(*Progress roll presentation*)
+
+
+displayProgressRoll[roll_Association] :=
+	Print[ironFramed[Grid[{
+		{Item[header["Progress Roll",roll["trackName"]],Alignment->Left]},
+          {rollColumn[
+              roll["progressScore"],
+              roll["challengeDice"],
+              {False, False}
+            ]},
+            {Item[actionRollResultDisplay[roll["result"], roll["match"]],Alignment -> Center]}
+        },
+        Alignment -> {{Center}, {Center, Top, Center}},
+        Spacings -> {2, {Automatic, rollHeaderBodyGap, rollBodyResultGap}}
+      ]
+    ]
+  ];
+
+
+(* ::Subsubsection:: *)
+(*Oracle roll presentation*)
+
+
+displayOracleRoll[table_String, {d1_, d2_}, value_Integer, match_, outcome_String]:=
+	Print[ironFramed[Grid[{
+		{Item[header["Oracle Roll", table], Alignment->Left], SpanFromLeft},
+		{Item[Grid[{{Item[d10Image[d1], Alignment -> Right],Item[d10Image[d2], Alignment -> Left]}},
+			Alignment -> {{Right, Left}, Center},
+			Spacings -> {0, 0}],
+			Alignment -> Center],
+		SpanFromLeft},
+		{Item[Rotate[mainStyle["\[RightArrow]"],-(\[Pi]/2)], Alignment->Center], SpanFromLeft},
+		{Item[mainStyle[value], Alignment->Center], SpanFromLeft},
+		{Item[Rotate[mainStyle["\[Rule]"],-(\[Pi]/2)], Alignment->Center], SpanFromLeft},
+		{Item[mainStyle[outcome<>If[match, " (MATCH)",""]], Alignment->Center], SpanFromLeft}
+	},
+	Alignment -> {{Center}, {Center, Top, Center}},
+	Spacings -> {0, {Automatic, rollHeaderBodyGap, 1, 2, 2, 1}}
+	]]];
+
+
+(* ::Subsection:: *)
+(*Oracle roll*)
+
+
+oracleRoll[table_Association] := Module[{oracleDice, od1, od2, value, outcome, match},
+	oracleDice = {od1, od2} = rollOracleDice[];
+	value = oracleRollValue[oracleDice];
+	outcome = oracleRollOutcome[table, value];
+	match = (od1==od2);
+	displayOracleRoll[table, oracleDice, value, match, outcome];
+	<|"oracleDice" -> oracleDice, "value" -> value, "outcome" -> outcome, "match" -> match|>
+];
+
+
+(* ::Subsection:: *)
+(*Moves*)
+
+
+(* ::Subsubsection:: *)
+(*Move data*)
+
+
+<<(NotebookDirectory[]<>"MoveData.wl");
+
+
+(* ::Subsubsection:: *)
+(*Move outcome*)
+
+
+moveOutcome[move_String, result_String] := moves[move, result];
+
+
+(* ::Subsubsection:: *)
+(*Move header presentation*)
+
+
+moveTextStyle[x_]:=Style[x, FontFamily->"Times New Roman", FontSize->18]
+
+
+displayMoveHeader[moveKey_String] :=
+  Print[
+    Framed[
+      Column[{titleStyle[moves[moveKey, "name"]], moveTextStyle[moves[moveKey, "header"]]}, Spacings->1],
+      FrameStyle -> rollFrameStyle,
+      FrameMargins -> {{12, 12}, {12, 12}},
+      RoundingRadius -> 8,
+      Background -> None
+    ]
+  ];
+
+
+(* ::Subsubsection:: *)
+(*Move outcome presentation*)
+
+
+displayMoveOutcome[moveKey_String, result_String] :=
+  Print[
+    Framed[
+      Column[{header[moves[moveKey, "name"], Lookup[$outcomeLabels, result]], moveTextStyle[moves[moveKey, result]]}, Spacings->1],
+      FrameStyle -> rollFrameStyle,
+      FrameMargins -> {{12, 12}, {12, 12}},
+      RoundingRadius -> 8,
+      Background -> None
+    ]
+  ];
+
+
+(* ::Subsubsection:: *)
+(*Combined move display*)
+
+
+displayMove[moveKey_String]:=displayMoveHeader[moveKey];
+displayMove[moveKey_String, roll_Association]:=displayMoveOutcome[moveKey, roll["result"]];
+
+
+(* ::Subsection:: *)
+(*Constants*)
+
+
+stats = {Edge, Heart, Iron, Shadow, Wits}; 
+ranks = {Troublesome, Dangerous, Formidable, Extreme, Epic}; 
+
+
 (* ::Subsection:: *)
 (*Interface implementation*)
 
@@ -661,39 +1145,162 @@ endChapter[] := Module[{statePath, notebookPath}, statePath = nextStatePath[];
 
 
 (* ::Subsubsection:: *)
-(*Character management*)
+(*Character creation*)
 
 
 createCharacter[Name -> name_String, Assets -> assets:{_String, _String, _String}, 
-    Edge -> (edge_)?statValueQ, Heart -> (heart_)?statValueQ, Iron -> (iron_)?statValueQ, 
-    Shadow -> (shadow_)?statValueQ, Wits -> (wits_)?statValueQ, 
-    BackgroundVow -> {vowName_String, vowDescription_String, (vowRank_)?rankQ}, 
-    Bonds -> bonds:{___String} /; Length[bonds] <= 3] := (ensureStateInitialized[]; 
-    $state[name] = Association["assets" -> assets, "edge" -> edge, "heart" -> heart, 
-      "iron" -> iron, "shadow" -> shadow, "wits" -> wits, "health" -> 5, "spirit" -> 5, 
-      "supply" -> 5, "momentum" -> 2, "debilities" -> {}, 
-      "vows" -> Association[vowName -> constructProgressTrack[vowDescription, vowRank]], 
-      "bonds" -> bonds, "earnedExperience" -> 0, "spentExperience" -> 0]; 
-    $soloCharacter = name;
-    $state[name])
+   Edge -> (edge_)?statValueQ, Heart -> (heart_)?statValueQ, Iron -> (iron_)?statValueQ, 
+   Shadow -> (shadow_)?statValueQ, Wits -> (wits_)?statValueQ, 
+   BackgroundVow -> {vowName_String, (vowRank_)?rankQ}, 
+   Bonds -> bonds:{___String} /; Length[bonds] <= 3] := (ensureStateInitialized[]; 
+   $state[name] = Association["assets" -> assets, "edge" -> edge, "heart" -> heart, "iron" -> iron, 
+     "shadow" -> shadow, "wits" -> wits, "health" -> 5, "spirit" -> 5, "supply" -> 5, "momentum" -> 2, 
+     "debilities" -> {}, "progressTracks" -> Association[vowName -> progressTrack[vowRank], "bonds" -> progressTrack[Epic, 0.25*Length[bonds]]], "bonds" -> bonds, "earnedExperience" -> 0, "spentExperience" -> 0]; 
+   $soloCharacter = name; $state[name]);
 
 
 (* ::Subsubsection:: *)
 (*Action roll*)
 
 
-Options[actionRoll] = {Adds -> Association[]}; 
-actionRoll[(stat_)?statQ, character_:$soloCharacter, opts:OptionsPattern[]] := 
-   Module[{actionDie, statValue, adds, actionScore, challengeDice, cd1, cd2}, 
-    actionDie = rollActionDie[]; 
-     statValue = $state[character, symString[stat]];
-     adds = OptionValue[Adds]; 
-     actionScore = Min[actionDie + Total[Values[adds]] + statValue, 10]; 
-     challengeDice = {cd1, cd2} = rollChallengeDice[]; 
-     Association["character" -> character, "actionDie" -> actionDie, "stat" -> stat, 
-      "statValue" -> statValue, "adds" -> adds, "actionScore" -> actionScore, 
-      "challengeDice" -> challengeDice, "match" -> cd1 == cd2, 
-      "result" -> actionRollResult[challengeDice, actionScore]]]; 
+Options[actionRoll] = {Adds -> Association[], Display -> True}; 
+actionRoll[(stat_)?statQ, opts:OptionsPattern[]] := actionRoll[stat, $soloCharacter, opts]; 
+actionRoll[(stat_)?statQ, character_String, opts:OptionsPattern[]] := 
+   Module[{actionDie, momentum, actionValue, actionDieCancelled, statValue, adds, 
+     actionScore, challengeDice, cd1, cd2, roll}, actionDie = rollActionDie[]; 
+     momentum = getMomentum[character]; {actionValue, actionDieCancelled} = 
+      If[momentum < 0 && Abs[momentum] == actionDie, {0, True}, {actionDie, False}]; 
+     statValue = getAttr[stat, character]; adds = OptionValue[Adds]; 
+     actionScore = Min[actionValue + Total[Values[adds]] + statValue, 10]; 
+     challengeDice = {cd1, cd2} = rollChallengeDice[]; roll = Association["character" -> character, 
+      "actionDie" -> actionDie, "momentum" -> momentum, "actionValue" -> actionValue, 
+      "actionDieCancelled" -> actionDieCancelled, "stat" -> stat, "statValue" -> statValue, 
+      "adds" -> adds, "actionScore" -> actionScore, "challengeDice" -> challengeDice, 
+      "match" -> cd1 == cd2, "result" -> actionRollResult[challengeDice, actionScore]]; If[OptionValue[Display],displayActionRoll[roll]];roll]; 
+
+
+(* ::Subsubsection:: *)
+(*Burning Momentum*)
+
+
+Options[burnMomentum] = {Display -> True};
+burnMomentum[roll_Association, opts:OptionsPattern[]] := Module[{momentum, challengeDice, challengeDiceCancelled, burn},
+	momentum = roll["momentum"];
+	challengeDice = roll["challengeDice"];
+	challengeDiceCancelled = challengeDice//Map[#<momentum&];
+	burn = <|"momentum"->momentum, "challengeDice"->challengeDice, "momentumReset"->getMomentumReset[roll["character"]],"actionScore"->roll["actionScore"],"result"->actionRollResult[challengeDice,momentum],"challengeDiceCancelled"->challengeDiceCancelled, "match"->roll["match"]|>;
+	resetMomentum[roll["character"]];
+	If[OptionValue[Display],displayMomentumBurn[burn]];
+	burn
+];
+
+
+(* ::Subsubsection:: *)
+(*Progress roll*)
+
+
+Options[progressRoll] = {Display -> True};
+progressRoll[trackName_String, opts:OptionsPattern[]] := progressRoll[trackName, $soloCharacter, opts];
+progressRoll[trackName_String, character_String, opts:OptionsPattern[]] := Module[{},
+	progressScore = Floor[getProgress[trackName, character]];
+	challengeDice = {cd1, cd2} = rollChallengeDice[];
+	roll = Association["character"->character, "trackName"->trackName, "progressScore"->progressScore, "challengeDice"->challengeDice, "match"->cd1==cd2, "result"->progressRollResult[challengeDice, progressScore]];
+	If[OptionValue[Display],displayProgressRoll[roll]];
+	roll
+];
+
+
+(* ::Subsubsection:: *)
+(*Suffer and take*)
+
+
+sufferMomentum = takeMomentum = adjustMomentum;
+sufferHealth = takeHealth = adjustHealth;
+sufferSpirit = takeSpirit = adjustSpirit;
+sufferSupply = takeSupply = adjustSupply;
+
+
+(* ::Subsubsection:: *)
+(*Mark progress*)
+
+
+markProgress[trackName_String, marks_Integer, character_:$soloCharacter] := Module[{rank},
+	rank = getRank[trackName, character];
+	markValue = Replace[rank, {Troublesome->3,Dangerous->2,Formidable->1,Extreme->0.5,Epic->0.25}];
+	$state[character, "progressTracks", trackName, "progress"] += marks*markValue;
+];
+
+
+(* ::Subsection:: *)
+(*Moves*)
+
+
+(* ::Subsubsection:: *)
+(*Adventure moves*)
+
+
+faceDanger[]:=displayMove["faceDanger"];
+faceDanger[roll_Association]:=displayMove["faceDanger",roll];
+
+
+(* ::Subsubsection:: *)
+(*Journey moves*)
+
+
+undertakeAJourney[]:=displayMove["undertakeAJourney"];
+undertakeAJourney[roll_Association]:=displayMove["undertakeAJourney",roll];
+
+
+(* ::Subsubsection:: *)
+(*Quest moves*)
+
+
+fulfillYourVow[]:=displayMove["fulfillYourVow"];
+fulfillYourVow[roll_Association]:=displayMove["fulfillYourVow",roll];
+
+
+(* ::Subsubsection:: *)
+(*Fate moves*)
+
+
+<<(NotebookDirectory[]<>"OracleTables.wl");
+
+
+askTheOracle[]:=displayMove["askTheOracle"];
+askTheOracle[table_String] := oracleRoll[table];
+askTheOracle["Yes/No", odds_String] := oracleRoll[oracles["Yes/No: "<>odds]];
+askTheOracle["Yes/No", yesOutcome_String, noOutcome_String] := oracleRoll[yesNo[yesOutcome, noOutcome]];
+
+
+askTheOracle[];
+
+
+askTheOracle["Yes/No", "Likely"]
+
+
+newState[]; 
+createCharacter[Name -> "Padraig", Assets -> {"Loyalist", "Ritualist", "Blademaster"}, Edge -> 1, Heart -> 2, Iron -> 3, Shadow -> 1, Wits -> 2, 
+   BackgroundVow -> {"Save the world", Epic}, Bonds -> {"Mom", "Dad", "Pug"}];
+takeMomentum[4];
+markProgress["Save the world", 25];
+
+
+actionRoll[Iron];
+
+
+burnMomentum[%];
+
+
+fulfillYourVow[];
+
+
+progressRoll["Save the world"];
+
+
+faceDanger[%];
+
+
+faceDanger[];
 
 
 (* ::Subsection:: *)
