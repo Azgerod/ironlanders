@@ -1,13 +1,29 @@
 (* ::Package:: *)
 
+(* ::Title:: *)
+(*Oracle Tables*)
+
+
 (* ::Chapter:: *)
-(*Header*)
+(*Introduction*)
+
+
+(* ::Text:: *)
+(*This file contains data used by the Iron Library for implementing consultations to the Oracle.*)
+
+
+(* ::Chapter:: *)
+(*Code*)
+
+
+(* ::Section::Closed:: *)
+(*Package header*)
 
 
 BeginPackage["OracleTables`"];
 
 
-(* ::Chapter:: *)
+(* ::Section::Closed:: *)
 (*Public symbols*)
 
 
@@ -15,21 +31,25 @@ oracles::usage = "Association of oracle tables.";
 YesNo::usage = "YesNo[yesOutcome, noOutcome] returns a Yes/No oracle table with those two outcomes.";
 
 
-(* ::Chapter:: *)
+(* ::Section:: *)
 (*Implementation details*)
+
+
+(* ::Subsection::Closed:: *)
+(*Private context header*)
 
 
 Begin["`Private`"]; 
 
 
-(* ::Section:: *)
-(*Main association*)
+(* ::Subsection::Closed:: *)
+(*Oracle association*)
 
 
 oracles = <||>;
 
 
-(* ::Section:: *)
+(* ::Subsection::Closed:: *)
 (*Yes/No*)
 
 
@@ -46,7 +66,6 @@ yesNo[odds_String] := Module[{oddsValue},
 ];
 yesNo[yesOutcome_String, noOutcome_String] := <|25 -> noOutcome, 100 -> yesOutcome|>;
 
-
 oracles["Yes/No: Almost Certain"] = yesNo["Almost Certain"];
 oracles["Yes/No: Likely"] = yesNo["Likely"];
 oracles["Yes/No: 50/50"] = yesNo["50/50"];
@@ -54,9 +73,59 @@ oracles["Yes/No: Unlikely"] = yesNo["Unlikely"];
 oracles["Yes/No: Small Chance"] = yesNo["Small Chance"];
 
 
-(* ::Chapter:: *)
-(*Footer*)
+(* ::Subsection:: *)
+(*Core oracles*)
+
+
+(* ::Subsection:: *)
+(*Location oracles*)
+
+
+(* ::Subsection:: *)
+(*Settlement oracles*)
+
+
+(* ::Subsection:: *)
+(*Character oracles*)
+
+
+(* ::Subsection:: *)
+(*Delve site oracles*)
+
+
+(* ::Subsection:: *)
+(*Monstrosity oracles*)
+
+
+(* ::Subsection:: *)
+(*Threat oracles*)
+
+
+(* ::Subsection:: *)
+(*Story oracles*)
+
+
+(* ::Subsection:: *)
+(*Combat oracles*)
+
+
+(* ::Subsection:: *)
+(*Magic oracles*)
+
+
+(* ::Subsection:: *)
+(*Scale oracles*)
+
+
+(* ::Subsection::Closed:: *)
+(*Private context footer*)
 
 
 End[];
+
+
+(* ::Section::Closed:: *)
+(*Package footer*)
+
+
 EndPackage[];

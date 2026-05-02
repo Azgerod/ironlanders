@@ -1,28 +1,48 @@
 (* ::Package:: *)
 
+(* ::Title:: *)
+(*Move Data*)
+
+
 (* ::Chapter:: *)
+(*Introduction*)
+
+
+(* ::Text:: *)
+(*This file contains data used by the Iron Library for implementing moves.*)
+
+
+(* ::Chapter:: *)
+(*Code*)
+
+
+(* ::Section::Closed:: *)
 (*Package header*)
 
 
 BeginPackage["MoveData`"];
 
 
-(* ::Section:: *)
+(* ::Section::Closed:: *)
 (*Public symbols*)
 
 
 moves::usage = "Association of moves.";
 
 
-(* ::Chapter:: *)
+(* ::Section:: *)
 (*Implementation details*)
+
+
+(* ::Subsection::Closed:: *)
+(*Private context header*)
 
 
 Begin["`Private`"]; 
 
 
-(* ::Section:: *)
-(*Helpers*)
+(* ::Subsection::Closed:: *)
+(*Move insertion helper*)
 
 
 move[name_String, header_String, strongHit_String, weakHit_String, miss_String] := <|
@@ -34,18 +54,18 @@ move[name_String, header_String, strongHit_String, weakHit_String, miss_String] 
 |>;
 
 
-(* ::Section:: *)
+(* ::Subsection::Closed:: *)
 (*Move association*)
 
 
 moves = Association[];
 
 
-(* ::Section:: *)
+(* ::Subsection::Closed:: *)
 (*Adventure moves*)
 
 
-(* ::Subsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Face Danger*)
 
 
@@ -67,11 +87,11 @@ moves["faceDanger"] = move[
 ];
 
 
-(* ::Section:: *)
+(* ::Subsection::Closed:: *)
 (*Journey moves*)
 
 
-(* ::Subsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Undertake a Journey*)
 
 
@@ -92,15 +112,15 @@ Then, for each segment of your journey, roll +wits. If you are setting off from 
 ];
 
 
-(* ::Section:: *)
+(* ::Subsection:: *)
 (*Scene challenge moves*)
 
 
-(* ::Section:: *)
+(* ::Subsection::Closed:: *)
 (*Quest moves*)
 
 
-(* ::Subsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Fulfill Your Vow*)
 
 
@@ -115,11 +135,11 @@ moves["fulfillYourVow"] = move[
 ];
 
 
-(* ::Section:: *)
+(* ::Subsection::Closed:: *)
 (*Fate moves*)
 
 
-(* ::Subsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Ask the Oracle*)
 
 
@@ -132,37 +152,43 @@ moves["askTheOracle", "header"] = "When you seek to resolve questions, discover 
 \:2734 Spark an idea: Brainstorm or use a random prompt.";
 
 
-(* ::Section:: *)
+(* ::Subsection:: *)
 (*Relationship moves*)
 
 
-(* ::Section:: *)
+(* ::Subsection:: *)
 (*Combat moves*)
 
 
-(* ::Section:: *)
+(* ::Subsection:: *)
 (*Suffer moves*)
 
 
-(* ::Section:: *)
+(* ::Subsection:: *)
 (*Delve moves*)
 
 
-(* ::Section:: *)
+(* ::Subsection:: *)
 (*Failure moves*)
 
 
-(* ::Section:: *)
+(* ::Subsection:: *)
 (*Threat moves*)
 
 
-(* ::Section:: *)
+(* ::Subsection:: *)
 (*Rarity moves*)
 
 
-(* ::Chapter:: *)
-(*Footer*)
+(* ::Subsection::Closed:: *)
+(*Private context footer*)
 
 
 End[];
+
+
+(* ::Section::Closed:: *)
+(*Package footer*)
+
+
 EndPackage[];
