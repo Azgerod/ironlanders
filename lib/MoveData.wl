@@ -1159,7 +1159,7 @@ moves["learnFromYourFailures"] = move[
 ];
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Threat moves*)
 
 
@@ -1170,7 +1170,7 @@ moves["learnFromYourFailures"] = move[
 moves["advanceAThreat"] = Association[];
 moves["advanceAThreat", "name"] = "Advance a Threat";
 moves["advanceAThreat", "header"] = paras[
-	p[b["When you give ground to a threat through inaction, failure, or delay,"], " roll on the Threat Action table and envision how the change manifests in your world (", i["Ask the Oracle"], " if unsure)."],
+	p[b["When you give ground to a threat through inaction, failure, or delay,"], " roll on the Threat: Action table and envision how the change manifests in your world (", i["Ask the Oracle"], " if unsure)."],
 	p[b["On a match,"], " this development also exposes a surprising aspect of the threat\[CloseCurlyQuote]s plan or nature."],
 	p[b["If you mark the last box on the threat\[CloseCurlyQuote]s menace track,"], " the threat achieves its goal, or the final dire outcome occurs. You must ", i["Forsake Your Vow"], "."]
 ];
