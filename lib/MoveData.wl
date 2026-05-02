@@ -1,10 +1,24 @@
 (* ::Package:: *)
 
+(* ::Chapter:: *)
+(*Package header*)
+
+
+BeginPackage["MoveData`"];
+
+
 (* ::Section:: *)
 (*Public symbols*)
 
 
 moves::usage = "Association of moves.";
+
+
+(* ::Chapter:: *)
+(*Implementation details*)
+
+
+Begin["`Private`"]; 
 
 
 (* ::Section:: *)
@@ -144,3 +158,11 @@ moves["askTheOracle", "header"] = "When you seek to resolve questions, discover 
 
 (* ::Section:: *)
 (*Rarity moves*)
+
+
+(* ::Chapter:: *)
+(*Footer*)
+
+
+End[];
+EndPackage[];

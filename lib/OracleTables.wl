@@ -1,11 +1,25 @@
 (* ::Package:: *)
 
-(* ::Section:: *)
+(* ::Chapter:: *)
+(*Header*)
+
+
+BeginPackage["OracleTables`"];
+
+
+(* ::Chapter:: *)
 (*Public symbols*)
 
 
 oracles::usage = "Association of oracle tables.";
 YesNo::usage = "YesNo[yesOutcome, noOutcome] returns a Yes/No oracle table with those two outcomes.";
+
+
+(* ::Chapter:: *)
+(*Implementation details*)
+
+
+Begin["`Private`"]; 
 
 
 (* ::Section:: *)
@@ -38,3 +52,11 @@ oracles["Yes/No: Likely"] = yesNo["Likely"];
 oracles["Yes/No: 50/50"] = yesNo["50/50"];
 oracles["Yes/No: Unlikely"] = yesNo["Unlikely"];
 oracles["Yes/No: Small Chance"] = yesNo["Small Chance"];
+
+
+(* ::Chapter:: *)
+(*Footer*)
+
+
+End[];
+EndPackage[];

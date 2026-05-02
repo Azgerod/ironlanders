@@ -70,15 +70,13 @@ and increments both the global chapter number and the chapter-within-arc number.
 
 
 setSoloCharacter::usage = "setSoloCharacter[name] sets $soloCharacter to the \
-named\ncharacter, who must already exist in the state. Functions that take a \
-character\nargument default to $soloCharacter when none is supplied."; 
-createCharacter::usage = "createCharacter[Name -> name, Assets -> {a1, a2, a3}, Edge \
--> e, Heart -> h, Iron -> i, Shadow -> s, Wits -> w, BackgroundVow -> \
-{vowName, vowDescription, vowRank}, Bonds -> {b1, ...}] adds a new character to \
-$state with full starting values for resources (health, spirit, supply, momentum) and \
-the given stats, assets, background vow, and bonds. Stats must be integers in 1-5; \
-rank must be one of the defined ranks (Troublesome, Dangerous, Formidable, Extreme, \
-Epic)."; 
+named character, who must already exist in the state. Functions that take a \
+character argument default to $soloCharacter when none is supplied."; 
+createCharacter::usage = 
+  "createCharacter[Name -> name, Assets -> {a1, a2, a3}, Edge -> e, Heart -> h, " <>
+  "Iron -> i, Shadow -> s, Wits -> w, BackgroundVow -> {vowName, rank}, " <>
+  "Bonds -> {b, ...}] creates a character with the given attributes, adds them " <>
+  "to the session state, and sets $soloCharacter to name.";
 
 
 (* ::Subsection:: *)
@@ -86,6 +84,127 @@ Epic).";
 
 
 actionRoll::usage="actionRoll[stat] performs an action roll for $soloCharacter using the given stat, which must be one of Edge, Heart, Iron, Shadow, or Wits. actionRoll[stat, character] performs the roll for the named character. Returns an Association with keys character, actionDie, stat, statValue, adds, actionScore, challengeDice, match, and result. Option Adds -> <|reason -> n, ...|> applies named adds to the action score.";
+
+
+(* ::Subsection:: *)
+(*Burn momentum*)
+
+
+burnMomentum::usage = 
+  "burnMomentum[roll] burns the character's momentum, cancelling any challenge " <>
+  "dice less than the momentum value and recomputing the result. Resets momentum " <>
+  "and returns the new outcome record.";
+
+
+(* ::Subsection:: *)
+(*Progress roll*)
+
+
+progressRoll::usage = 
+  "progressRoll[trackName] makes a progress roll against the named track for the " <>
+  "solo character.\nprogressRoll[trackName, character] makes a progress roll for " <>
+  "a named character. The progress score (filled boxes, rounded down) is compared " <>
+  "against the challenge dice.";
+
+
+(* ::Subsection:: *)
+(*Suffering and taking*)
+
+
+sufferMomentum::usage = 
+  "sufferMomentum[delta] adjusts the solo character's momentum by delta. " <>
+  "Conventionally used with negative values for loss.";
+
+takeMomentum::usage = 
+  "takeMomentum[delta] adjusts the solo character's momentum by delta. " <>
+  "Conventionally used with positive values for gain.";
+
+sufferHealth::usage = 
+  "sufferHealth[delta] adjusts the solo character's health by delta. " <>
+  "Conventionally used with negative values for loss.";
+
+takeHealth::usage = 
+  "takeHealth[delta] adjusts the solo character's health by delta. " <>
+  "Conventionally used with positive values for gain.";
+
+sufferSpirit::usage = 
+  "sufferSpirit[delta] adjusts the solo character's spirit by delta. " <>
+  "Conventionally used with negative values for loss.";
+
+takeSpirit::usage = 
+  "takeSpirit[delta] adjusts the solo character's spirit by delta. " <>
+  "Conventionally used with positive values for gain.";
+  
+sufferSupply::usage = 
+  "sufferSupply[delta] adjusts the solo character's supply by delta. " <>
+  "Conventionally used with negative values for loss.";
+
+takeSupply::usage = 
+  "takeSupply[delta] adjusts the solo character's supply by delta. " <>
+  "Conventionally used with positive values for gain.";
+
+
+(* ::Subsubsection:: *)
+(*Adding bonds*)
+
+
+addBond::usage = "addBond[bondName] adds the given bond to the solo character, and marks progress on their bonds track.";
+
+
+(* ::Subsubsection:: *)
+(*Mark/spend experience*)
+
+
+markExperience::usage = "markExperience[points] increases the solo character's earned experience by points."
+spendExperience::usage = "spendExperience[points] increases the solo character's spent experience by points."
+
+
+(* ::Subsection:: *)
+(*Moves*)
+
+
+(* ::Subsubsection:: *)
+(*Adventure moves*)
+
+
+faceDanger::usage = 
+  "faceDanger[] displays the Face Danger move text.\n" <>
+  "faceDanger[roll] displays the outcome of an action roll as resolved by Face Danger.";
+
+
+(* ::Subsubsection:: *)
+(*Journey moves*)
+
+
+undertakeAJourney::usage = 
+  "undertakeAJourney[] displays the Undertake a Journey move text.\n" <>
+  "undertakeAJourney[roll] displays the outcome of an action roll as resolved by Undertake a Journey.";
+
+
+(* ::Subsubsection:: *)
+(*Quest moves*)
+
+
+fulfillYourVow::usage = 
+  "fulfillYourVow[] displays the Fulfill Your Vow move text.\n" <>
+  "fulfillYourVow[roll] displays the outcome of a progress roll as resolved by Fulfill Your Vow.";
+
+
+(* ::Subsubsection:: *)
+(*Fate moves*)
+
+
+askTheOracle::usage = 
+  "askTheOracle[] displays the Ask the Oracle move text.\n" <>
+  "askTheOracle[tableName] rolls on the named oracle table.\n" <>
+  "askTheOracle[\"Yes/No\", odds] rolls a Yes/No oracle at the given odds " <>
+  "(\"Almost Certain\", \"Likely\", \"50/50\", \"Unlikely\", or \"Small Chance\").\n" <>
+  "askTheOracle[\"Yes/No\", yesOutcome, noOutcome] rolls a 50/50 Yes/No oracle " <>
+  "with custom result strings.";
+
+
+(* ::Subsection:: *)
+(*Marking progress*)
 
 
 (* ::Subsection:: *)
@@ -148,6 +267,21 @@ Begin["`Private`"];
 
 If[ !ValueQ[$IronLibraryPath], $IronLibraryPath = 
     If[StringQ[$InputFileName] && $InputFileName =!= "", $InputFileName, $Failed]]; 
+
+
+(* ::Subsubsection:: *)
+(*Library directory variable*)
+
+
+ironLibraryDirectory[] := DirectoryName[$IronLibraryPath];
+
+
+(* ::Subsubsection:: *)
+(*Imports*)
+
+
+Get[FileNameJoin[{ironLibraryDirectory[], "MoveData.wl"}]];
+Get[FileNameJoin[{ironLibraryDirectory[], "OracleTables.wl"}]];
 
 
 (* ::Subsubsection:: *)
@@ -289,21 +423,45 @@ libraryGetCell[] := If[StringQ[$IronLibraryPath] && $IronLibraryPath =!= $Failed
     With[{path = $IronLibraryPath}, Cell[BoxData[ToBoxes[Defer[Get[path]; ]]], "Input", 
       CellTags -> "IronLibraryGet"]], Cell["Load IronLibrary here.", "Text", 
      CellTags -> "IronLibraryGet"]]; 
-beginChapterCell[] := Cell[BoxData[ToBoxes[Defer[beginChapter[]; ]]], "Input", 
-    CellTags -> "IronLibraryBeginChapter"]; 
-endChapterCell[] := Cell[BoxData[ToBoxes[Defer[endChapter[]; ]]], "Input", 
-    CellTags -> "IronLibraryEndChapter"]; 
-chapterNotebookCells[path_String] := Module[{heading}, 
-    heading = chapterTitleSubtitleFromPath[path]; If[heading === $Failed, Return[$Failed]]; 
-     {Cell[heading["Title"], "Title", CellTags -> "IronLibraryTitle"], 
-      Cell[heading["Subtitle"], "Subtitle", CellTags -> "IronLibrarySubtitle"], 
-      Cell["Header", "Section", CellTags -> "IronLibraryHeader"], libraryGetCell[], 
-      beginChapterCell[], Cell["Body", "Section", CellTags -> "IronLibraryBody"], 
-      Cell["Footer", "Section", CellTags -> "IronLibraryFooter"], endChapterCell[]}]; 
-createChapterNotebook[path_String] := Module[{nb, cells}, 
-    If[FileExistsQ[path], Return[path]]; cells = chapterNotebookCells[path]; 
-     If[cells === $Failed, Return[$Failed]]; nb = CreateDocument[cells, Visible -> False]; 
-     NotebookSave[nb, path]; NotebookClose[nb]; path]; 
+beginChapterCell[] :=
+  Cell[
+    BoxData[ToBoxes[Defer[beginChapter[];]]],
+    "Input",
+    CellTags -> "IronLibraryBeginChapter"
+  ];
+
+endChapterCell[] :=
+  Cell[
+    BoxData[ToBoxes[Defer[endChapter[];]]],
+    "Input",
+    CellTags -> "IronLibraryEndChapter"
+  ];
+
+chapterNotebookCells[path_String] := Module[{heading},
+  heading = chapterTitleSubtitleFromPath[path];
+  If[heading === $Failed, Return[$Failed]];
+
+  {
+    Cell[heading["Title"], "Title", CellTags -> "IronLibraryTitle"],
+    Cell[heading["Subtitle"], "Subtitle", CellTags -> "IronLibrarySubtitle"],
+
+    Cell["Header", "Section", CellTags -> "IronLibraryHeader"],
+    libraryGetCell[],
+    beginChapterCell[],
+
+    Cell["Body", "Section", CellTags -> "IronLibraryBody"],
+
+    Cell["Footer", "Section", CellTags -> "IronLibraryFooter"],
+endChapterCell[]
+  }
+];
+createChapterNotebook[path_String] := Module[{cells},
+  If[FileExistsQ[path], Return[path]];
+  cells = chapterNotebookCells[path];
+  If[cells === $Failed, Return[$Failed]];
+  Export[path, Notebook[cells], "NB"];
+  path
+];
 
 
 (* ::Subsubsection:: *)
@@ -325,40 +483,100 @@ updateCurrentChapterHeading[arcTitle_:Automatic] :=
      NotebookWrite[nb, {Cell[title, "Title", CellTags -> "IronLibraryTitle"], 
        Cell[subtitle, "Subtitle", CellTags -> "IronLibrarySubtitle"]}]; NotebookSave[nb]; 
      Association["Title" -> title, "Subtitle" -> subtitle]]; 
-updateChapterNotebookHeading[path_String] := Module[{nb, heading}, 
-    If[ !FileExistsQ[path], Return[$Failed]]; heading = chapterTitleSubtitleFromPath[path]; 
-     If[heading === $Failed, Return[$Failed]]; nb = NotebookOpen[path, Visible -> False]; 
-     deleteTaggedCells[nb, "IronLibraryTitle"]; deleteTaggedCells[nb, 
-      "IronLibrarySubtitle"]; SelectionMove[nb, Before, Notebook]; 
-     NotebookWrite[nb, {Cell[heading["Title"], "Title", CellTags -> "IronLibraryTitle"], 
-       Cell[heading["Subtitle"], "Subtitle", CellTags -> "IronLibrarySubtitle"]}]; 
-     NotebookSave[nb]; NotebookClose[nb]; heading]; 
+updateChapterNotebookHeading[path_String] := Module[{nb, heading},
+  If[!FileExistsQ[path], Return[$Failed]];
+  heading = chapterTitleSubtitleFromPath[path];
+  If[heading === $Failed, Return[$Failed]];
+  nb = NotebookOpen[path, Visible -> False];
+  SetOptions[nb, Visible -> Inherited];
+  deleteTaggedCells[nb, "IronLibraryTitle"];
+  deleteTaggedCells[nb, "IronLibrarySubtitle"];
+  SelectionMove[nb, Before, Notebook];
+  NotebookWrite[nb, {
+    Cell[heading["Title"], "Title", CellTags -> "IronLibraryTitle"],
+    Cell[heading["Subtitle"], "Subtitle", CellTags -> "IronLibrarySubtitle"]
+  }];
+  NotebookSave[nb];
+  NotebookClose[nb];
+  heading
+];
 firstInputCellObject[nb_] := Module[{cells}, cells = Cells[nb, CellStyle -> "Input"]; 
      If[cells === {}, Missing["NoInputCell"], First[cells]]]; 
 taggedCellExistsQ[nb_, tag_String] := Cells[nb, CellTags -> tag] =!= {}; 
-ensureChapterOneBoilerplate[] := Module[{nb, path, heading, firstInput, needsStructure}, 
-    nb = currentNotebookObject[]; path = NotebookFileName[]; 
-     If[path === $Failed, Return[$Failed]]; heading = chapterTitleSubtitleFromPath[path]; 
-     If[heading === $Failed, Return[$Failed]]; deleteTaggedCells[nb, "IronLibraryTitle"]; 
-     deleteTaggedCells[nb, "IronLibrarySubtitle"]; SelectionMove[nb, Before, Notebook]; 
-     NotebookWrite[nb, {Cell[heading["Title"], "Title", CellTags -> "IronLibraryTitle"], 
-       Cell[heading["Subtitle"], "Subtitle", CellTags -> "IronLibrarySubtitle"]}]; 
-     needsStructure =  !taggedCellExistsQ[nb, "IronLibraryHeader"] || 
-        !taggedCellExistsQ[nb, "IronLibraryBody"] || 
-        !taggedCellExistsQ[nb, "IronLibraryFooter"] || 
-        !taggedCellExistsQ[nb, "IronLibraryEndChapter"]; If[needsStructure, 
-      deleteTaggedCells[nb, "IronLibraryHeader"]; deleteTaggedCells[nb, "IronLibraryBody"]; 
-       deleteTaggedCells[nb, "IronLibraryFooter"]; deleteTaggedCells[nb, 
-        "IronLibraryEndChapter"]; firstInput = firstInputCellObject[nb]; 
-       If[firstInput === Missing["NoInputCell"], SelectionMove[nb, After, Notebook]; 
-         NotebookWrite[nb, {Cell["Header", "Section", CellTags -> "IronLibraryHeader"], 
-           Cell["Body", "Section", CellTags -> "IronLibraryBody"], Cell["Footer", "Section", 
-            CellTags -> "IronLibraryFooter"], endChapterCell[]}], 
-        SelectionMove[firstInput, Before, Cell]; NotebookWrite[nb, Cell["Header", "Section", 
-           CellTags -> "IronLibraryHeader"]]; SelectionMove[firstInput, After, Cell]; 
-         NotebookWrite[nb, {Cell["Body", "Section", CellTags -> "IronLibraryBody"], 
-           Cell["Footer", "Section", CellTags -> "IronLibraryFooter"], 
-           endChapterCell[]}]]; ]; NotebookSave[nb]; heading]; 
+ensureChapterOneBoilerplate[] :=
+  Module[{nb, path, heading, firstInput, needsStructure},
+    nb = currentNotebookObject[];
+    path = NotebookFileName[];
+
+    If[path === $Failed, Return[$Failed]];
+
+    heading = chapterTitleSubtitleFromPath[path];
+    If[heading === $Failed, Return[$Failed]];
+
+    deleteTaggedCells[nb, "IronLibraryTitle"];
+    deleteTaggedCells[nb, "IronLibrarySubtitle"];
+
+    SelectionMove[nb, Before, Notebook];
+
+    NotebookWrite[
+      nb,
+      {
+        Cell[heading["Title"], "Title", CellTags -> "IronLibraryTitle"],
+        Cell[heading["Subtitle"], "Subtitle", CellTags -> "IronLibrarySubtitle"]
+      }
+    ];
+
+    needsStructure =
+  !taggedCellExistsQ[nb, "IronLibraryHeader"] ||
+  !taggedCellExistsQ[nb, "IronLibraryBody"] ||
+  !taggedCellExistsQ[nb, "IronLibraryFooter"] ||
+  !taggedCellExistsQ[nb, "IronLibraryEndChapter"];
+
+    If[
+      needsStructure,
+
+      deleteTaggedCells[nb, "IronLibraryHeader"];
+      deleteTaggedCells[nb, "IronLibraryBody"];
+      deleteTaggedCells[nb, "IronLibraryFooter"];
+      deleteTaggedCells[nb, "IronLibraryEndChapter"];
+
+      firstInput = firstInputCellObject[nb];
+
+      If[
+        firstInput === Missing["NoInputCell"],
+
+        SelectionMove[nb, After, Notebook];
+        NotebookWrite[
+          nb,
+          {
+            Cell["Header", "Section", CellTags -> "IronLibraryHeader"],
+            Cell["Body", "Section", CellTags -> "IronLibraryBody"],
+            Cell["Footer", "Section", CellTags -> "IronLibraryFooter"],
+            endChapterCell[]
+          }
+        ],
+
+        SelectionMove[firstInput, Before, Cell];
+        NotebookWrite[
+          nb,
+          Cell["Header", "Section", CellTags -> "IronLibraryHeader"]
+        ];
+
+        SelectionMove[firstInput, After, Cell];
+        NotebookWrite[
+          nb,
+          {
+            Cell["Body", "Section", CellTags -> "IronLibraryBody"],
+            Cell["Footer", "Section", CellTags -> "IronLibraryFooter"],
+            endChapterCell[]
+          }
+        ]
+      ];
+    ];
+
+    NotebookSave[nb];
+    heading
+  ];
 
 
 (* ::Subsubsection:: *)
@@ -392,9 +610,11 @@ renameCurrentChapterArc[newArc_String] := Module[{oldBase, data, storyDir, oldDi
      normalizedArc, newData, newBase, newDir, oldNotebookFile, newNotebookPath, 
      oldStatePath, newStatePath, movedOldNotebookPath, movedOldStatePath, oldArc, 
      oldArcStart}, If[ !chapterNotebookQ[], Message[beginChapter::notchapter]; 
-       Return[$Failed]]; oldBase = currentNotebookBase[]; data = parseNotebookBase[oldBase]; 
-     oldArc = data["Arc"]; oldArcStart = data["ArcChapterNumber"]; 
-     If[data === $Failed, Return[$Failed]]; storyDir = parentNotebookDirectory[]; 
+       Return[$Failed]]; oldBase = currentNotebookBase[]; data = parseNotebookBase[oldBase];
+If[data === $Failed, Return[$Failed]];
+
+oldArc = data["Arc"];
+oldArcStart = data["ArcChapterNumber"]; storyDir = parentNotebookDirectory[]; 
      oldDir = currentNotebookDirectory[]; If[storyDir === $Failed || oldDir === $Failed, 
       Return[$Failed]]; normalizedArc = normalizeName[newArc]; 
      newData = Join[data, Association["Arc" -> normalizedArc, "ArcChapterNumber" -> 1]]; 
@@ -635,9 +855,9 @@ getSupply[character_:$soloCharacter] := getAttr["supply", character];
 resetMomentum[character_:$soloCharacter] := ($state[character, "momentum"] = getMomentumReset[character]);
 adjustMomentum[delta_Integer, character_:$soloCharacter] := ($state[character, "momentum"] += delta);
 
-adjustHealth[delta_Integer, character_:$soloCharacter] := ($state[character, "Health"] += delta);
-adjustSpirit[delta_Integer, character_:$soloCharacter] := ($state[character, "Spirit"] += delta);
-adjustSupply[delta_Integer, character_:$soloCharacter] := ($state[character, "Supply"] += delta);
+adjustHealth[delta_Integer, character_:$soloCharacter] := ($state[character, "health"] += delta);
+adjustSpirit[delta_Integer, character_:$soloCharacter] := ($state[character, "spirit"] += delta);
+adjustSupply[delta_Integer, character_:$soloCharacter] := ($state[character, "supply"] += delta);
 
 
 (* ::Subsubsection:: *)
@@ -657,7 +877,7 @@ rollBodyResultGap = 3;
 
 
 (* ::Subsubsection:: *)
-(*Action roll presentation*)
+(*Presentation preparation*)
 
 
 dieStyle[n_] := Style[n, GrayLevel[0.255], FontSize -> 21, FontFamily -> "Futura", FontWeight -> Bold];
@@ -893,6 +1113,10 @@ ironFramed[x_]:=Framed[x,FrameStyle -> rollFrameStyle,
       Background -> None];
 
 
+(* ::Subsubsection:: *)
+(*Display action roll*)
+
+
 displayActionRoll[roll_Association] :=
   Print[
     ironFramed[
@@ -1005,25 +1229,18 @@ displayOracleRoll[table_String, {d1_, d2_}, value_Integer, match_, outcome_Strin
 (*Oracle roll*)
 
 
-oracleRoll[table_Association] := Module[{oracleDice, od1, od2, value, outcome, match},
+oracleRoll[tableName_String, table_Association] := Module[{oracleDice, od1, od2, value, outcome, match},
 	oracleDice = {od1, od2} = rollOracleDice[];
 	value = oracleRollValue[oracleDice];
 	outcome = oracleRollOutcome[table, value];
 	match = (od1==od2);
-	displayOracleRoll[table, oracleDice, value, match, outcome];
+	displayOracleRoll[tableName, oracleDice, value, match, outcome];
 	<|"oracleDice" -> oracleDice, "value" -> value, "outcome" -> outcome, "match" -> match|>
 ];
 
 
 (* ::Subsection:: *)
 (*Moves*)
-
-
-(* ::Subsubsection:: *)
-(*Move data*)
-
-
-<<(NotebookDirectory[]<>"MoveData.wl");
 
 
 (* ::Subsubsection:: *)
@@ -1140,23 +1357,60 @@ endChapter[] := Module[{statePath, notebookPath}, statePath = nextStatePath[];
      notebookPath = nextNotebookPath[]; If[statePath === $Failed || 
        notebookPath === $Failed, Return[$Failed]]; 
      If[saveExpressionToPath[statePath, stateForNextChapter[]] === $Failed, 
-      Return[$Failed]]; createChapterNotebook[notebookPath]; 
+      Return[$Failed]]; createChapterNotebook[notebookPath];
      Association["StatePath" -> statePath, "NotebookPath" -> notebookPath]]; 
+
+
+
+
 
 
 (* ::Subsubsection:: *)
 (*Character creation*)
 
 
-createCharacter[Name -> name_String, Assets -> assets:{_String, _String, _String}, 
-   Edge -> (edge_)?statValueQ, Heart -> (heart_)?statValueQ, Iron -> (iron_)?statValueQ, 
-   Shadow -> (shadow_)?statValueQ, Wits -> (wits_)?statValueQ, 
-   BackgroundVow -> {vowName_String, (vowRank_)?rankQ}, 
-   Bonds -> bonds:{___String} /; Length[bonds] <= 3] := (ensureStateInitialized[]; 
-   $state[name] = Association["assets" -> assets, "edge" -> edge, "heart" -> heart, "iron" -> iron, 
-     "shadow" -> shadow, "wits" -> wits, "health" -> 5, "spirit" -> 5, "supply" -> 5, "momentum" -> 2, 
-     "debilities" -> {}, "progressTracks" -> Association[vowName -> progressTrack[vowRank], "bonds" -> progressTrack[Epic, 0.25*Length[bonds]]], "bonds" -> bonds, "earnedExperience" -> 0, "spentExperience" -> 0]; 
-   $soloCharacter = name; $state[name]);
+createCharacter[
+  Name -> name_String,
+  Assets -> assets:{_String, _String, _String},
+  Edge -> (edge_)?statValueQ,
+  Heart -> (heart_)?statValueQ,
+  Iron -> (iron_)?statValueQ,
+  Shadow -> (shadow_)?statValueQ,
+  Wits -> (wits_)?statValueQ,
+  BackgroundVow -> {vowName_String, (vowRank_)?rankQ},
+  Bonds -> bonds:{___String} /; Length[bonds] <= 3
+] :=
+  Module[{character},
+    ensureStateInitialized[];
+
+    character =
+      Association[
+        "assets" -> assets,
+        "edge" -> edge,
+        "heart" -> heart,
+        "iron" -> iron,
+        "shadow" -> shadow,
+        "wits" -> wits,
+        "health" -> 5,
+        "spirit" -> 5,
+        "supply" -> 5,
+        "momentum" -> 2,
+        "debilities" -> {},
+        "progressTracks" -> Association[
+          vowName -> progressTrack[vowRank],
+          "bonds" -> progressTrack[Epic, 0.25*Length[bonds]]
+        ],
+        "bonds" -> bonds,
+        "earnedExperience" -> 0,
+        "spentExperience" -> 0
+      ];
+
+    AssociateTo[$state, name -> character];
+
+    $soloCharacter = name;
+
+    $state[name]
+  ];
 
 
 (* ::Subsubsection:: *)
@@ -1231,6 +1485,21 @@ markProgress[trackName_String, marks_Integer, character_:$soloCharacter] := Modu
 ];
 
 
+(* ::Subsubsection:: *)
+(*Add a bond*)
+
+
+addBond[bondName_String, character_:$soloCharacter] := (AppendTo[$state[character, "bonds"], bondName]; markProgress["bonds", 1, character]);
+
+
+(* ::Subsubsection:: *)
+(*Mark/spend experience*)
+
+
+markExperience[points_Integer, character_:$soloCharacter] := ($state[character, "earnedExperience"] += points);
+spendExperience[points_Integer, character_:$soloCharacter] := ($state[character, "spentExperience"] += points);
+
+
 (* ::Subsection:: *)
 (*Moves*)
 
@@ -1263,44 +1532,10 @@ fulfillYourVow[roll_Association]:=displayMove["fulfillYourVow",roll];
 (*Fate moves*)
 
 
-<<(NotebookDirectory[]<>"OracleTables.wl");
-
-
 askTheOracle[]:=displayMove["askTheOracle"];
-askTheOracle[table_String] := oracleRoll[table];
-askTheOracle["Yes/No", odds_String] := oracleRoll[oracles["Yes/No: "<>odds]];
-askTheOracle["Yes/No", yesOutcome_String, noOutcome_String] := oracleRoll[yesNo[yesOutcome, noOutcome]];
-
-
-askTheOracle[];
-
-
-askTheOracle["Yes/No", "Likely"]
-
-
-newState[]; 
-createCharacter[Name -> "Padraig", Assets -> {"Loyalist", "Ritualist", "Blademaster"}, Edge -> 1, Heart -> 2, Iron -> 3, Shadow -> 1, Wits -> 2, 
-   BackgroundVow -> {"Save the world", Epic}, Bonds -> {"Mom", "Dad", "Pug"}];
-takeMomentum[4];
-markProgress["Save the world", 25];
-
-
-actionRoll[Iron];
-
-
-burnMomentum[%];
-
-
-fulfillYourVow[];
-
-
-progressRoll["Save the world"];
-
-
-faceDanger[%];
-
-
-faceDanger[];
+askTheOracle[tableName_String] := oracleRoll[tableName, oracles[tableName]];
+askTheOracle["Yes/No", odds_String] := oracleRoll["Yes/No: "<>odds, oracles["Yes/No: "<>odds]];
+askTheOracle["Yes/No", yesOutcome_String, noOutcome_String] := oracleRoll["Yes/No", yesNo[yesOutcome, noOutcome]];
 
 
 (* ::Subsection:: *)
