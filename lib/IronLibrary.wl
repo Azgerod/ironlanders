@@ -626,7 +626,7 @@ getProgress[trackName_String, character_:$soloCharacter] := $state[character, "p
 getRank[trackName_String, character_:$soloCharacter] := $state[character, "progressTracks", trackName, "rank"];
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*General presentation helpers*)
 
 
@@ -771,12 +771,11 @@ displayProgressRoll[roll_Association] := Print[ironFramed[Grid[{{Item[header["Pr
 (*Display oracle roll*)
 
 
-displayOracleRoll[table_String, {d1_, d2_}, value_Integer, match_, outcome_String] := 
+displayOracleRoll[table_String, {d1_, d2_}, match_, outcome_String] := 
    Print[ironFramed[Grid[{{Item[header["Oracle Roll", table], Alignment -> Left], SpanFromLeft}, {Item[Grid[{{Item[d10Image[d1], Alignment -> Right], Item[d10Image[d2], Alignment -> Left]}}, 
-          Alignment -> {{Right, Left}, Center}, Spacings -> {0, 0}], Alignment -> Center], SpanFromLeft}, {Item[Rotate[mainStyle["\[RightArrow]"], -(Pi/2)], Alignment -> Center], SpanFromLeft}, 
-       {Item[mainStyle[value], Alignment -> Center], SpanFromLeft}, {Item[Rotate[mainStyle["\[Rule]"], -(Pi/2)], Alignment -> Center], SpanFromLeft}, 
+          Alignment -> {{Right, Left}, Center}, Spacings -> {0, 0}], Alignment -> Center], SpanFromLeft}, {Item[Rotate[mainStyle["\[Rule]"], -(Pi/2)], Alignment -> Center], SpanFromLeft}, 
        {Item[mainStyle[StringJoin[outcome, If[match, " (MATCH)", ""]]], Alignment -> Center], SpanFromLeft}}, Alignment -> {{Center}, {Center, Top, Center}}, 
-      Spacings -> {0, {Automatic, rollHeaderBodyGap, 1, 2, 2, 1}}]]]; 
+      Spacings -> {0, {Automatic, rollHeaderBodyGap, 1, 2}}]]]; 
 
 
 (* ::Subsubsection:: *)
@@ -788,12 +787,12 @@ oracleRoll[tableName_String, table_Association] := Module[{oracleDice, od1, od2,
 	value = oracleRollValue[oracleDice];
 	outcome = oracleRollOutcome[table, value];
 	match = (od1==od2);
-	displayOracleRoll[tableName, oracleDice, value, match, outcome];
+	displayOracleRoll[tableName, oracleDice, match, outcome];
 	<|"oracleDice" -> oracleDice, "value" -> value, "outcome" -> outcome, "match" -> match|>
 ];
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Move helpers*)
 
 
@@ -808,7 +807,8 @@ moveOutcome[move_String, result_String] := moves[move, result];
 (*Move header presentation*)
 
 
-moveTextStyle[x_]:=Style[x, FontFamily->"Times New Roman", FontSize->18]
+moveTextStyle[x_String] := Style[x, FontFamily -> "Times New Roman", FontSize -> 18];
+moveTextStyle[x_] := x;
 
 
 displayMoveHeader[moveKey_String] :=
