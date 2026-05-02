@@ -39,7 +39,7 @@
 BeginPackage["IronLibrary`"];
 
 
-(* ::Section::Closed:: *)
+(* ::Section:: *)
 (*Public interface*)
 
 
@@ -51,216 +51,471 @@ BeginPackage["IronLibrary`"];
 (*State management*)
 
 
-resetIronSession::usage =
-  "resetIronSession[] clears the current in-memory IronLibrary state and solo character.";
-beginStory::usage = "beginStory[] starts a new story from the current notebook, using \
-$soloCharacter as the story name. \nbeginStory[name] starts a new story using name as the \
-story name. It creates a top-level story directory, creates the first chapter directory \
-inside it, and renames/saves the current notebook as the first chapter notebook."; 
-beginChapter::usage = "beginChapter[] loads the state file for the current chapter notebook \
-into $state and seeds the random number generator.\nbeginChapter[ArcName -> arc] additionally \
-renames the current chapter as the first chapter of arc."; 
-endChapter::usage = "endChapter[] ends the current chapter by saving $state for the next \
-chapter and generating the next chapter notebook. The next chapter keeps the same arc name \
-and increments both the global chapter number and the chapter-within-arc number."; 
+resetIronSession::usage = 
+"resetIronSession[] clears the current in-memory IronLibrary state and solo character.";
+
+beginStory::usage = 
+"beginStory[] starts a new story using the solo character as the story name.
+beginStory[name] starts a new story using name as the story name.";
+
+beginChapter::usage =
+"beginChapter[] loads the state for the current chapter and seeds the random number generator.
+beginChapter[ArcName -> arc] renames the current chapter as the first chapter of arc after loading its state.";
+
+endChapter::usage =
+"endChapter[] saves the state for the next chapter and creates the next chapter notebook.";
 
 
 (* ::Subsection:: *)
 (*Character management*)
 
 
-setSoloCharacter::usage = "setSoloCharacter[name] sets $soloCharacter to the \
-named character, who must already exist in the state. Functions that take a \
-character argument default to $soloCharacter when none is supplied."; 
-createCharacter::usage = 
-  "createCharacter[Name -> name, Assets -> {a1, a2, a3}, Edge -> e, Heart -> h, " <>
-  "Iron -> i, Shadow -> s, Wits -> w, BackgroundVow -> {vowName, rank}, " <>
-  "Bonds -> {b, ...}] creates a character with the given attributes, adds them " <>
-  "to the session state, and sets $soloCharacter to name.";
+setSoloCharacter::usage =
+"setSoloCharacter[character] sets the solo character to character.";
+
+createCharacter::usage =
+"createCharacter[Name -> name, Assets -> {a1, a2, a3}, Edge -> edge, Heart -> heart, Iron -> iron, Shadow -> shadow, Wits -> wits, BackgroundVow -> {vowName, vowRank}, Bonds -> {b1, b2, b3}] creates a character and sets it as the solo character.";
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Action roll*)
 
 
-actionRoll::usage="actionRoll[stat] performs an action roll for $soloCharacter using the given stat, which must be one of Edge, Heart, Iron, Shadow, or Wits. actionRoll[stat, character] performs the roll for the named character. Returns an Association with keys character, actionDie, stat, statValue, adds, actionScore, challengeDice, match, and result. Option Adds -> <|reason -> n, ...|> applies named adds to the action score.";
+actionRoll::usage =
+"actionRoll[stat] makes an action roll using stat for the solo character.
+actionRoll[stat, character] makes an action roll using stat for character.";
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Burn momentum*)
 
 
-burnMomentum::usage = 
-  "burnMomentum[roll] burns the character's momentum, cancelling any challenge " <>
-  "dice less than the momentum value and recomputing the result. Resets momentum " <>
-  "and returns the new outcome record.";
+burnMomentum::usage =
+"burnMomentum[roll] burns momentum for roll and returns the modified roll result.";
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Progress roll*)
 
 
-progressRoll::usage = 
-  "progressRoll[trackName] makes a progress roll against the named track for the " <>
-  "solo character.\nprogressRoll[trackName, character] makes a progress roll for " <>
-  "a named character. The progress score (filled boxes, rounded down) is compared " <>
-  "against the challenge dice.";
+progressRoll::usage =
+"progressRoll[track] makes a progress roll against track for the solo character.
+progressRoll[track, character] makes a progress roll against track for character.";
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Marking progress*)
 
 
-markProgress::usage = "markProgress[track, marks] marks progress [marks]-many times on track [track], increasing progress according to rank.";
+markProgress::usage =
+"markProgress[track, n] marks n progress units on track for the solo character.
+markProgress[track, n, character] marks n progress units on track for character.";
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Suffering and taking*)
 
 
-sufferMomentum::usage = 
-  "sufferMomentum[delta] adjusts the solo character's momentum by delta. " <>
-  "Conventionally used with negative values for loss.";
+sufferMomentum::usage =
+"sufferMomentum[n] adjusts the solo character's momentum by n.
+sufferMomentum[n, character] adjusts character's momentum by n.";
 
-takeMomentum::usage = 
-  "takeMomentum[delta] adjusts the solo character's momentum by delta. " <>
-  "Conventionally used with positive values for gain.";
+takeMomentum::usage =
+"takeMomentum[n] adjusts the solo character's momentum by n.
+takeMomentum[n, character] adjusts character's momentum by n.";
 
-sufferHealth::usage = 
-  "sufferHealth[delta] adjusts the solo character's health by delta. " <>
-  "Conventionally used with negative values for loss.";
+sufferHealth::usage =
+"sufferHealth[n] adjusts the solo character's health by n.
+sufferHealth[n, character] adjusts character's health by n.";
 
-takeHealth::usage = 
-  "takeHealth[delta] adjusts the solo character's health by delta. " <>
-  "Conventionally used with positive values for gain.";
+takeHealth::usage =
+"takeHealth[n] adjusts the solo character's health by n.
+takeHealth[n, character] adjusts character's health by n.";
 
-sufferSpirit::usage = 
-  "sufferSpirit[delta] adjusts the solo character's spirit by delta. " <>
-  "Conventionally used with negative values for loss.";
+sufferSpirit::usage =
+"sufferSpirit[n] adjusts the solo character's spirit by n.
+sufferSpirit[n, character] adjusts character's spirit by n.";
 
-takeSpirit::usage = 
-  "takeSpirit[delta] adjusts the solo character's spirit by delta. " <>
-  "Conventionally used with positive values for gain.";
-  
-sufferSupply::usage = 
-  "sufferSupply[delta] adjusts the solo character's supply by delta. " <>
-  "Conventionally used with negative values for loss.";
+takeSpirit::usage =
+"takeSpirit[n] adjusts the solo character's spirit by n.
+takeSpirit[n, character] adjusts character's spirit by n.";
 
-takeSupply::usage = 
-  "takeSupply[delta] adjusts the solo character's supply by delta. " <>
-  "Conventionally used with positive values for gain.";
+sufferSupply::usage =
+"sufferSupply[n] adjusts the solo character's supply by n.
+sufferSupply[n, character] adjusts character's supply by n.";
+
+takeSupply::usage =
+"takeSupply[n] adjusts the solo character's supply by n.
+takeSupply[n, character] adjusts character's supply by n.";
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Adding bonds*)
 
 
-addBond::usage = "addBond[bondName] adds the given bond to the solo character, and marks progress on their bonds track.";
+addBond::usage =
+"addBond[bond] adds bond to the solo character and marks progress on the bonds track.
+addBond[bond, character] adds bond to character and marks progress on the bonds track.";
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Mark/spend experience*)
 
 
-markExperience::usage = "markExperience[points] increases the solo character's earned experience by points."
-spendExperience::usage = "spendExperience[points] increases the solo character's spent experience by points."
+markExperience::usage =
+"markExperience[n] adds n earned experience to the solo character.
+markExperience[n, character] adds n earned experience to character.";
+
+spendExperience::usage =
+"spendExperience[n] adds n spent experience to the solo character.
+spendExperience[n, character] adds n spent experience to character.";
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Moves*)
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Adventure moves*)
 
 
-faceDanger::usage = 
-  "faceDanger[] displays the Face Danger move text.\n" <>
-  "faceDanger[roll] displays the outcome of an action roll as resolved by Face Danger.";
+faceDanger::usage =
+"faceDanger[] displays the Face Danger move header.
+faceDanger[actionRoll] displays the Face Danger outcome corresponding to actionRoll.";
+
+secureAnAdvantage::usage =
+"secureAnAdvantage[] displays the Secure an Advantage move header.
+secureAnAdvantage[actionRoll] displays the Secure an Advantage outcome corresponding to actionRoll.";
+
+gatherInformation::usage =
+"gatherInformation[] displays the Gather Information move header.
+gatherInformation[actionRoll] displays the Gather Information outcome corresponding to actionRoll.";
+
+makeCamp::usage =
+"makeCamp[] displays the Make Camp move header.
+makeCamp[actionRoll] displays the Make Camp outcome corresponding to actionRoll.";
+
+heal::usage =
+"heal[] displays the Heal move header.
+heal[actionRoll] displays the Heal outcome corresponding to actionRoll.";
+
+resupply::usage =
+"resupply[] displays the Resupply move header.
+resupply[actionRoll] displays the Resupply outcome corresponding to actionRoll.";
+
+checkYourGear::usage =
+"checkYourGear[] displays the Check Your Gear move header.
+checkYourGear[actionRoll] displays the Check Your Gear outcome corresponding to actionRoll.";
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Journey moves*)
 
 
-undertakeAJourney::usage = 
-  "undertakeAJourney[] displays the Undertake a Journey move text.\n" <>
-  "undertakeAJourney[roll] displays the outcome of an action roll as resolved by Undertake a Journey.";
+undertakeAJourney::usage =
+"undertakeAJourney[] displays the Undertake a Journey move header.
+undertakeAJourney[actionRoll] displays the Undertake a Journey outcome corresponding to actionRoll.";
+
+reachYourDestination::usage =
+"reachYourDestination[] displays the Reach Your Destination move header.
+reachYourDestination[progressRoll] displays the Reach Your Destination outcome corresponding to progressRoll.";
+
+followAPath::usage =
+"followAPath[] displays the Follow a Path move header.
+followAPath[actionRoll] displays the Follow a Path outcome corresponding to actionRoll.";
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
+(*Scene challenge moves*)
+
+
+beginTheScene::usage =
+"beginTheScene[] displays the Begin the Scene move header.";
+
+faceDangerScene::usage =
+"faceDangerScene[] displays the scene challenge version of the Face Danger move header.
+faceDangerScene[actionRoll] displays the scene challenge Face Danger outcome corresponding to actionRoll.";
+
+secureAnAdvantageScene::usage =
+"secureAnAdvantageScene[] displays the scene challenge version of the Secure an Advantage move header.
+secureAnAdvantageScene[actionRoll] displays the scene challenge Secure an Advantage outcome corresponding to actionRoll.";
+
+finishTheScene::usage =
+"finishTheScene[] displays the Finish the Scene move header.
+finishTheScene[progressRoll] displays the Finish the Scene outcome corresponding to progressRoll.";
+
+
+(* ::Subsubsection::Closed:: *)
 (*Quest moves*)
 
 
-fulfillYourVow::usage = 
-  "fulfillYourVow[] displays the Fulfill Your Vow move text.\n" <>
-  "fulfillYourVow[roll] displays the outcome of a progress roll as resolved by Fulfill Your Vow.";
+swearAnIronVow::usage =
+"swearAnIronVow[] displays the Swear an Iron Vow move header.
+swearAnIronVow[actionRoll] displays the Swear an Iron Vow outcome corresponding to actionRoll.";
+
+reachAMilestone::usage =
+"reachAMilestone[] displays the Reach a Milestone move header.";
+
+fulfillYourVow::usage =
+"fulfillYourVow[] displays the Fulfill Your Vow move header.
+fulfillYourVow[progressRoll] displays the Fulfill Your Vow outcome corresponding to progressRoll.";
+
+forsakeYourVow::usage =
+"forsakeYourVow[] displays the Forsake Your Vow move header.";
+
+advance::usage =
+"advance[] displays the Advance move header.";
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Fate moves*)
 
 
-askTheOracle::usage = 
-  "askTheOracle[] displays the Ask the Oracle move text.\n" <>
-  "askTheOracle[tableName] rolls on the named oracle table.\n" <>
-  "askTheOracle[\"Yes/No\", odds] rolls a Yes/No oracle at the given odds " <>
-  "(\"Almost Certain\", \"Likely\", \"50/50\", \"Unlikely\", or \"Small Chance\").\n" <>
-  "askTheOracle[\"Yes/No\", yesOutcome, noOutcome] rolls a 50/50 Yes/No oracle " <>
-  "with custom result strings.";
+payThePrice::usage =
+"payThePrice[] displays the Pay the Price move header.";
+
+askTheOracle::usage =
+"askTheOracle[] displays the Ask the Oracle move header.
+askTheOracle[table] rolls on the oracle table table.
+askTheOracle[\"Yes/No\", odds] rolls on the Yes/No oracle using odds.
+askTheOracle[\"Yes/No\", yesOutcome, noOutcome] rolls on a 50/50 Yes/No oracle with the specified yes and no outcomes.";
+
+
+(* ::Subsubsection::Closed:: *)
+(*Relationship moves*)
+
+
+compel::usage =
+"compel[] displays the Compel move header.
+compel[actionRoll] displays the Compel outcome corresponding to actionRoll.";
+
+aidYourAlly::usage =
+"aidYourAlly[] displays the Aid Your Ally move header.";
+
+forgeABond::usage =
+"forgeABond[] displays the Forge a Bond move header.
+forgeABond[actionRoll] displays the Forge a Bond outcome corresponding to actionRoll.";
+
+testYourBond::usage =
+"testYourBond[] displays the Test Your Bond move header.
+testYourBond[actionRoll] displays the Test Your Bond outcome corresponding to actionRoll.";
+
+drawTheCircle::usage =
+"drawTheCircle[] displays the Draw the Circle move header.
+drawTheCircle[actionRoll] displays the Draw the Circle outcome corresponding to actionRoll.";
+
+writeYourEpilogue::usage =
+"writeYourEpilogue[] displays the Write Your Epilogue move header.
+writeYourEpilogue[progressRoll] displays the Write Your Epilogue outcome corresponding to progressRoll.";
+
+
+(* ::Subsubsection::Closed:: *)
+(*Combat moves*)
+
+
+enterTheFray::usage =
+"enterTheFray[] displays the Enter the Fray move header.
+enterTheFray[actionRoll] displays the Enter the Fray outcome corresponding to actionRoll.";
+
+strike::usage =
+"strike[] displays the Strike move header.
+strike[actionRoll] displays the Strike outcome corresponding to actionRoll.";
+
+clash::usage =
+"clash[] displays the Clash move header.
+clash[actionRoll] displays the Clash outcome corresponding to actionRoll.";
+
+turnTheTide::usage =
+"turnTheTide[] displays the Turn the Tide move header.";
+
+battle::usage =
+"battle[] displays the Battle move header.
+battle[actionRoll] displays the Battle outcome corresponding to actionRoll.";
+
+endTheFight::usage =
+"endTheFight[] displays the End the Fight move header.
+endTheFight[progressRoll] displays the End the Fight outcome corresponding to progressRoll.";
+
+
+(* ::Subsubsection::Closed:: *)
+(*Suffer moves*)
+
+
+endureHarm::usage =
+"endureHarm[] displays the Endure Harm move header.
+endureHarm[actionRoll] displays the Endure Harm outcome corresponding to actionRoll.";
+
+faceDeath::usage =
+"faceDeath[] displays the Face Death move header.
+faceDeath[actionRoll] displays the Face Death outcome corresponding to actionRoll.";
+
+companionEndureHarm::usage =
+"companionEndureHarm[] displays the Companion Endure Harm move header.
+companionEndureHarm[actionRoll] displays the Companion Endure Harm outcome corresponding to actionRoll.";
+
+endureStress::usage =
+"endureStress[] displays the Endure Stress move header.
+endureStress[actionRoll] displays the Endure Stress outcome corresponding to actionRoll.";
+
+faceDesolation::usage =
+"faceDesolation[] displays the Face Desolation move header.
+faceDesolation[actionRoll] displays the Face Desolation outcome corresponding to actionRoll.";
+
+outOfSupply::usage =
+"outOfSupply[] displays the Out of Supply move header.";
+
+faceASetback::usage =
+"faceASetback[] displays the Face a Setback move header.";
+
+
+(* ::Subsubsection::Closed:: *)
+(*Delve moves*)
+
+
+discoverASite::usage =
+"discoverASite[] displays the Discover a Site move header.";
+
+delveTheDepths::usage =
+"delveTheDepths[] displays the Delve the Depths move header.
+delveTheDepths[actionRoll] displays the Delve the Depths outcome corresponding to actionRoll.";
+
+findAnOpportunity::usage =
+"findAnOpportunity[] displays the Find an Opportunity move header.";
+
+revealADanger::usage =
+"revealADanger[] displays the Reveal a Danger move header.";
+
+locateYourObjective::usage =
+"locateYourObjective[] displays the Locate Your Objective move header.
+locateYourObjective[progressRoll] displays the Locate Your Objective outcome corresponding to progressRoll.";
+
+escapeTheDepths::usage =
+"escapeTheDepths[] displays the Escape the Depths move header.
+escapeTheDepths[actionRoll] displays the Escape the Depths outcome corresponding to actionRoll.";
+
+
+(* ::Subsubsection::Closed:: *)
+(*Failure moves*)
+
+
+markYourFailure::usage =
+"markYourFailure[] displays the Mark Your Failure move header.";
+
+learnFromYourFailures::usage =
+"learnFromYourFailures[] displays the Learn from Your Failures move header.
+learnFromYourFailures[progressRoll] displays the Learn from Your Failures outcome corresponding to progressRoll.";
+
+
+(* ::Subsubsection::Closed:: *)
+(*Threat moves*)
+
+
+advanceAThreat::usage =
+"advanceAThreat[] displays the Advance a Threat move header.";
+
+takeAHiatus::usage =
+"takeAHiatus[] displays the Take a Hiatus move header.";
+
+
+(* ::Subsubsection::Closed:: *)
+(*Rarity moves*)
+
+
+gainARarity::usage =
+"gainARarity[] displays the Gain a Rarity move header.";
+
+wieldARarity::usage =
+"wieldARarity[] displays the Wield a Rarity move header.";
+
+
+(* ::Subsection:: *)
+(*Stats*)
+
+
+Health::usage =
+"Health is a stat.";
+
+Spirit::usage =
+"Spirit is a stat.";
+
+Supply::usage =
+"Supply is a stat";
 
 
 (* ::Subsection:: *)
 (*Option names*)
 
 
-Name::usage = "Name is an option for createCharacter specifying the character name."; 
-Edge::usage = "Edge is one of the five Ironsworn stats and an option for createCharacter."; 
-Heart::usage = "Heart is one of the five Ironsworn stats and an option for createCharacter."; 
-Iron::usage = "Iron is one of the five Ironsworn stats and an option for createCharacter."; 
-Shadow::usage = 
-   "Shadow is one of the five Ironsworn stats and an option for createCharacter."; 
-Wits::usage = "Wits is one of the five Ironsworn stats and an option for createCharacter."; 
-Assets::usage = 
-   "Assets is an option for createCharacter specifying a list of three asset names."; 
-BackgroundVow::usage = "BackgroundVow is an option for createCharacter specifying {name, \
-description, rank} for the character's starting background vow."; 
-Bonds::usage = 
-   "Bonds is an option for createCharacter specifying a list of starting bonds (max 3)."; 
-Adds::usage = "Adds is an option for actionRoll specifying an Association of named bonuses, \
-e.g. <|\"running\" -> 1, \"asset bonus\" -> 1|>."; 
-ArcName::usage = "ArcName is an option for beginChapter. ArcName -> arc renames the current \
-chapter as the first chapter of arc after loading its state. ArcName -> Automatic leaves the \
-current chapter name unchanged."; 
+Name::usage =
+"Name is an option for createCharacter that specifies the character name.";
 
+Edge::usage =
+"Edge is one of the five Ironsworn stats and an option for createCharacter.";
 
-(* ::Subsection:: *)
-(*Rank symbols*)
+Heart::usage =
+"Heart is one of the five Ironsworn stats and an option for createCharacter.";
 
+Iron::usage =
+"Iron is one of the five Ironsworn stats and an option for createCharacter.";
 
-Troublesome::usage = "Troublesome is a rank."; 
-Dangerous::usage = "Dangerous is a rank."; 
-Formidable::usage = "Formidable is a rank."; 
-Extreme::usage = "Extreme is a rank."; 
-Epic::usage = "Epic is a rank."; 
+Shadow::usage =
+"Shadow is one of the five Ironsworn stats and an option for createCharacter.";
 
+Wits::usage =
+"Wits is one of the five Ironsworn stats and an option for createCharacter.";
 
-(* ::Section:: *)
-(*Implementation details*)
+Assets::usage =
+"Assets is an option for createCharacter that specifies a list of three asset names.";
 
+BackgroundVow::usage =
+"BackgroundVow is an option for createCharacter that specifies the character's background vow.";
 
-(* ::Text:: *)
-(*The following code implements the public interface above.*)
+Bonds::usage =
+"Bonds is an option for createCharacter that specifies the character's starting bonds.";
+
+Adds::usage =
+"Adds is an option for actionRoll that specifies an association of named bonuses.";
+
+ArcName::usage =
+"ArcName is an option for beginChapter that specifies the arc name to use for the current chapter.";
 
 
 (* ::Subsection::Closed:: *)
+(*Rank symbols*)
+
+
+Troublesome::usage =
+"Troublesome is a rank.";
+
+Dangerous::usage =
+"Dangerous is a rank.";
+
+Formidable::usage =
+"Formidable is a rank.";
+
+Extreme::usage =
+"Extreme is a rank.";
+
+Epic::usage =
+"Epic is a rank.";
+
+
+(* ::Section::Closed:: *)
 (*Private context header*)
 
 
 Begin["`Private`"]; 
 
 
-(* ::Subsection::Closed:: *)
+(* ::Section:: *)
+(*Private helpers*)
+
+
+(* ::Text:: *)
+(*The following code implements the public interface above.*)
+
+
+(* ::Subsection:: *)
 (*Bookkeeping helpers*)
 
 
@@ -396,12 +651,34 @@ chapterTitleSubtitleFromPath[path_String] := Module[{base, data, storyDir, overr
      Association["Title" -> title, "Subtitle" -> subtitle]]; 
 libraryGetCell[] := If[StringQ[$IronLibraryPath] && $IronLibraryPath =!= $Failed, With[{path = $IronLibraryPath}, Cell[BoxData[ToBoxes[Defer[Get[path]; ]]], "Input", CellTags -> "IronLibraryGet"]], 
     Cell["Load IronLibrary here.", "Text", CellTags -> "IronLibraryGet"]]; 
-beginChapterCell[] := Cell[BoxData[ToBoxes[Defer[beginChapter[]; ]]], "Input", CellTags -> "IronLibraryBeginChapter"]; 
-endChapterCell[] := Cell[BoxData[ToBoxes[Defer[endChapter[]; ]]], "Input", CellTags -> "IronLibraryEndChapter"]; 
-chapterNotebookCells[path_String] := Module[{heading}, heading = chapterTitleSubtitleFromPath[path]; If[heading === $Failed, Return[$Failed]]; 
-     {Cell[heading["Title"], "Title", CellTags -> "IronLibraryTitle"], Cell[heading["Subtitle"], "Subtitle", CellTags -> "IronLibrarySubtitle"], 
-      Cell["Header", "Section", CellTags -> "IronLibraryHeader"], libraryGetCell[], beginChapterCell[], Cell["Body", "Section", CellTags -> "IronLibraryBody"], 
-      Cell["Footer", "Section", CellTags -> "IronLibraryFooter"], endChapterCell[]}]; 
+beginChapterCell[] := Cell[BoxData[ToBoxes[Defer[beginChapter[]; ]]], "Input", CellTags -> "IronLibraryBeginChapter"];
+endChapterInstructionCell[] := Cell[
+	"When you're done writing, switch the following cell to code and execute the notebook from top to bottom.
+If you later decide to come back and add cells interactively, switch it back to text until you're done.",
+	"Text",
+	CellTags -> "IronLibraryEndChapterInstruction"
+];
+
+endChapterTextCell[] := Cell[
+	"endChapter[];",
+	"Text",
+	CellTags -> "IronLibraryEndChapter"
+];
+chapterNotebookCells[path_String] := Module[{heading},
+	heading = chapterTitleSubtitleFromPath[path];
+	If[heading === $Failed, Return[$Failed]];
+	{
+		Cell[heading["Title"], "Title", CellTags -> "IronLibraryTitle"],
+		Cell[heading["Subtitle"], "Subtitle", CellTags -> "IronLibrarySubtitle"],
+		Cell["Header", "Section", CellTags -> "IronLibraryHeader"],
+		libraryGetCell[],
+		beginChapterCell[],
+		Cell["Body", "Section", CellTags -> "IronLibraryBody"],
+		Cell["Footer", "Section", CellTags -> "IronLibraryFooter"],
+		endChapterInstructionCell[],
+		endChapterTextCell[]
+	}
+];
 createChapterNotebook[path_String] := Module[{cells}, If[FileExistsQ[path], Return[path]]; cells = chapterNotebookCells[path]; If[cells === $Failed, Return[$Failed]]; Export[path, Notebook[cells], "NB"]; 
      path]; 
 
@@ -423,16 +700,88 @@ updateChapterNotebookHeading[path_String] := Module[{nb, heading}, If[ !FileExis
      NotebookSave[nb]; NotebookClose[nb]; heading]; 
 firstInputCellObject[nb_] := Module[{cells}, cells = Cells[nb, CellStyle -> "Input"]; If[cells === {}, Missing["NoInputCell"], First[cells]]]; 
 taggedCellExistsQ[nb_, tag_String] := Cells[nb, CellTags -> tag] =!= {}; 
-ensureChapterOneBoilerplate[] := Module[{nb, path, heading, firstInput, needsStructure}, nb = currentNotebookObject[]; path = NotebookFileName[]; If[path === $Failed, Return[$Failed]]; 
-     heading = chapterTitleSubtitleFromPath[path]; If[heading === $Failed, Return[$Failed]]; deleteTaggedCells[nb, "IronLibraryTitle"]; deleteTaggedCells[nb, "IronLibrarySubtitle"]; 
-     SelectionMove[nb, Before, Notebook]; NotebookWrite[nb, {Cell[heading["Title"], "Title", CellTags -> "IronLibraryTitle"], Cell[heading["Subtitle"], "Subtitle", CellTags -> "IronLibrarySubtitle"]}]; 
-     needsStructure =  !taggedCellExistsQ[nb, "IronLibraryHeader"] ||  !taggedCellExistsQ[nb, "IronLibraryBody"] ||  !taggedCellExistsQ[nb, "IronLibraryFooter"] || 
-        !taggedCellExistsQ[nb, "IronLibraryEndChapter"]; If[needsStructure, deleteTaggedCells[nb, "IronLibraryHeader"]; deleteTaggedCells[nb, "IronLibraryBody"]; 
-       deleteTaggedCells[nb, "IronLibraryFooter"]; deleteTaggedCells[nb, "IronLibraryEndChapter"]; firstInput = firstInputCellObject[nb]; 
-       If[firstInput === Missing["NoInputCell"], SelectionMove[nb, After, Notebook]; NotebookWrite[nb, {Cell["Header", "Section", CellTags -> "IronLibraryHeader"], 
-           Cell["Body", "Section", CellTags -> "IronLibraryBody"], Cell["Footer", "Section", CellTags -> "IronLibraryFooter"], endChapterCell[]}], 
-        SelectionMove[firstInput, Before, Cell]; NotebookWrite[nb, Cell["Header", "Section", CellTags -> "IronLibraryHeader"]]; SelectionMove[firstInput, After, Cell]; 
-         NotebookWrite[nb, {Cell["Body", "Section", CellTags -> "IronLibraryBody"], Cell["Footer", "Section", CellTags -> "IronLibraryFooter"], endChapterCell[]}]]; ]; NotebookSave[nb]; heading]; 
+ensureChapterOneBoilerplate[] := Module[
+	{nb, path, heading, firstInput, needsSections, needsEndInstruction, needsEndCell},
+
+	nb = currentNotebookObject[];
+	path = NotebookFileName[];
+	If[path === $Failed, Return[$Failed]];
+
+	heading = chapterTitleSubtitleFromPath[path];
+	If[heading === $Failed, Return[$Failed]];
+
+	deleteTaggedCells[nb, "IronLibraryTitle"];
+	deleteTaggedCells[nb, "IronLibrarySubtitle"];
+
+	SelectionMove[nb, Before, Notebook];
+	NotebookWrite[
+		nb,
+		{
+			Cell[heading["Title"], "Title", CellTags -> "IronLibraryTitle"],
+			Cell[heading["Subtitle"], "Subtitle", CellTags -> "IronLibrarySubtitle"]
+		}
+	];
+
+	needsSections =
+		!taggedCellExistsQ[nb, "IronLibraryHeader"] ||
+		!taggedCellExistsQ[nb, "IronLibraryBody"] ||
+		!taggedCellExistsQ[nb, "IronLibraryFooter"];
+
+	If[needsSections,
+		deleteTaggedCells[nb, "IronLibraryHeader"];
+		deleteTaggedCells[nb, "IronLibraryBody"];
+		deleteTaggedCells[nb, "IronLibraryFooter"];
+
+		firstInput = firstInputCellObject[nb];
+
+		If[firstInput === Missing["NoInputCell"],
+			SelectionMove[nb, After, Notebook];
+			NotebookWrite[
+				nb,
+				{
+					Cell["Header", "Section", CellTags -> "IronLibraryHeader"],
+					Cell["Body", "Section", CellTags -> "IronLibraryBody"],
+					Cell["Footer", "Section", CellTags -> "IronLibraryFooter"]
+				}
+			],
+			SelectionMove[firstInput, Before, Cell];
+			NotebookWrite[
+				nb,
+				Cell["Header", "Section", CellTags -> "IronLibraryHeader"]
+			];
+
+			SelectionMove[firstInput, After, Cell];
+			NotebookWrite[
+				nb,
+				{
+					Cell["Body", "Section", CellTags -> "IronLibraryBody"],
+					Cell["Footer", "Section", CellTags -> "IronLibraryFooter"]
+				}
+			]
+		]
+	];
+
+	needsEndInstruction =
+		!taggedCellExistsQ[nb, "IronLibraryEndChapterInstruction"];
+
+	needsEndCell =
+		!taggedCellExistsQ[nb, "IronLibraryEndChapter"];
+
+	If[needsEndInstruction || needsEndCell,
+		SelectionMove[Last[Cells[nb, CellTags -> "IronLibraryFooter"]], After, Cell];
+
+		If[needsEndInstruction,
+			NotebookWrite[nb, endChapterInstructionCell[]]
+		];
+
+		If[needsEndCell,
+			NotebookWrite[nb, endChapterTextCell[]]
+		]
+	];
+
+	NotebookSave[nb];
+	heading
+];
 
 
 (* ::Subsubsection:: *)
@@ -531,7 +880,7 @@ nextChapterSeed[] := Module[{base}, base = nextNotebookBase[]; If[base === $Fail
 stateForNextChapter[] := Module[{next, seed}, seed = nextChapterSeed[]; If[seed === $Failed, Return[$Failed]]; next = Association[$state]; next["seed"] = seed; next]; 
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*General mechanics helpers*)
 
 
@@ -541,9 +890,10 @@ stateForNextChapter[] := Module[{next, seed}, seed = nextChapterSeed[]; If[seed 
 
 rollChallengeDice[] := RandomInteger[{1, 10}, 2]; 
 rollActionDie[] := RandomInteger[{1, 6}]; 
-actionRollResult[challengeDice_, actionScore_] := 
-   Replace[{0 -> "miss", 1 -> "weakHit", 2 -> "strongHit"}][
-    Count[True][(Map[actionScore > #1 & ])[challengeDice]]];
+actionRollResult[challengeDice_List, actionScore_Integer] :=
+	<|0 -> "miss", 1 -> "weakHit", 2 -> "strongHit"|>[
+		Count[challengeDice, die_ /; actionScore > die]
+	];
 rollOracleDice = rollChallengeDice;
 oracleRollValue[{tensDie_Integer, onesDie_Integer}]:=Module[{tensValue, onesValue},
 	tensValue = If[tensDie==10, 0, tensDie*10];
@@ -551,13 +901,13 @@ oracleRollValue[{tensDie_Integer, onesDie_Integer}]:=Module[{tensValue, onesValu
 	If[tensDie==onesDie==10, 100, tensValue+onesValue]
 ];
 oracleRollOutcome[table_Association, value_Integer] := Module[{key},
-	key = First[Select[Keys[table], #>=value&]];
+	key = First[Select[Sort[Keys[table]], # >= value &]];
 	table[key]
 ];
 
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Argument tests*)
 
 
@@ -566,7 +916,7 @@ rankQ[input_] := MemberQ[ranks, input];
 statValueQ[input_Integer] := 1 <= input <= 5; 
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Progress tracks*)
 
 
@@ -575,14 +925,14 @@ progressTrack[(rank_)?rankQ, progress_:0] :=
 progressRollResult = actionRollResult;
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Symbol to string conversion*)
 
 
 symString[symbol_] := ToLowerCase[SymbolName[symbol]]; 
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Attribute Getters*)
 
 
@@ -606,19 +956,27 @@ getSpirit[character_:$soloCharacter] := getAttr["spirit", character];
 getSupply[character_:$soloCharacter] := getAttr["supply", character];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Attribute adjusters and setters*)
 
 
-resetMomentum[character_:$soloCharacter] := ($state[character, "momentum"] = getMomentumReset[character]);
-adjustMomentum[delta_Integer, character_:$soloCharacter] := ($state[character, "momentum"] += delta);
+resetMomentum[character_:$soloCharacter] :=
+	$state[character, "momentum"] = getMomentumReset[character];
 
-adjustHealth[delta_Integer, character_:$soloCharacter] := ($state[character, "health"] += delta);
-adjustSpirit[delta_Integer, character_:$soloCharacter] := ($state[character, "spirit"] += delta);
-adjustSupply[delta_Integer, character_:$soloCharacter] := ($state[character, "supply"] += delta);
+adjustMomentum[n_Integer, character_ : $soloCharacter] :=
+	$state[character, "momentum"] += n;
+
+adjustHealth[n_Integer, character_ : $soloCharacter] :=
+	$state[character, "health"] += n;
+
+adjustSpirit[n_Integer, character_ : $soloCharacter] :=
+	$state[character, "spirit"] += n;
+
+adjustSupply[n_Integer, character_ : $soloCharacter] :=
+	$state[character, "supply"] += n;
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Progress track getters*)
 
 
@@ -630,20 +988,76 @@ getRank[trackName_String, character_:$soloCharacter] := $state[character, "progr
 (*General presentation helpers*)
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Shared presentation constants*)
 
 
-rollHeaderBodyGap = 3;
-rollBodyResultGap = 3;
+rollHeaderBodyGap = scaled[3];
+rollBodyResultGap = scaled[3];
+$ironDisplayScale = 0.8;
+
+
+(* ::Subsubsection::Closed:: *)
+(*Scaling*)
+
+
+scaled[n_?NumericQ] := $ironDisplayScale n;
+
+scaledSize[n_?NumericQ] := Round[scaled[n]];
+
+
+(* ::Subsubsection::Closed:: *)
+(*Text styles*)
+
+
+dieStyle[n_] := Style[
+	n,
+	GrayLevel[0.255],
+	FontSize -> 21,
+	FontFamily -> "Futura",
+	FontWeight -> Bold
+];
+
+mainStyle[n_] := Style[
+	n,
+	GrayLevel[0.255],
+	FontSize -> scaledSize[42],
+	FontFamily -> "Futura",
+	FontWeight -> Bold
+];
+
+titleStyle[x_] := Style[
+	x,
+	FontFamily -> "Futura",
+	FontSize -> scaledSize[32],
+	FontWeight -> Bold,
+	GrayLevel[0.255]
+];
+
+subtitleStyle[x_] := Style[
+	x,
+	FontFamily -> "Futura",
+	FontSize -> scaledSize[26],
+	GrayLevel[0.4]
+];
+
+moveTextStyle[x_String] := Style[
+	x,
+	FontFamily -> "Times New Roman",
+	FontSize -> scaledSize[18]
+];
+
+moveTextStyle[x_] := Style[
+	x,
+	FontFamily -> "Times New Roman",
+	FontSize -> scaledSize[18]
+];
 
 
 (* ::Subsubsection:: *)
 (*Presentation preparation*)
 
 
-dieStyle[n_] := Style[n, GrayLevel[0.255], FontSize -> 21, FontFamily -> "Futura", FontWeight -> Bold]; 
-mainStyle[n_] := Style[n, GrayLevel[0.255], FontSize -> 42, FontFamily -> "Futura", FontWeight -> Bold]
 emptyD6Image = Image[CompressedData["\n1:eJztnU9v03YYx6Oxw459CewdcNzNsU1Iy7+EVqTtAWhRU0TLCmqQpgGCllO6\nSyqB4ETpYblVGlKvVOMdbL1X2k69bu/A8zeppTQLjhP/7Mfx832kD1KrisrP\nx88fx5V+399/PLv6TaFQaHzn/zO7/JO9ubn889\
 yU/8XtjcbDBxv1lZmNp/UH\n9c0f7l/wv7nq88Ln28LkRskqXXKKzisyGLfoVipWZUraU5woW+WLuBa76Pzl\n45Gh/ONYTlXa26jh36v37KL7WwbyN5H4zp9IOxwW6Nd20W7hHpXOVx5wLbco\n7bQ/MG+6tez8IZ2f3GE5n6T9BoF7z6/ljzZrOVEkHZ/tXo9tw7vXnTt\
 3VVCp\nVEfODXKetmc8J5jYveZr896j9Udes9n03r177x0eHqqg2dzx7vq+x8lZWjMc\n95WJ3QvXub217bV/bYvnPU0ODg68Z8+ej1XTafk2tXvhGhubDXWOwd7ent/D\nfgzNz2W35FVuVry5uTlv9tas5zqXU/VtavdaWal7rVZLPOcSROnZ5SvTHb+L\ni4vnqFZvJe\
@@ -655,8 +1069,26 @@ U4gzakT33zW76zq5v/J84e3ZcxwE4/7nQE/SdLd/jzOZB\nFC3nb991tdAX9C3vO9ZsHux5qWJVpvpd0
 fYOTkxPx/GYN9L3eHMFp0NMlZ7MJ\n3zjrWjq/WeLo6MiMy9DZ7O6OM5tN+AboX9J5zgJwjR6djOfObH4SZzab8h3M\n8lcvtzrutYEe19/DjdGdzUtJOh7HNzHueb/3PUaKvj+JX7sSkp7NUQIzQzoP\neSet2RwlcK9J5yO3pDybowY+mxPPTZ7wZ6TEbB4lMFfE8zTBd\
 Gezsy85m0cN\n3JPc30b17PyZldnMYPTGf7vRtU8=\n"], "Byte", ColorSpace -> "RGB", Interleaving -> True]; 
 Options[d6Image] = {Cancelled -> False}; 
-d6Image[n_Integer /; 1 <= n <= 6, opts:OptionsPattern[]] := Module[{die}, die = ImageCompose[emptyD6Image, Rasterize[dieStyle[n], Background -> None], Scaled[{0.36 - If[n == 4, 0.01, 0], 0.42}]]; 
-     If[OptionValue[Cancelled], ImageCompose[die, Rasterize[Style["\[Times]", GrayLevel[0.255], FontSize -> 110], Background -> None], Scaled[{0.5, 0.81}]], die]]; 
+d6Image[n_Integer /; 1 <= n <= 6, opts : OptionsPattern[]] := Module[{die},
+	die = ImageCompose[
+		emptyD6Image,
+		Rasterize[dieStyle[n], Background -> None],
+		Scaled[{0.36 - If[n == 4, 0.01, 0], 0.42}]
+	];
+	die = If[
+		OptionValue[Cancelled],
+		ImageCompose[
+			die,
+			Rasterize[
+				Style["\[Times]", GrayLevel[0.255], FontSize -> scaledSize[110]],
+				Background -> None
+			],
+			Scaled[{0.5, 0.81}]
+		],
+		die
+	];
+	ImageResize[die, Scaled[$ironDisplayScale]]
+];
 emptyD10Image = Image[CompressedData["\n1:eJztnctuFEcUhq0kiyx5BPIGWWbX7jHGmJuNHTu2FJQxwuGSQBwwCpFQ4mXI\nJkh4DVmSVRBrLFjFSzBbkGDFFt5gMv/YbY3L3VOnLt11qvr80kE2sj1V1V/V\nX13nTM8XF36a+/6TsbGxm5/3/5lb+SW/cWPl1\
 /kj/W8Wrt+8cun66sXp6+ur\nl1ZvfHXh0/5/3uvHH/34bEwkEo3SVDZ1NB/P/8rHO8/68aEfL/rfP5zIJsZD\nt00UVp2s0+3z0BsRz2aymSOh2ylqXnmWb2jYKOKFMNIuEdYNYaSlsmBjn5HQ\nbRfVKwc29iJ/GLoPono0mU1+6caGMJKq9tj44IcPYSQl+WdjN/petR\
 a6byI3\n7Z59+WdjiJFu6D6K7IT70XxwFloPG8JIvLJh49b6rd7Tp1u9+/c3e6dPnTZl\nZDZ0n0U02bLx/v37/QAnhuvIB+xzQvddpFc+PvGvybXFWvH69esDfCDu3v1T\nGElMuO803T88efLkEBsIMLO48I0wkohs2FB9RQ0Ln0G8lVwNL+XZxD3T61jl\nKx58BiH5P\
@@ -677,41 +1109,81 @@ PEOwzeLASNN84PkH\nOjY41nCEUugatCb5iLW+J7RC1qA19VrChptC1Rc1wYew4UchGKmbj1Rqv7io\n
 \nZMSFD6n94imfNWi2fEh9D2/5qh2x4UPYiEM+GDHlg1L7JWzwkSsjJnxI7Vec\nonyGXhUjVD6khiNu2dagUX5O2EhDNvVFOj6EjbRkysgoPlw/81HEU1RGcP2r\n+JC6wLRFqUGrqv0DF8JG+qIwYhXCRjLyzkjWeRy6TyK/8sWI5OnTla4GTdgQ\n6eoChA2RKSPCRvt\
 EZQRnKHi+QOj2ipqX7rmsWDeEjXYLz+jBWjJ81gouJJ8i\nEun1P17oOAA=\n"], "Byte", ColorSpace -> "RGB", Interleaving -> True]; 
 Options[d10Image] = {Cancelled -> False}; 
-d10Image[n_Integer /; 1 <= n <= 10, opts:OptionsPattern[]] := 
-   Module[{die}, die = ImageCompose[emptyD10Image, Rasterize[dieStyle[If[n == 10, 0, n]], Background -> None], Scaled[{0.5 - If[n == 4, 0.01, 0], 0.66}]]; 
-     If[OptionValue[Cancelled], ImageCompose[die, Rasterize[Style["\[Times]", GrayLevel[0.255], FontSize -> 150], Background -> None], Scaled[{0.5, 0.8}]], die]]; 
+d10Image[n_Integer /; 1 <= n <= 10, opts : OptionsPattern[]] := Module[{die},
+	die = ImageCompose[
+		emptyD10Image,
+		Rasterize[dieStyle[If[n == 10, 0, n]], Background -> None],
+		Scaled[{0.5 - If[n == 4, 0.01, 0], 0.66}]
+	];
+	die = If[
+		OptionValue[Cancelled],
+		ImageCompose[
+			die,
+			Rasterize[
+				Style["\[Times]", GrayLevel[0.255], FontSize -> scaledSize[150]],
+				Background -> None
+			],
+			Scaled[{0.5, 0.8}]
+		],
+		die
+	];
+	ImageResize[die, Scaled[$ironDisplayScale]]
+];
 $outcomeColors = Association["miss" -> RGBColor[0.72, 0.22, 0.22], "weakHit" -> RGBColor[0.78, 0.55, 0.15], "strongHit" -> RGBColor[0.3, 0.55, 0.3]]; 
 $outcomeLabels = Association["miss" -> "Miss", "weakHit" -> "Weak Hit", "strongHit" -> "Strong Hit"]; 
 actionRollResultDisplay[result_String, match_] := Module[{color, label}, color = Lookup[$outcomeColors, result, GrayLevel[0.4]]; label = ToUpperCase[Lookup[$outcomeLabels, result]]; 
-    Style[StringJoin[label, If[match, " (MATCH)", ""]], FontFamily -> "Futura", FontWeight -> Bold, FontSize -> 42, FontTracking -> "Wide", color]]
+    Style[StringJoin[label, If[match, " (MATCH)", ""]], FontFamily -> "Futura", FontWeight -> Bold, FontSize -> scaledSize[42], FontTracking -> "Wide", color]]
 
 
 (* ::Subsubsection:: *)
 (*Math column*)
 
 
-scoreCircle[score_Integer /; 1 <= score <= 10] := ImageCompose[Graphics[{EdgeForm[{GrayLevel[0.255], Thickness[0.05]}], FaceForm[GrayLevel[0.9]], Disk[{0, 0}, 1]}, ImageSize -> 135], 
-    Rasterize[dieStyle[score], Background -> None]]; 
+scoreCircle[score_Integer /; 1 <= score <= 10] := Module[{circle},
+	circle = ImageCompose[
+		Graphics[
+			{
+				EdgeForm[{GrayLevel[0.255], AbsoluteThickness[6]}],
+				FaceForm[GrayLevel[0.9]],
+				Disk[{0, 0}, 1]
+			},
+			ImageSize -> 135,
+			PlotRange -> {{-1.1, 1.1}, {-1.1, 1.1}}
+		],
+		Rasterize[
+			dieStyle[score],
+			Background -> None
+		],
+		Scaled[{0.5, 0.5}]
+	];
+
+	ImageResize[circle, Scaled[$ironDisplayScale]]
+];
 rollColumn[actionScore_, challengeDice_List, challengeDiceCancelled_:Automatic] := Module[{cancelled, dice, sortedDice}, 
     cancelled = Replace[challengeDiceCancelled, Automatic :> ConstantArray[False, Length[challengeDice]]]; 
      dice = Join[{{actionScore, 0, scoreCircle[actionScore]}}, MapThread[{#1, 1, d10Image[#1, Cancelled -> #2]} & , {challengeDice, cancelled}]]; 
      sortedDice = Last /@ ReverseSortBy[dice, {#1[[1]], #1[[2]]} & ]; Column[sortedDice]]; 
-rollFrameStyle := Directive[GrayLevel[0.25], AbsoluteThickness[4]]; 
-mathCoreWidth = 200; 
-mathOperatorWidth = 24; 
-mathValueWidth = 60; 
-mathOpValueGap = 6; 
-mathReasonGap = 0; 
-mathDieAddGap = 0; 
-mathReasonYOffset = -0.4; 
+rollFrameStyle := Directive[
+	GrayLevel[0.25],
+	AbsoluteThickness[scaled[4]]
+];
+
+mathCoreWidth := scaled[200];
+mathOperatorWidth := scaled[24];
+mathValueWidth := scaled[60];
+mathOpValueGap := scaled[6];
+mathReasonGap := scaled[0];
+mathDieAddGap := scaled[0];
+mathReasonYOffset := scaled[-0.4];
+mathDieXOffset := scaled[34];
+
 mathOperator[x_] := mainStyle[x]; 
 mathValue[x_] := mainStyle[x]; 
-mathLabel[x_] := RawBoxes[AdjustmentBox[ToBoxes[Style[StringJoin["(", ToString[x], ")"], FontFamily -> "Futura", FontSize -> 32, GrayLevel[0.35]]], BoxBaselineShift -> -mathReasonYOffset]]; 
+mathLabel[x_] := RawBoxes[AdjustmentBox[ToBoxes[Style[StringJoin["(", ToString[x], ")"], FontFamily -> "Futura", FontSize -> scaledSize[32], GrayLevel[0.35]]], BoxBaselineShift -> -mathReasonYOffset]]; 
 mathCore[op_, value_] := Pane[Row[{Pane[mathOperator[op], {mathOperatorWidth, Automatic}, Alignment -> Center], Pane[mathValue[value], {mathValueWidth, Automatic}, Alignment -> Left]}, 
      Spacer[mathOpValueGap]], {mathCoreWidth, Automatic}, Alignment -> Center]; 
 mathTermRow[op_, value_, source_] := {mathCore[op, value], mathLabel[source]}; 
 mathResultRow[actionScore_] := {mathCore["=", actionScore], Spacer[0]}; 
-mathDieXOffset = 34; 
 offsetX[expr_, dx_] := Pane[expr, ImageMargins -> {{Max[dx, 0], Max[-dx, 0]}, {0, 0}}]; 
 mathColumn[actionDie_Integer, statValue_Integer, adds_Association, actionScore_Integer, actionDieCancelled_, momentum_] := Module[{termRows, rows, dividerPosition, blankRow, dieGapRow}, 
     blankRow = {Spacer[{0, 4}], Spacer[{0, 4}]}; dieGapRow = {Spacer[{0, mathDieAddGap}], Spacer[{0, mathDieAddGap}]}; 
@@ -721,21 +1193,25 @@ mathColumn[actionDie_Integer, statValue_Integer, adds_Association, actionScore_I
      dividerPosition = 2 + Length[termRows] + 2; Grid[rows, Alignment -> {{Center, Left}}, Spacings -> {mathReasonGap, 0.6}, Dividers -> {False, {dividerPosition -> rollFrameStyle}}]]; 
 
 
-(* ::Subsubsection:: *)
-(*Header styles*)
+(* ::Subsubsection::Closed:: *)
+(*Headers*)
 
 
-titleStyle[x_] := Style[x, FontFamily -> "Futura", FontSize -> 32, FontWeight -> Bold, GrayLevel[0.255]]; 
-subtitleStyle[x_] := Style[x, FontFamily -> "Futura", FontSize -> 26, GrayLevel[0.4]]; 
 header[title_String] := titleStyle[title]; 
 header[title_String, subtitle_String] := Column[{titleStyle[title], subtitleStyle[subtitle]}, Alignment -> Left, Spacings -> 0.5]; 
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Frames*)
 
 
-ironFramed[x_] := Framed[x, FrameStyle -> rollFrameStyle, FrameMargins -> {{12, 12}, {12, 12}}, RoundingRadius -> 8, Background -> None]; 
+ironFramed[x_] := Framed[
+	x,
+	FrameStyle -> rollFrameStyle,
+	FrameMargins -> {{scaled[12], scaled[12]}, {scaled[12], scaled[12]}},
+	RoundingRadius -> scaled[8],
+	Background -> None
+];
 
 
 (* ::Subsubsection:: *)
@@ -744,7 +1220,7 @@ ironFramed[x_] := Framed[x, FrameStyle -> rollFrameStyle, FrameMargins -> {{12, 
 
 displayActionRoll[roll_Association] := Print[ironFramed[Grid[{{Item[header["Action Roll", Capitalize[symString[roll["stat"]]]], Alignment -> Left], SpanFromLeft}, 
        {mathColumn[roll["actionDie"], roll["statValue"], roll["adds"], roll["actionScore"], roll["actionDieCancelled"], roll["momentum"]], rollColumn[roll["actionScore"], roll["challengeDice"]]}, 
-       {Item[actionRollResultDisplay[roll["result"], roll["match"]], Alignment -> Center], SpanFromLeft}}, Dividers -> {None, {False, False, False, False}}, Alignment -> {Left, Center, Center}, 
+       {Item[actionRollResultDisplay[roll["result"], roll["match"]], Alignment -> Center], SpanFromLeft}}, Dividers -> {None, {False, False, False, False}}, Alignment -> {{Left, Center, Center}, {Top, Top, Bottom}}, 
       Spacings -> {2, {Automatic, rollHeaderBodyGap, rollBodyResultGap}}, FrameStyle -> None]]]; 
 
 
@@ -807,10 +1283,6 @@ moveOutcome[move_String, result_String] := moves[move, result];
 (*Move header presentation*)
 
 
-moveTextStyle[x_String] := Style[x, FontFamily -> "Times New Roman", FontSize -> 18];
-moveTextStyle[x_] := x;
-
-
 displayMoveHeader[moveKey_String] :=
   Print[
     Framed[
@@ -847,15 +1319,15 @@ displayMove[moveKey_String]:=displayMoveHeader[moveKey];
 displayMove[moveKey_String, roll_Association]:=displayMoveOutcome[moveKey, roll["result"]];
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Constants*)
 
 
-stats = {Edge, Heart, Iron, Shadow, Wits}; 
-ranks = {Troublesome, Dangerous, Formidable, Extreme, Epic}; 
+stats = {Edge, Heart, Iron, Shadow, Wits, Health, Spirit, Supply}; 
+ranks = {Troublesome, Dangerous, Formidable, Extreme, Epic};
 
 
-(* ::Subsection::Closed:: *)
+(* ::Section:: *)
 (*General interface implementation*)
 
 
@@ -890,8 +1362,8 @@ endChapter[] := Module[{statePath, notebookPath}, statePath = nextStatePath[]; n
      If[saveExpressionToPath[statePath, stateForNextChapter[]] === $Failed, Return[$Failed]]; createChapterNotebook[notebookPath]; Association["StatePath" -> statePath, "NotebookPath" -> notebookPath]]; 
 
 
-(* ::Subsubsection:: *)
-(*Character creation*)
+(* ::Subsubsection::Closed:: *)
+(*Character management*)
 
 
 createCharacter[Name -> name_String, Assets -> assets:{_String, _String, _String}, Edge -> (edge_)?statValueQ, Heart -> (heart_)?statValueQ, Iron -> (iron_)?statValueQ, Shadow -> (shadow_)?statValueQ, 
@@ -899,6 +1371,16 @@ createCharacter[Name -> name_String, Assets -> assets:{_String, _String, _String
    Module[{character}, ensureStateInitialized[]; character = Association["assets" -> assets, "edge" -> edge, "heart" -> heart, "iron" -> iron, "shadow" -> shadow, "wits" -> wits, "health" -> 5, 
        "spirit" -> 5, "supply" -> 5, "momentum" -> 2, "debilities" -> {}, "progressTracks" -> Association[vowName -> progressTrack[vowRank], "bonds" -> progressTrack[Epic, 0.25*Length[bonds]]], 
        "bonds" -> bonds, "earnedExperience" -> 0, "spentExperience" -> 0]; AssociateTo[$state, name -> character]; $soloCharacter = name; $state[name]]; 
+       
+setSoloCharacter[character_String] := Module[{},
+	If[!AssociationQ[$state] || !KeyExistsQ[$state, character],
+		Message[setSoloCharacter::nochar, character];
+		Return[$Failed]
+	];
+	$soloCharacter = character
+];
+
+setSoloCharacter::nochar = "No character named `1` exists in the current state.";
 
 
 (* ::Subsubsection:: *)
@@ -915,7 +1397,7 @@ actionRoll[(stat_)?statQ, character_String, opts:OptionsPattern[]] := Module[{ac
      If[OptionValue[Display], displayActionRoll[roll]]; roll]; 
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Burn momentum*)
 
 
@@ -926,90 +1408,557 @@ burnMomentum[roll_Association, opts:OptionsPattern[]] := Module[{momentum, chall
      resetMomentum[roll["character"]]; If[OptionValue[Display], displayMomentumBurn[burn]]; burn]; 
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Progress roll*)
 
 
-Options[progressRoll] = {Display -> True}; 
-progressRoll[trackName_String, opts:OptionsPattern[]] := progressRoll[trackName, $soloCharacter, opts]; 
-progressRoll[trackName_String, character_String, opts:OptionsPattern[]] := Module[{}, progressScore = Floor[getProgress[trackName, character]]; challengeDice = {cd1, cd2} = rollChallengeDice[]; 
-     roll = Association["character" -> character, "trackName" -> trackName, "progressScore" -> progressScore, "challengeDice" -> challengeDice, "match" -> cd1 == cd2, 
-       "result" -> progressRollResult[challengeDice, progressScore]]; If[OptionValue[Display], displayProgressRoll[roll]]; roll]; 
+Options[progressRoll] = {Display -> True};
+
+progressRoll[track_String, opts : OptionsPattern[]] :=
+	progressRoll[track, $soloCharacter, opts];
+
+progressRoll[track_String, character_String, opts : OptionsPattern[]] := Module[
+	{progressScore, challengeDice, die1, die2, roll},
+	progressScore = Floor[getProgress[track, character]];
+	challengeDice = {die1, die2} = rollChallengeDice[];
+	roll = Association[
+		"character" -> character,
+		"trackName" -> track,
+		"progressScore" -> progressScore,
+		"challengeDice" -> challengeDice,
+		"match" -> die1 == die2,
+		"result" -> progressRollResult[challengeDice, progressScore]
+	];
+	If[OptionValue[Display], displayProgressRoll[roll]];
+	roll
+];
 
 
 (* ::Subsubsection:: *)
 (*Suffer and take*)
 
 
-sufferMomentum = takeMomentum = adjustMomentum; 
-sufferHealth = takeHealth = adjustHealth; 
-sufferSpirit = takeSpirit = adjustSpirit; 
-sufferSupply = takeSupply = adjustSupply; 
+sufferMomentum[n_Integer, character_ : $soloCharacter] :=
+	adjustMomentum[n, character];
+
+takeMomentum[n_Integer, character_ : $soloCharacter] :=
+	adjustMomentum[n, character];
+
+sufferHealth[n_Integer, character_ : $soloCharacter] :=
+	adjustHealth[n, character];
+
+takeHealth[n_Integer, character_ : $soloCharacter] :=
+	adjustHealth[n, character];
+
+sufferSpirit[n_Integer, character_ : $soloCharacter] :=
+	adjustSpirit[n, character];
+
+takeSpirit[n_Integer, character_ : $soloCharacter] :=
+	adjustSpirit[n, character];
+
+sufferSupply[n_Integer, character_ : $soloCharacter] :=
+	adjustSupply[n, character];
+
+takeSupply[n_Integer, character_ : $soloCharacter] :=
+	adjustSupply[n, character];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Mark progress*)
 
 
-markProgress[trackName_String, marks_Integer, character_:$soloCharacter] := 
-   Module[{rank}, rank = getRank[trackName, character]; markValue = Replace[rank, {Troublesome -> 3, Dangerous -> 2, Formidable -> 1, Extreme -> 0.5, Epic -> 0.25}]; 
-     $state[character, "progressTracks", trackName, "progress"] += marks*markValue; ]; 
+markProgress[track_String, n_Integer, character_ : $soloCharacter] := Module[
+	{rank, markValue},
+	rank = getRank[track, character];
+	markValue = Replace[
+		rank,
+		{
+			Troublesome -> 3,
+			Dangerous -> 2,
+			Formidable -> 1,
+			Extreme -> 0.5,
+			Epic -> 0.25
+		}
+	];
+	$state[character, "progressTracks", track, "progress"] += n markValue
+];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Add a bond*)
 
 
-addBond[bondName_String, character_:$soloCharacter] := (AppendTo[$state[character, "bonds"], bondName]; markProgress["bonds", 1, character]);
+addBond[bond_String, character_ : $soloCharacter] := Module[{},
+	AppendTo[$state[character, "bonds"], bond];
+	markProgress["bonds", 1, character]
+];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Mark/spend experience*)
 
 
-markExperience[points_Integer, character_:$soloCharacter] := ($state[character, "earnedExperience"] += points);
-spendExperience[points_Integer, character_:$soloCharacter] := ($state[character, "spentExperience"] += points);
+markExperience[n_Integer, character_ : $soloCharacter] :=
+	$state[character, "earnedExperience"] += n;
+
+spendExperience[n_Integer, character_ : $soloCharacter] :=
+	$state[character, "spentExperience"] += n;
+
+
+(* ::Section:: *)
+(*Move interface implementation*)
 
 
 (* ::Subsection::Closed:: *)
-(*Move implementation*)
-
-
-(* ::Subsubsection:: *)
 (*Adventure moves*)
 
 
-faceDanger[]:=displayMove["faceDanger"];
-faceDanger[roll_Association]:=displayMove["faceDanger",roll];
+(* ::Subsubsection:: *)
+(*Face Danger*)
+
+
+faceDanger[] := displayMove["faceDanger"];
+faceDanger[actionRoll_Association] := displayMove["faceDanger", actionRoll];
 
 
 (* ::Subsubsection:: *)
+(*Secure an Advantage*)
+
+
+secureAnAdvantage[] := displayMove["secureAnAdvantage"];
+secureAnAdvantage[actionRoll_Association] := displayMove["secureAnAdvantage", actionRoll];
+
+
+(* ::Subsubsection:: *)
+(*Gather Information*)
+
+
+gatherInformation[] := displayMove["gatherInformation"];
+gatherInformation[actionRoll_Association] := displayMove["gatherInformation", actionRoll];
+
+
+(* ::Subsubsection:: *)
+(*Make Camp*)
+
+
+makeCamp[] := displayMove["makeCamp"];
+makeCamp[actionRoll_Association] := displayMove["makeCamp", actionRoll];
+
+
+(* ::Subsubsection:: *)
+(*Heal*)
+
+
+heal[] := displayMove["heal"];
+heal[actionRoll_Association] := displayMove["heal", actionRoll];
+
+
+(* ::Subsubsection:: *)
+(*Resupply*)
+
+
+resupply[] := displayMove["resupply"];
+resupply[actionRoll_Association] := displayMove["resupply", actionRoll];
+
+
+(* ::Subsubsection:: *)
+(*Check Your Gear*)
+
+
+checkYourGear[] := displayMove["checkYourGear"];
+checkYourGear[actionRoll_Association] := displayMove["checkYourGear", actionRoll];
+
+
+(* ::Subsection::Closed:: *)
 (*Journey moves*)
 
 
-undertakeAJourney[]:=displayMove["undertakeAJourney"];
-undertakeAJourney[roll_Association]:=displayMove["undertakeAJourney",roll];
+(* ::Subsubsection:: *)
+(*Undertake a Journey*)
+
+
+undertakeAJourney[] := displayMove["undertakeAJourney"];
+undertakeAJourney[actionRoll_Association] := displayMove["undertakeAJourney", actionRoll];
 
 
 (* ::Subsubsection:: *)
+(*Reach Your Destination*)
+
+
+reachYourDestination[] := displayMove["reachYourDestination"];
+reachYourDestination[actionRoll_Association] := displayMove["reachYourDestination", actionRoll];
+
+
+(* ::Subsubsection:: *)
+(*Follow a Path*)
+
+
+followAPath[] := displayMove["followAPath"];
+followAPath[actionRoll_Association] := displayMove["followAPath", actionRoll];
+
+
+(* ::Subsection::Closed:: *)
+(*Scene challenge moves*)
+
+
+(* ::Subsubsection:: *)
+(*Begin the Scene*)
+
+
+beginTheScene[] := displayMove["beginTheScene"];
+
+
+(* ::Subsubsection:: *)
+(*Face Danger (Scene)*)
+
+
+faceDangerScene[] := displayMove["faceDangerScene"];
+faceDangerScene[actionRoll_Association] := displayMove["faceDangerScene", actionRoll];
+
+
+(* ::Subsubsection:: *)
+(*Secure an Advantage (Scene)*)
+
+
+secureAnAdvantageScene[] := displayMove["secureAnAdvantageScene"];
+secureAnAdvantageScene[actionRoll_Association] := displayMove["secureAnAdvantageScene", actionRoll];
+
+
+(* ::Subsubsection:: *)
+(*Finish the Scene*)
+
+
+finishTheScene[] := displayMove["finishTheScene"];
+finishTheScene[actionRoll_Association] := displayMove["finishTheScene", actionRoll];
+
+
+(* ::Subsection::Closed:: *)
 (*Quest moves*)
 
 
-fulfillYourVow[]:=displayMove["fulfillYourVow"];
-fulfillYourVow[roll_Association]:=displayMove["fulfillYourVow",roll];
+(* ::Subsubsection:: *)
+(*Swear an Iron Vow*)
+
+
+swearAnIronVow[] := displayMove["swearAnIronVow"];
+swearAnIronVow[actionRoll_Association] := displayMove["swearAnIronVow", actionRoll];
 
 
 (* ::Subsubsection:: *)
+(*Reach a Milestone*)
+
+
+reachAMilestone[] := displayMove["reachAMilestone"];
+
+
+(* ::Subsubsection:: *)
+(*Fulfill Your Vow*)
+
+
+fulfillYourVow[] := displayMove["fulfillYourVow"];
+fulfillYourVow[actionRoll_Association] := displayMove["fulfillYourVow", actionRoll];
+
+
+(* ::Subsubsection:: *)
+(*Forsake Your Vow*)
+
+
+forsakeYourVow[] := displayMove["forsakeYourVow"];
+
+
+(* ::Subsubsection:: *)
+(*Advance*)
+
+
+advance[] := displayMove["advance"];
+
+
+(* ::Subsection::Closed:: *)
 (*Fate moves*)
 
 
-askTheOracle[]:=displayMove["askTheOracle"];
+(* ::Subsubsection:: *)
+(*Pay the Price*)
+
+
+payThePrice[] := displayMove["payThePrice"];
+
+
+(* ::Subsubsection:: *)
+(*Ask the Oracle*)
+
+
+askTheOracle[] := displayMove["askTheOracle"];
 askTheOracle[tableName_String] := oracleRoll[tableName, oracles[tableName]];
-askTheOracle["Yes/No", odds_String] := oracleRoll["Yes/No: "<>odds, oracles["Yes/No: "<>odds]];
+askTheOracle["Yes/No", odds_String] := oracleRoll["Yes/No: " <> odds, oracles["Yes/No: " <> odds]];
 askTheOracle["Yes/No", yesOutcome_String, noOutcome_String] := oracleRoll["Yes/No", yesNo[yesOutcome, noOutcome]];
 
 
 (* ::Subsection::Closed:: *)
+(*Relationship moves*)
+
+
+(* ::Subsubsection:: *)
+(*Compel*)
+
+
+compel[] := displayMove["compel"];
+compel[actionRoll_Association] := displayMove["compel", actionRoll];
+
+
+(* ::Subsubsection:: *)
+(*Aid Your Ally*)
+
+
+aidYourAlly[] := displayMove["aidYourAlly"];
+
+
+(* ::Subsubsection:: *)
+(*Forge a Bond*)
+
+
+forgeABond[] := displayMove["forgeABond"];
+forgeABond[actionRoll_Association] := displayMove["forgeABond", actionRoll];
+
+
+(* ::Subsubsection:: *)
+(*Test Your Bond*)
+
+
+testYourBond[] := displayMove["testYourBond"];
+testYourBond[actionRoll_Association] := displayMove["testYourBond", actionRoll];
+
+
+(* ::Subsubsection:: *)
+(*Draw the Circle*)
+
+
+drawTheCircle[] := displayMove["drawTheCircle"];
+drawTheCircle[actionRoll_Association] := displayMove["drawTheCircle", actionRoll];
+
+
+(* ::Subsubsection:: *)
+(*Write Your Epilogue*)
+
+
+writeYourEpilogue[] := displayMove["writeYourEpilogue"];
+writeYourEpilogue[actionRoll_Association] := displayMove["writeYourEpilogue", actionRoll];
+
+
+(* ::Subsection::Closed:: *)
+(*Combat moves*)
+
+
+(* ::Subsubsection:: *)
+(*Enter the Fray*)
+
+
+enterTheFray[] := displayMove["enterTheFray"];
+enterTheFray[actionRoll_Association] := displayMove["enterTheFray", actionRoll];
+
+
+(* ::Subsubsection:: *)
+(*Strike*)
+
+
+strike[] := displayMove["strike"];
+strike[actionRoll_Association] := displayMove["strike", actionRoll];
+
+
+(* ::Subsubsection:: *)
+(*Clash*)
+
+
+clash[] := displayMove["clash"];
+clash[actionRoll_Association] := displayMove["clash", actionRoll];
+
+
+(* ::Subsubsection:: *)
+(*Turn the Tide*)
+
+
+turnTheTide[] := displayMove["turnTheTide"];
+
+
+(* ::Subsubsection:: *)
+(*Battle*)
+
+
+battle[] := displayMove["battle"];
+battle[actionRoll_Association] := displayMove["battle", actionRoll];
+
+
+(* ::Subsubsection:: *)
+(*End the Fight*)
+
+
+endTheFight[] := displayMove["endTheFight"];
+endTheFight[actionRoll_Association] := displayMove["endTheFight", actionRoll];
+
+
+(* ::Subsection::Closed:: *)
+(*Suffer moves*)
+
+
+(* ::Subsubsection:: *)
+(*Endure Harm*)
+
+
+endureHarm[] := displayMove["endureHarm"];
+endureHarm[actionRoll_Association] := displayMove["endureHarm", actionRoll];
+
+
+(* ::Subsubsection:: *)
+(*Face Death*)
+
+
+faceDeath[] := displayMove["faceDeath"];
+faceDeath[actionRoll_Association] := displayMove["faceDeath", actionRoll];
+
+
+(* ::Subsubsection:: *)
+(*Companion Endure Harm*)
+
+
+companionEndureHarm[] := displayMove["companionEndureHarm"];
+companionEndureHarm[actionRoll_Association] := displayMove["companionEndureHarm", actionRoll];
+
+
+(* ::Subsubsection:: *)
+(*Endure Stress*)
+
+
+endureStress[] := displayMove["endureStress"];
+endureStress[actionRoll_Association] := displayMove["endureStress", actionRoll];
+
+
+(* ::Subsubsection:: *)
+(*Face Desolation*)
+
+
+faceDesolation[] := displayMove["faceDesolation"];
+faceDesolation[actionRoll_Association] := displayMove["faceDesolation", actionRoll];
+
+
+(* ::Subsubsection:: *)
+(*Out of Supply*)
+
+
+outOfSupply[] := displayMove["outOfSupply"];
+
+
+(* ::Subsubsection:: *)
+(*Face a Setback*)
+
+
+faceASetback[] := displayMove["faceASetback"];
+
+
+(* ::Subsection::Closed:: *)
+(*Delve moves*)
+
+
+(* ::Subsubsection::Closed:: *)
+(*Discover a Site*)
+
+
+discoverASite[] := displayMove["discoverASite"];
+
+
+(* ::Subsubsection::Closed:: *)
+(*Delve the Depths*)
+
+
+delveTheDepths[] := displayMove["delveTheDepths"];
+delveTheDepths[actionRoll_Association] := displayMove["delveTheDepths", actionRoll];
+
+
+(* ::Subsubsection::Closed:: *)
+(*Find an Opportunity*)
+
+
+findAnOpportunity[] := displayMove["findAnOpportunity"];
+
+
+(* ::Subsubsection::Closed:: *)
+(*Reveal a Danger*)
+
+
+revealADanger[] := displayMove["revealADanger"];
+
+
+(* ::Subsubsection::Closed:: *)
+(*Locate Your Objective*)
+
+
+locateYourObjective[] := displayMove["locateYourObjective"];
+locateYourObjective[actionRoll_Association] := displayMove["locateYourObjective", actionRoll];
+
+
+(* ::Subsubsection::Closed:: *)
+(*Escape the Depths*)
+
+
+escapeTheDepths[] := displayMove["escapeTheDepths"];
+escapeTheDepths[actionRoll_Association] := displayMove["escapeTheDepths", actionRoll];
+
+
+(* ::Subsection::Closed:: *)
+(*Failure moves*)
+
+
+(* ::Subsubsection:: *)
+(*Mark Your Failure*)
+
+
+markYourFailure[] := displayMove["markYourFailure"];
+
+
+(* ::Subsubsection::Closed:: *)
+(*Learn from Your Failures*)
+
+
+learnFromYourFailures[] := displayMove["learnFromYourFailures"];
+learnFromYourFailures[actionRoll_Association] := displayMove["learnFromYourFailures", actionRoll];
+
+
+(* ::Subsection::Closed:: *)
+(*Threat moves*)
+
+
+(* ::Subsubsection:: *)
+(*Advance a Threat*)
+
+
+advanceAThreat[] := displayMove["advanceAThreat"];
+
+
+(* ::Subsubsection:: *)
+(*Take a Hiatus*)
+
+
+takeAHiatus[] := displayMove["takeAHiatus"];
+
+
+(* ::Subsection::Closed:: *)
+(*Rarity moves*)
+
+
+(* ::Subsubsection:: *)
+(*Gain a Rarity*)
+
+
+gainARarity[] := displayMove["gainARarity"];
+
+
+(* ::Subsubsection:: *)
+(*Wield a Rarity*)
+
+
+wieldARarity[] := displayMove["wieldARarity"];
+
+
+(* ::Section::Closed:: *)
 (*Private context footer*)
 
 

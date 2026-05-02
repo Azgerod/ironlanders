@@ -57,11 +57,7 @@ b[text_] := Style[text, Bold];
 i[text_] := Style[text, Italic];
 bi[text_] := Style[text, Bold, Italic];
 
-p[parts___] := Style[
-	Row[{parts}],
-	FontFamily -> "Times New Roman",
-	FontSize -> 18
-];
+p[parts___] := Row[{parts}];
 
 paras[items___] := Column[
 	{items},
@@ -358,11 +354,11 @@ moves["beginTheScene", "header"] = paras[
 
 
 (* ::Subsubsection:: *)
-(*Face Danger: Scene*)
+(*Face Danger (Scene)*)
 
 
 moves["faceDangerScene"] = move[
-	"Face Danger",
+	"Face Danger (Scene)",
 	paras[
 		p[b["When you attempt something risky or react to an imminent threat within a scene challenge,"], " envision your action and roll. If you act\[Ellipsis]"],
 		p["\:2734 With speed, agility, or precision: Roll +edge."],
@@ -384,11 +380,11 @@ moves["faceDangerScene"] = move[
 
 
 (* ::Subsubsection:: *)
-(*Secure an Advantage: Scene*)
+(*Secure an Advantage (Scene)*)
 
 
 moves["secureAnAdvantageScene"] = move[
-	"Secure an Advantage",
+	"Secure an Advantage (Scene)",
 	paras[
 		p[b["When you assess a situation, make preparations, or attempt to gain leverage within a scene challenge,"], " envision your action and roll. If you act\[Ellipsis]"],
 		p["\:2734 With speed, agility, or precision: Roll +edge."],
@@ -1140,11 +1136,11 @@ moves["markYourFailure", "header"] = paras[
 
 
 (* ::Subsubsection:: *)
-(*Learn From Your Failures*)
+(*Learn from Your Failures*)
 
 
 moves["learnFromYourFailures"] = move[
-	"Learn From Your Failures",
+	"Learn from Your Failures",
 	paras[
 		p[b["When you spend time reflecting on your hardships and missteps,"], " and your failure track is 6 or greater, roll your challenge dice and compare to your progress. Momentum is ignored on this roll."]
 	],
