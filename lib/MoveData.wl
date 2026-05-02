@@ -430,11 +430,11 @@ moves["finishTheScene"] = move[
 ];
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Quest moves*)
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Swear an Iron Vow*)
 
 
@@ -457,7 +457,7 @@ moves["swearAnIronVow"] = move[
 ];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Reach a Milestone*)
 
 
@@ -480,7 +480,7 @@ moves["reachAMilestone", "header"] = paras[
 ];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Fulfill Your Vow*)
 
 
@@ -515,18 +515,18 @@ moves["forsakeYourVow", "header"] = paras[
 ];
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*Advance*)
 
 
 moves["advance"] = Association[];
 moves["advance", "name"] = "Advance";
 moves["advance", "header"] = paras[
-	p[b["When you focus on your skills, receive training, find inspiration, earn a reward, or gain a companion,"], " you may spend 3 experience to add a new asset, or 2 experience to upgrade an asset."]
+	p[b["When you focus on your skills, receive training, find inspiration, earn a reward, or gain a companion,"], " you may spend 5 experience to add a new asset, or 3 experience to upgrade an asset."]
 ];
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Fate moves*)
 
 
@@ -851,7 +851,7 @@ moves["endTheFight"] = move[
 ];
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Suffer moves*)
 
 
@@ -994,7 +994,7 @@ moves["faceASetback", "header"] = paras[
 ];
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Delve moves*)
 
 
@@ -1163,7 +1163,7 @@ moves["learnFromYourFailures"] = move[
 (*Threat moves*)
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*Advance a Threat*)
 
 

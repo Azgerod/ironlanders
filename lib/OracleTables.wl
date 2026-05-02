@@ -31,7 +31,7 @@ oracles::usage = "Association of oracle tables.";
 YesNo::usage = "YesNo[yesOutcome, noOutcome] returns a Yes/No oracle table with those two outcomes.";
 
 
-(* ::Section::Closed:: *)
+(* ::Section:: *)
 (*Implementation details*)
 
 
@@ -2236,7 +2236,7 @@ oracles["Delve Site: Domain"] = <|
 |>;
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Delve Site: Danger*)
 
 
