@@ -87,6 +87,30 @@ moves["faceDanger"] = move[
 ];
 
 
+(* ::Subsubsection:: *)
+(*Secure an Advantage*)
+
+
+(* ::Subsubsection:: *)
+(*Gather Information*)
+
+
+(* ::Subsubsection:: *)
+(*Make Camp*)
+
+
+(* ::Subsubsection:: *)
+(*Heal*)
+
+
+(* ::Subsubsection:: *)
+(*Resupply*)
+
+
+(* ::Subsubsection:: *)
+(*Check Your Gear*)
+
+
 (* ::Subsection::Closed:: *)
 (*Journey moves*)
 
@@ -112,12 +136,44 @@ Then, for each segment of your journey, roll +wits. If you are setting off from 
 ];
 
 
-(* ::Subsection:: *)
+(* ::Subsubsection:: *)
+(*Reach Your Destination*)
+
+
+(* ::Subsubsection:: *)
+(*Follow a Path*)
+
+
+(* ::Subsection::Closed:: *)
 (*Scene challenge moves*)
+
+
+(* ::Subsubsection:: *)
+(*Begin the Scene*)
+
+
+(* ::Subsubsection:: *)
+(*Face Danger: Scene*)
+
+
+(* ::Subsubsection:: *)
+(*Secure an Advantage: Scene*)
+
+
+(* ::Subsubsection:: *)
+(*Finish The Scene*)
 
 
 (* ::Subsection::Closed:: *)
 (*Quest moves*)
+
+
+(* ::Subsubsection:: *)
+(*Swear an Iron Vow*)
+
+
+(* ::Subsubsection:: *)
+(*Reach a Milestone*)
 
 
 (* ::Subsubsection::Closed:: *)
@@ -135,8 +191,20 @@ moves["fulfillYourVow"] = move[
 ];
 
 
+(* ::Subsubsection:: *)
+(*Forsake Your Vow*)
+
+
+(* ::Subsubsection:: *)
+(*Advance*)
+
+
 (* ::Subsection::Closed:: *)
 (*Fate moves*)
+
+
+(* ::Subsubsection:: *)
+(*Pay the Price*)
 
 
 (* ::Subsubsection::Closed:: *)
@@ -152,32 +220,160 @@ moves["askTheOracle", "header"] = "When you seek to resolve questions, discover 
 \:2734 Spark an idea: Brainstorm or use a random prompt.";
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Relationship moves*)
 
 
-(* ::Subsection:: *)
+(* ::Subsubsection:: *)
+(*Compel*)
+
+
+(* ::Subsubsection:: *)
+(*Aid Your Ally*)
+
+
+(* ::Subsubsection:: *)
+(*Sojourn*)
+
+
+(* ::Subsubsection:: *)
+(*Forge a Bond*)
+
+
+(* ::Subsubsection:: *)
+(*Test Your Bond*)
+
+
+(* ::Subsubsection:: *)
+(*Draw the Circle*)
+
+
+(* ::Subsubsection:: *)
+(*Write Your Epilogue*)
+
+
+(* ::Subsection::Closed:: *)
 (*Combat moves*)
 
 
-(* ::Subsection:: *)
+(* ::Subsubsection:: *)
+(*Enter the Fray*)
+
+
+(* ::Subsubsection:: *)
+(*Strike*)
+
+
+(* ::Subsubsection:: *)
+(*Clash*)
+
+
+(* ::Subsubsection:: *)
+(*Turn the Tide*)
+
+
+(* ::Subsubsection:: *)
+(*Battle*)
+
+
+(* ::Subsubsection:: *)
+(*End the Fight*)
+
+
+(* ::Subsection::Closed:: *)
 (*Suffer moves*)
 
 
-(* ::Subsection:: *)
+(* ::Subsubsection:: *)
+(*Endure Harm*)
+
+
+(* ::Subsubsection:: *)
+(*Face Death*)
+
+
+(* ::Subsubsection:: *)
+(*Companion Endure Harm*)
+
+
+(* ::Subsubsection:: *)
+(*Endure Stress*)
+
+
+(* ::Subsubsection:: *)
+(*Face Desolation*)
+
+
+(* ::Subsubsection:: *)
+(*Out of Supply*)
+
+
+(* ::Subsubsection:: *)
+(*Face a Setback*)
+
+
+(* ::Subsection::Closed:: *)
 (*Delve moves*)
 
 
-(* ::Subsection:: *)
+(* ::Subsubsection:: *)
+(*Discover a Site*)
+
+
+(* ::Subsubsection:: *)
+(*Delve the Depths*)
+
+
+(* ::Subsubsection:: *)
+(*Find an Opportunity*)
+
+
+(* ::Subsubsection:: *)
+(*Reveal a Danger*)
+
+
+(* ::Subsubsection:: *)
+(*Locate Your Objective*)
+
+
+(* ::Subsubsection:: *)
+(*Escape the Depths*)
+
+
+(* ::Subsection::Closed:: *)
 (*Failure moves*)
 
 
-(* ::Subsection:: *)
+(* ::Subsubsection:: *)
+(*Mark Your Failure*)
+
+
+(* ::Subsubsection:: *)
+(*Learn From Your Failures*)
+
+
+(* ::Subsection::Closed:: *)
 (*Threat moves*)
 
 
-(* ::Subsection:: *)
+(* ::Subsubsection:: *)
+(*Advance a Threat*)
+
+
+(* ::Subsubsection:: *)
+(*Take a Hiatus*)
+
+
+(* ::Subsection::Closed:: *)
 (*Rarity moves*)
+
+
+(* ::Subsubsection:: *)
+(*Gain a Rarity*)
+
+
+(* ::Subsubsection:: *)
+(*Wield a Rarity*)
 
 
 (* ::Subsection::Closed:: *)
