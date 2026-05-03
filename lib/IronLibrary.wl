@@ -74,7 +74,50 @@ setSoloCharacter::usage =
 "setSoloCharacter[character] sets the solo character to character.";
 
 createCharacter::usage =
-"createCharacter[name, {a1, a2, a3}, edge, heart, iron, shadow, wits, {vowName, vowRank}, {b1, b2, b3}] creates a character and sets it as the solo character.";
+"createCharacter[name, {a1, a2, a3}, edge, heart, iron, shadow, wits, {vowName, vowRank}, {b1, b2, b3}] creates a character and sets it as the solo character. Starting assets may be asset name strings when the card has a printed default selected ability, or starterAsset[...] specs.";
+
+
+(* ::Subsection::Closed:: *)
+(*Asset management*)
+
+
+starterAsset::usage =
+"starterAsset[name] creates a quiet starting asset spec using the asset's printed default selected abilities.
+starterAsset[name, ability] creates a quiet starting asset spec with the selected ability index.
+starterAsset[name, {ability1, ability2, ...}] creates a quiet starting asset spec with multiple selected abilities.
+starterAsset[name, abilityOrAbilities, fields] includes custom field values such as <|\"Name\" -> \"Asha\"|>.";
+
+asset::usage =
+"asset[name] displays the owned asset named name for the solo character.
+asset[name, character] displays the owned asset named name for character.";
+
+assets::usage =
+"assets[] displays all owned assets for the solo character.
+assets[character] displays all owned assets for character.";
+
+drawAssets::usage =
+"drawAssets[] displays three random reference asset cards and returns their canonical names.
+drawAssets[n] displays n random reference asset cards.
+drawAssets[n, category] draws from category, one of \"Path\", \"Companion\", \"Combat Talent\", or \"Ritual\".";
+
+addAsset::usage =
+"addAsset[assetSpec] spends 5 experience to add an asset to the solo character and displays the updated card.
+addAsset[assetSpec, character] spends 5 experience to add an asset to character.
+assetSpec may be an asset name string with printed default selected abilities, or a starterAsset[...] spec.
+addAsset[..., Display -> False] suppresses display.";
+
+upgradeAsset::usage =
+"upgradeAsset[name, ability] spends 3 experience to mark ability on an owned asset for the solo character and displays the updated card.
+upgradeAsset[name, ability, character] spends 3 experience to mark ability on an owned asset for character.
+upgradeAsset[..., Display -> False] suppresses display.";
+
+setAssetTrack::usage =
+"setAssetTrack[assetName, trackName, value] sets an owned asset track for the solo character, clamped to the printed track range.
+setAssetTrack[assetName, trackName, value, character] sets an owned asset track for character.";
+
+adjustAssetTrack::usage =
+"adjustAssetTrack[assetName, trackName, delta] adjusts an owned asset track for the solo character, clamped to the printed track range.
+adjustAssetTrack[assetName, trackName, delta, character] adjusts an owned asset track for character.";
 
 
 (* ::Subsection::Closed:: *)
@@ -116,6 +159,17 @@ Possible dice are ActionDie, ChallengeDice, LargerChallengeDie, and SmallerChall
 ActionDie may only be used with action rolls. Challenge dice may be rerolled in action rolls and progress rolls.
 
 reroll[..., Display -> False] suppresses display.";
+
+
+(* ::Subsection::Closed:: *)
+(*Choice display*)
+
+
+choose::usage =
+"choose[moveOutput, n] displays the nth choice from a previous move header or outcome output.
+choose[moveOutput, {n1, n2, ...}] displays multiple choices from a previous move header or outcome output.
+
+Typical usage is moveFunction[]; choose[%, n].";
 
 
 (* ::Subsection::Closed:: *)
@@ -601,6 +655,7 @@ ironLibraryDirectory[] := DirectoryName[$IronLibraryPath];
 
 
 Get[FileNameJoin[{ironLibraryDirectory[], "MoveData.wl"}]];
+Get[FileNameJoin[{ironLibraryDirectory[], "AssetData.wl"}]];
 Get[FileNameJoin[{ironLibraryDirectory[], "OracleTables.wl"}]];
 
 
@@ -1540,35 +1595,89 @@ moveOutcome[move_String, result_String] := moves[move, result];
 
 
 (* ::Subsubsection::Closed:: *)
+(*Move section metadata*)
+
+
+moveSectionText[section_Association] /; KeyExistsQ[section, "Text"] :=
+	section["Text"];
+
+moveSectionText[section_] :=
+	section;
+
+moveSectionChoices[section_Association] /; KeyExistsQ[section, "Choices"] :=
+	section["Choices"];
+
+moveSectionChoices[_] :=
+	{};
+
+moveOutputSubtitle[moveName_String, "header"] :=
+	moveName;
+
+moveOutputSubtitle[moveName_String, section_String] :=
+	StringJoin[moveName, ": ", Lookup[$outcomeLabels, section, section]];
+
+moveOutput[moveKey_String, sectionKey_String, section_] := Module[
+	{moveName},
+	moveName = moves[moveKey, "name"];
+	MoveDisplayOutput[
+		Association[
+			"Move" -> moveKey,
+			"Name" -> moveName,
+			"Section" -> sectionKey,
+			"Subtitle" -> moveOutputSubtitle[moveName, sectionKey],
+			"Choices" -> moveSectionChoices[section]
+		]
+	]
+];
+
+
+(* ::Subsubsection::Closed:: *)
 (*Move header presentation*)
 
 
-displayMoveHeader[moveKey_String] :=
-  Print[
-    Framed[
-      Column[{titleStyle[moves[moveKey, "name"]], moveTextStyle[moves[moveKey, "header"]]}, Spacings->1],
-      FrameStyle -> rollFrameStyle,
-      FrameMargins -> {{12, 12}, {12, 12}},
-      RoundingRadius -> 8,
-      Background -> None
-    ]
-  ];
+displayMoveHeader[moveKey_String] := Module[
+	{section},
+	section = moves[moveKey, "header"];
+	Print[
+		Framed[
+			Column[
+				{titleStyle[moves[moveKey, "name"]], moveTextStyle[moveSectionText[section]]},
+				Spacings -> 1
+			],
+			FrameStyle -> rollFrameStyle,
+			FrameMargins -> {{12, 12}, {12, 12}},
+			RoundingRadius -> 8,
+			Background -> None
+		]
+	];
+	moveOutput[moveKey, "header", section]
+];
 
 
 (* ::Subsubsection::Closed:: *)
 (*Move outcome presentation*)
 
 
-displayMoveOutcome[moveKey_String, result_String] :=
-  Print[
-    Framed[
-      Column[{header[moves[moveKey, "name"], Lookup[$outcomeLabels, result]], moveTextStyle[moves[moveKey, result]]}, Spacings->1],
-      FrameStyle -> rollFrameStyle,
-      FrameMargins -> {{12, 12}, {12, 12}},
-      RoundingRadius -> 8,
-      Background -> None
-    ]
-  ];
+displayMoveOutcome[moveKey_String, result_String] := Module[
+	{section},
+	section = moves[moveKey, result];
+	Print[
+		Framed[
+			Column[
+				{
+					header[moves[moveKey, "name"], Lookup[$outcomeLabels, result]],
+					moveTextStyle[moveSectionText[section]]
+				},
+				Spacings -> 1
+			],
+			FrameStyle -> rollFrameStyle,
+			FrameMargins -> {{12, 12}, {12, 12}},
+			RoundingRadius -> 8,
+			Background -> None
+		]
+	];
+	moveOutput[moveKey, result, section]
+];
 
 
 (* ::Subsubsection::Closed:: *)
@@ -1577,6 +1686,442 @@ displayMoveOutcome[moveKey_String, result_String] :=
 
 displayMove[moveKey_String]:=displayMoveHeader[moveKey];
 displayMove[moveKey_String, roll_Association]:=displayMoveOutcome[moveKey, roll["result"]];
+
+
+(* ::Subsubsection::Closed:: *)
+(*Choice display*)
+
+
+choiceSelectionIndices[n_Integer] :=
+	{n};
+
+choiceSelectionIndices[indices_List] /; VectorQ[indices, IntegerQ] && indices =!= {} :=
+	indices;
+
+choiceSelectionIndices[_] :=
+	$Failed;
+
+choiceDisplayBody[texts_List] :=
+	If[
+		Length[texts] == 1,
+		First[texts],
+		Column[texts, Spacings -> 0.8, Alignment -> Left]
+	];
+
+displayChoice[subtitle_String, texts_List] :=
+	Print[
+		ironFramed[
+			Column[
+				{
+					header["Choice", subtitle],
+					moveTextStyle[choiceDisplayBody[texts]]
+				},
+				Spacings -> 1
+			]
+		]
+	];
+
+
+(* ::Subsection::Closed:: *)
+(*Asset helpers*)
+
+
+assetDataAssociation[] := AssetData`assetData;
+
+assetNames[] :=
+	Keys[assetDataAssociation[]];
+
+assetCategories[] :=
+	DeleteDuplicates[Lookup[Values[assetDataAssociation[]], "Category"]];
+
+assetRecord[name_String] :=
+	Lookup[assetDataAssociation[], name, Missing["UnknownAsset", name]];
+
+assetRecordQ[name_String] :=
+	AssociationQ[assetRecord[name]];
+
+assetAbilityIndices[record_Association] :=
+	Lookup[Lookup[record, "Abilities", {}], "Index", {}];
+
+defaultAssetAbilities[record_Association] :=
+	Lookup[record, "DefaultAbilities", {}];
+
+assetFieldKeys[record_Association] :=
+	Keys[Lookup[record, "Fields", <||>]];
+
+initialAssetTracks[record_Association] :=
+	Association @ KeyValueMap[
+		#1 -> Lookup[#2, "Default", Lookup[#2, "Max", 0]] &,
+		Lookup[record, "Tracks", <||>]
+	];
+
+normalizeAbilitySelection[Automatic, record_Association] := Module[
+	{defaults},
+	defaults = defaultAssetAbilities[record];
+	If[defaults === {},
+		Message[asset::nodefault, record["Name"]];
+		Return[$Failed]
+	];
+	defaults
+];
+
+normalizeAbilitySelection[ability_Integer, record_Association] :=
+	normalizeAbilitySelection[{ability}, record];
+
+normalizeAbilitySelection[abilities_List, record_Association] /; VectorQ[abilities, IntegerQ] && abilities =!= {} := Module[
+	{valid, duplicates, invalid},
+	valid = assetAbilityIndices[record];
+	duplicates = DeleteDuplicates[Cases[Tally[abilities], {ability_, count_} /; count > 1 :> ability]];
+	If[duplicates =!= {},
+		Message[asset::dupeability, First[duplicates], record["Name"]];
+		Return[$Failed]
+	];
+	invalid = Select[abilities, !MemberQ[valid, #] &];
+	If[invalid =!= {},
+		Message[asset::badability, First[invalid], record["Name"], Length[valid]];
+		Return[$Failed]
+	];
+	Sort[abilities]
+];
+
+normalizeAbilitySelection[_, record_Association] := (
+	Message[asset::badabilities, record["Name"]];
+	$Failed
+);
+
+normalizeAssetFields[fields_Association, record_Association] := Module[
+	{keys, invalid, blankFields},
+	keys = assetFieldKeys[record];
+	invalid = Complement[Keys[fields], keys];
+	If[invalid =!= {},
+		Message[asset::badfield, First[invalid], record["Name"]];
+		Return[$Failed]
+	];
+	blankFields = AssociationThread[keys -> ConstantArray["", Length[keys]]];
+	Join[blankFields, fields]
+];
+
+normalizeAssetFields[_, record_Association] := (
+	Message[asset::badfields, record["Name"]];
+	$Failed
+);
+
+makeOwnedAsset[name_String, abilitySpec_, fields_Association] := Module[
+	{record, abilities, normalizedFields},
+	record = assetRecord[name];
+	If[!AssociationQ[record],
+		Message[asset::unknown, name];
+		Return[$Failed]
+	];
+	abilities = normalizeAbilitySelection[abilitySpec, record];
+	If[abilities === $Failed, Return[$Failed]];
+	normalizedFields = normalizeAssetFields[fields, record];
+	If[normalizedFields === $Failed, Return[$Failed]];
+	Association[
+		"Name" -> record["Name"],
+		"Abilities" -> abilities,
+		"Fields" -> normalizedFields,
+		"Tracks" -> initialAssetTracks[record]
+	]
+];
+
+makeStarterAssetSpec[name_String, abilitySpec_, fields_Association] := Module[
+	{owned},
+	owned = makeOwnedAsset[name, abilitySpec, fields];
+	If[owned === $Failed, Return[$Failed]];
+	StarterAssetSpec[
+		Association[
+			"Name" -> owned["Name"],
+			"Abilities" -> owned["Abilities"],
+			"Fields" -> owned["Fields"]
+		]
+	]
+];
+
+ownedAssetFromSpec[$Failed] :=
+	$Failed;
+
+ownedAssetFromSpec[name_String] :=
+	makeOwnedAsset[name, Automatic, <||>];
+
+ownedAssetFromSpec[StarterAssetSpec[data_Association]] :=
+	makeOwnedAsset[data["Name"], data["Abilities"], Lookup[data, "Fields", <||>]];
+
+ownedAssetFromSpec[other_] := (
+	Message[asset::badasset, other];
+	$Failed
+);
+
+ownedAssetQ[owned_Association] :=
+	KeyExistsQ[owned, "Name"] &&
+	KeyExistsQ[owned, "Abilities"] &&
+	KeyExistsQ[owned, "Fields"] &&
+	KeyExistsQ[owned, "Tracks"];
+
+characterExistsQ[character_] :=
+	AssociationQ[$state] &&
+	StringQ[character] &&
+	KeyExistsQ[$state, character];
+
+normalizeCharacterAssets[character_] := Module[
+	{rawAssets, normalizedAssets},
+	If[!characterExistsQ[character],
+		Message[asset::nochar, character];
+		Return[$Failed]
+	];
+	rawAssets = Lookup[$state[character], "assets", {}];
+	If[AllTrue[rawAssets, ownedAssetQ],
+		Return[rawAssets]
+	];
+	normalizedAssets = ownedAssetFromSpec /@ rawAssets;
+	If[MemberQ[normalizedAssets, $Failed],
+		Message[asset::badstoredassets, character];
+		Return[$Failed]
+	];
+	$state[character, "assets"] = normalizedAssets
+];
+
+ownedAssetIndex[assetName_String, character_] := Module[
+	{ownedAssets, positions},
+	ownedAssets = normalizeCharacterAssets[character];
+	If[ownedAssets === $Failed, Return[$Failed]];
+	positions = Flatten @ Position[Lookup[ownedAssets, "Name", Missing["NoName"]], assetName];
+	If[positions === {},
+		Missing["NotOwned", assetName],
+		First[positions]
+	]
+];
+
+availableExperience[character_] :=
+	Lookup[$state[character], "earnedExperience", 0] -
+	Lookup[$state[character], "spentExperience", 0];
+
+assetTrackDefinition[record_Association, trackName_String] :=
+	Lookup[Lookup[record, "Tracks", <||>], trackName, Missing["UnknownTrack", trackName]];
+
+clampAssetTrackValue[trackDef_Association, value_Integer] :=
+	Clip[value, {trackDef["Min"], trackDef["Max"]}];
+
+assetFieldValueDisplay[value_] :=
+	If[
+		StringQ[value] && StringLength[StringTrim[value]] > 0,
+		value,
+		If[value === "" || MissingQ[value],
+			"____________",
+			ToString[value]
+		]
+	];
+
+assetFieldRow[label_String, value_] :=
+	Row[
+		{
+			Style[
+				StringJoin[label, ": "],
+				FontFamily -> "Futura",
+				FontSize -> scaledSize[16],
+				FontWeight -> Bold,
+				GrayLevel[0.255]
+			],
+			Style[
+				assetFieldValueDisplay[value],
+				FontFamily -> "Times New Roman",
+				FontSize -> scaledSize[18],
+				GrayLevel[0.255]
+			]
+		}
+	];
+
+assetFieldRows[record_Association, fields_Association] :=
+	KeyValueMap[
+		assetFieldRow[Lookup[#2, "Label", #1], Lookup[fields, #1, ""]] &,
+		Lookup[record, "Fields", <||>]
+	];
+
+assetCardWidth :=
+	scaled[520];
+
+assetBodyWidth :=
+	scaled[470];
+
+assetCategoryBand[category_String] :=
+	Framed[
+		Pane[
+			Style[
+				ToUpperCase[category],
+				White,
+				FontFamily -> "Futura",
+				FontSize -> scaledSize[16],
+				FontWeight -> Bold
+			],
+			{assetCardWidth, Automatic},
+			Alignment -> Left
+		],
+		Background -> GrayLevel[0.255],
+		FrameStyle -> None,
+		FrameMargins -> {{scaled[8], scaled[8]}, {scaled[4], scaled[4]}},
+		RoundingRadius -> 0
+	];
+
+assetAbilityTitle[name_String] /; StringLength[StringTrim[name]] > 0 :=
+	Style[
+		name,
+		FontFamily -> "Futura",
+		FontSize -> scaledSize[17],
+		FontWeight -> Bold,
+		GrayLevel[0.255]
+	];
+
+assetAbilityTitle[_] :=
+	Nothing;
+
+assetAbilityRow[ability_Association, selectedQ_] :=
+	Grid[
+		{{
+			Style[
+				If[TrueQ[selectedQ], "\[FilledCircle]", "\[EmptyCircle]"],
+				GrayLevel[0.255],
+				FontSize -> scaledSize[16]
+			],
+			Column[
+				{
+					assetAbilityTitle[Lookup[ability, "Name", ""]],
+					Pane[
+						moveTextStyle[Lookup[ability, "Text", ""]],
+						{assetBodyWidth, Automatic},
+						Alignment -> Left
+					]
+				},
+				Spacings -> 0.2,
+				Alignment -> Left
+			]
+		}},
+		Alignment -> {Left, Top},
+		Spacings -> {0.7, 0}
+	];
+
+assetAbilityRows[record_Association, selectedAbilities_List] :=
+	(assetAbilityRow[#, MemberQ[selectedAbilities, #["Index"]]] &) /@ Lookup[record, "Abilities", {}];
+
+assetTrackCell[value_Integer, current_Integer] :=
+	Framed[
+		Style[
+			ToString[value],
+			If[value == current, White, GrayLevel[0.255]],
+			FontFamily -> "Futura",
+			FontSize -> scaledSize[14],
+			FontWeight -> Bold
+		],
+		Background -> If[value == current, GrayLevel[0.255], None],
+		FrameStyle -> GrayLevel[0.45],
+		FrameMargins -> {{scaled[5], scaled[5]}, {scaled[2], scaled[2]}},
+		RoundingRadius -> 0
+	];
+
+assetTrackRow[trackName_String, trackDef_Association, current_Integer] := Module[
+	{label, values},
+	label = Lookup[trackDef, "Label", trackName];
+	values = Range[trackDef["Min"], trackDef["Max"]];
+	Column[
+		{
+			Style[
+				label,
+				FontFamily -> "Futura",
+				FontSize -> scaledSize[16],
+				FontWeight -> Bold,
+				GrayLevel[0.255]
+			],
+			Grid[
+				{assetTrackCell[#, current] & /@ values},
+				Spacings -> {0, 0}
+			]
+		},
+		Spacings -> 0.2,
+		Alignment -> Left
+	]
+];
+
+assetTrackRows[record_Association, tracks_Association] := Module[
+	{trackDefs, values},
+	trackDefs = Lookup[record, "Tracks", <||>];
+	values = Join[initialAssetTracks[record], tracks];
+	KeyValueMap[
+		assetTrackRow[#1, #2, Lookup[values, #1, Lookup[#2, "Default", 0]]] &,
+		trackDefs
+	]
+];
+
+assetCardExpression[record_Association, selectedAbilities_List, fields_Association, tracks_Association, status_:None] := Module[
+	{statusRows, fieldRows, requirementRows, abilityRows, trackRows},
+	statusRows = If[status === None, {}, {subtitleStyle[status]}];
+	fieldRows = assetFieldRows[record, fields];
+	requirementRows = If[
+		StringLength[StringTrim[Lookup[record, "Requirement", ""]]] == 0,
+		{},
+		{moveTextStyle[record["Requirement"]]}
+	];
+	abilityRows = assetAbilityRows[record, selectedAbilities];
+	trackRows = assetTrackRows[record, tracks];
+	ironFramed[
+		Column[
+			Join[
+				statusRows,
+				{
+					assetCategoryBand[record["Category"]],
+					titleStyle[record["Name"]]
+				},
+				fieldRows,
+				requirementRows,
+				abilityRows,
+				trackRows
+			],
+			Spacings -> 0.8,
+			Alignment -> Left
+		]
+	]
+];
+
+assetCardExpression[owned_Association, status_:None] := Module[
+	{record},
+	record = assetRecord[owned["Name"]];
+	If[!AssociationQ[record],
+		Message[asset::unknown, owned["Name"]];
+		Return[$Failed]
+	];
+	assetCardExpression[
+		record,
+		Lookup[owned, "Abilities", {}],
+		Lookup[owned, "Fields", <||>],
+		Lookup[owned, "Tracks", <||>],
+		status
+	]
+];
+
+assetReferenceCard[name_String] := Module[
+	{record, fields},
+	record = assetRecord[name];
+	If[!AssociationQ[record],
+		Message[asset::unknown, name];
+		Return[$Failed]
+	];
+	fields = normalizeAssetFields[<||>, record];
+	assetCardExpression[
+		record,
+		defaultAssetAbilities[record],
+		fields,
+		initialAssetTracks[record]
+	]
+];
+
+displayAssetCard[owned_Association, status_:None] := Module[
+	{card},
+	card = assetCardExpression[owned, status];
+	If[card === $Failed, Return[$Failed]];
+	Print[card];
+	owned
+];
+
+displayAssetCards[cards_List] :=
+	Print[Column[cards, Spacings -> 1, Alignment -> Left]];
 
 
 (* ::Section:: *)
@@ -1617,11 +2162,13 @@ endChapter[] := Module[{statePath, notebookPath}, statePath = nextStatePath[]; n
 (*Character management*)
 
 
-createCharacter[name_String, assets:{_String, _String, _String}, (edge_)?statValueQ, (heart_)?statValueQ, (iron_)?statValueQ, (shadow_)?statValueQ, 
+createCharacter[name_String, assetSpecs_List /; Length[assetSpecs] == 3, (edge_)?statValueQ, (heart_)?statValueQ, (iron_)?statValueQ, (shadow_)?statValueQ, 
     (wits_)?statValueQ, {vowName_String, (vowRank_)?rankQ}, bonds:{___String} /; Length[bonds] <= 3] := 
-   Module[{character}, ensureStateInitialized[]; character = Association["assets" -> assets, "edge" -> edge, "heart" -> heart, "iron" -> iron, "shadow" -> shadow, "wits" -> wits, "health" -> 5, 
+   Module[{character, ownedAssets}, ensureStateInitialized[]; ownedAssets = ownedAssetFromSpec /@ assetSpecs; If[MemberQ[ownedAssets, $Failed], Message[createCharacter::badassets]; Return[$Failed]]; 
+     character = Association["assets" -> ownedAssets, "edge" -> edge, "heart" -> heart, "iron" -> iron, "shadow" -> shadow, "wits" -> wits, "health" -> 5, 
        "spirit" -> 5, "supply" -> 5, "momentum" -> 2, "debilities" -> {}, "progressTracks" -> Association[vowName -> progressTrack[vowRank], "Bonds" -> progressTrack[Epic, 0.25*Length[bonds]], "Failures"->progressTrack[Epic]], 
        "bonds" -> bonds, "earnedExperience" -> 0, "spentExperience" -> 0]; AssociateTo[$state, name -> character]; $soloCharacter = name; $state[name]]; 
+createCharacter::badassets = "Could not create the character because one or more starting assets are invalid.";
        
 setSoloCharacter[character_String] := Module[{},
 	If[!AssociationQ[$state] || !KeyExistsQ[$state, character],
@@ -1632,6 +2179,255 @@ setSoloCharacter[character_String] := Module[{},
 ];
 
 setSoloCharacter::nochar = "No character named `1` exists in the current state.";
+
+
+(* ::Subsection::Closed:: *)
+(*Asset management*)
+
+
+starterAsset[name_String] :=
+	makeStarterAssetSpec[name, Automatic, <||>];
+
+starterAsset[name_String, fields_Association] :=
+	makeStarterAssetSpec[name, Automatic, fields];
+
+starterAsset[name_String, abilitySpec : (_Integer | {__Integer})] :=
+	makeStarterAssetSpec[name, abilitySpec, <||>];
+
+starterAsset[name_String, abilitySpec : (_Integer | {__Integer}), fields_Association] :=
+	makeStarterAssetSpec[name, abilitySpec, fields];
+
+starterAsset[args___] := (
+	Message[asset::badasset, HoldForm[starterAsset[args]]];
+	$Failed
+);
+
+asset[name_String, character_ : $soloCharacter] := Module[
+	{record, ownedAssets, positions, owned},
+	record = assetRecord[name];
+	If[!AssociationQ[record],
+		Message[asset::unknown, name];
+		Return[$Failed]
+	];
+	ownedAssets = normalizeCharacterAssets[character];
+	If[ownedAssets === $Failed, Return[$Failed]];
+	positions = Flatten @ Position[Lookup[ownedAssets, "Name", Missing["NoName"]], name];
+	If[positions === {},
+		Message[asset::notowned, name, character];
+		Return[$Failed]
+	];
+	owned = ownedAssets[[First[positions]]];
+	displayAssetCard[owned]
+];
+
+assets[] :=
+	assets[$soloCharacter];
+
+assets[character_] := Module[
+	{ownedAssets, cards},
+	ownedAssets = normalizeCharacterAssets[character];
+	If[ownedAssets === $Failed, Return[$Failed]];
+	cards = assetCardExpression /@ ownedAssets;
+	If[MemberQ[cards, $Failed], Return[$Failed]];
+	displayAssetCards[cards];
+	ownedAssets
+];
+
+drawAssets[] :=
+	drawAssets[3];
+
+drawAssets[category_String] :=
+	drawAssets[3, category];
+
+drawAssets[n_Integer?Positive] :=
+	drawAssets[n, All];
+
+drawAssets[n_Integer?Positive, All] := Module[
+	{names, cards},
+	If[n > Length[assetNames[]],
+		Message[asset::drawcount, n, Length[assetNames[]]];
+		Return[$Failed]
+	];
+	names = RandomSample[assetNames[], n];
+	cards = assetReferenceCard /@ names;
+	If[MemberQ[cards, $Failed], Return[$Failed]];
+	displayAssetCards[cards];
+	names
+];
+
+drawAssets[n_Integer?Positive, category_String] := Module[
+	{pool, names, cards},
+	If[!MemberQ[assetCategories[], category],
+		Message[asset::badcategory, category, StringRiffle[assetCategories[], ", "]];
+		Return[$Failed]
+	];
+	pool = Select[assetNames[], assetRecord[#]["Category"] === category &];
+	If[n > Length[pool],
+		Message[asset::drawcount, n, Length[pool]];
+		Return[$Failed]
+	];
+	names = RandomSample[pool, n];
+	cards = assetReferenceCard /@ names;
+	If[MemberQ[cards, $Failed], Return[$Failed]];
+	displayAssetCards[cards];
+	names
+];
+
+drawAssets[args___] := (
+	Message[asset::baddraw, HoldForm[drawAssets[args]]];
+	$Failed
+);
+
+Options[addAsset] = {Display -> True};
+
+addAsset[assetSpec_, opts : OptionsPattern[]] :=
+	addAsset[assetSpec, $soloCharacter, opts];
+
+addAsset[assetSpec_, character_, opts : OptionsPattern[]] := Module[
+	{ownedAssets, owned, name},
+	If[!characterExistsQ[character],
+		Message[asset::nochar, character];
+		Return[$Failed]
+	];
+	ownedAssets = normalizeCharacterAssets[character];
+	If[ownedAssets === $Failed, Return[$Failed]];
+	owned = ownedAssetFromSpec[assetSpec];
+	If[owned === $Failed, Return[$Failed]];
+	name = owned["Name"];
+	If[MemberQ[Lookup[ownedAssets, "Name", Missing["NoName"]], name],
+		Message[asset::duplicate, name, character];
+		Return[$Failed]
+	];
+	If[availableExperience[character] < 5,
+		Message[asset::xp, character, 5, availableExperience[character]];
+		Return[$Failed]
+	];
+	AppendTo[$state[character, "assets"], owned];
+	spendExperience[5, character];
+	If[OptionValue[Display], displayAssetCard[owned, "Added Asset"]];
+	owned
+];
+
+Options[upgradeAsset] = {Display -> True};
+
+upgradeAsset[name_String, ability_Integer, opts : OptionsPattern[]] :=
+	upgradeAsset[name, ability, $soloCharacter, opts];
+
+upgradeAsset[name_String, ability_Integer, character_, opts : OptionsPattern[]] := Module[
+	{record, ownedAssets, positions, index, owned, valid, selected, updated, updatedAssets},
+	record = assetRecord[name];
+	If[!AssociationQ[record],
+		Message[asset::unknown, name];
+		Return[$Failed]
+	];
+	ownedAssets = normalizeCharacterAssets[character];
+	If[ownedAssets === $Failed, Return[$Failed]];
+	positions = Flatten @ Position[Lookup[ownedAssets, "Name", Missing["NoName"]], name];
+	If[positions === {},
+		Message[asset::notowned, name, character];
+		Return[$Failed]
+	];
+	valid = assetAbilityIndices[record];
+	If[!MemberQ[valid, ability],
+		Message[asset::badability, ability, name, Length[valid]];
+		Return[$Failed]
+	];
+	index = First[positions];
+	owned = ownedAssets[[index]];
+	selected = Lookup[owned, "Abilities", {}];
+	If[MemberQ[selected, ability],
+		Message[asset::selected, ability, name];
+		Return[$Failed]
+	];
+	If[availableExperience[character] < 3,
+		Message[asset::xp, character, 3, availableExperience[character]];
+		Return[$Failed]
+	];
+	updated = Association[owned];
+	updated["Abilities"] = Sort[Append[selected, ability]];
+	updatedAssets = ownedAssets;
+	updatedAssets[[index]] = updated;
+	$state[character, "assets"] = updatedAssets;
+	spendExperience[3, character];
+	If[OptionValue[Display], displayAssetCard[updated, "Upgraded Asset"]];
+	updated
+];
+
+setAssetTrack[assetName_String, trackName_String, value_Integer, character_ : $soloCharacter] := Module[
+	{record, ownedAssets, positions, index, owned, trackDef, tracks, updated, updatedAssets, clamped},
+	record = assetRecord[assetName];
+	If[!AssociationQ[record],
+		Message[asset::unknown, assetName];
+		Return[$Failed]
+	];
+	ownedAssets = normalizeCharacterAssets[character];
+	If[ownedAssets === $Failed, Return[$Failed]];
+	positions = Flatten @ Position[Lookup[ownedAssets, "Name", Missing["NoName"]], assetName];
+	If[positions === {},
+		Message[asset::notowned, assetName, character];
+		Return[$Failed]
+	];
+	trackDef = assetTrackDefinition[record, trackName];
+	If[!AssociationQ[trackDef],
+		Message[asset::track, trackName, assetName];
+		Return[$Failed]
+	];
+	index = First[positions];
+	owned = ownedAssets[[index]];
+	tracks = Join[initialAssetTracks[record], Lookup[owned, "Tracks", <||>]];
+	clamped = clampAssetTrackValue[trackDef, value];
+	tracks[trackName] = clamped;
+	updated = Association[owned];
+	updated["Tracks"] = tracks;
+	updatedAssets = ownedAssets;
+	updatedAssets[[index]] = updated;
+	$state[character, "assets"] = updatedAssets;
+	clamped
+];
+
+adjustAssetTrack[assetName_String, trackName_String, delta_Integer, character_ : $soloCharacter] := Module[
+	{record, ownedAssets, positions, owned, trackDef, tracks, current},
+	record = assetRecord[assetName];
+	If[!AssociationQ[record],
+		Message[asset::unknown, assetName];
+		Return[$Failed]
+	];
+	ownedAssets = normalizeCharacterAssets[character];
+	If[ownedAssets === $Failed, Return[$Failed]];
+	positions = Flatten @ Position[Lookup[ownedAssets, "Name", Missing["NoName"]], assetName];
+	If[positions === {},
+		Message[asset::notowned, assetName, character];
+		Return[$Failed]
+	];
+	trackDef = assetTrackDefinition[record, trackName];
+	If[!AssociationQ[trackDef],
+		Message[asset::track, trackName, assetName];
+		Return[$Failed]
+	];
+	owned = ownedAssets[[First[positions]]];
+	tracks = Join[initialAssetTracks[record], Lookup[owned, "Tracks", <||>]];
+	current = Lookup[tracks, trackName, Lookup[trackDef, "Default", 0]];
+	setAssetTrack[assetName, trackName, current + delta, character]
+];
+
+asset::unknown = "Unknown asset `1`. Use the exact canonical asset name.";
+asset::nodefault = "Asset `1` has no printed default selected ability. Use starterAsset[`1`, abilityIndex].";
+asset::badability = "Ability `1` is not available for asset `2`. Valid ability indices are 1 through `3`.";
+asset::badabilities = "Asset `1` requires a non-empty integer ability selection.";
+asset::dupeability = "Ability `1` was selected more than once for asset `2`.";
+asset::badfield = "Field `1` is not defined for asset `2`.";
+asset::badfields = "Fields for asset `1` must be an association.";
+asset::badasset = "`1` is not a valid asset spec. Use an asset name string or starterAsset[...].";
+asset::badstoredassets = "The stored assets for character `1` could not be migrated to structured asset state.";
+asset::nochar = "No character named `1` exists in the current state.";
+asset::notowned = "Character `2` does not own asset `1`.";
+asset::duplicate = "Character `2` already owns asset `1`.";
+asset::xp = "Character `1` needs `2` available experience, but only has `3`.";
+asset::selected = "Ability `1` is already selected for asset `2`.";
+asset::track = "Track `1` is not defined for asset `2`.";
+asset::badcategory = "Unknown asset category `1`. Use one of: `2`.";
+asset::drawcount = "Cannot draw `1` distinct assets from a pool of `2`.";
+asset::baddraw = "`1` is not a valid drawAssets call.";
 
 
 (* ::Subsection::Closed:: *)
@@ -1892,6 +2688,56 @@ reroll[roll_Association, dice_List, opts : OptionsPattern[]] := Module[
 
 	newRoll
 ];
+
+
+(* ::Subsection::Closed:: *)
+(*Choice display*)
+
+
+choose[MoveDisplayOutput[data_Association], selection_] := Module[
+	{indices, choices, invalid, selected},
+
+	indices = choiceSelectionIndices[selection];
+
+	If[indices === $Failed,
+		Message[choose::badselection, selection];
+		Return[$Failed]
+	];
+
+	choices = Lookup[data, "Choices", {}];
+
+	If[choices === {},
+		Message[choose::nochoices, Lookup[data, "Subtitle", "the previous output"]];
+		Return[$Failed]
+	];
+
+	invalid = Select[indices, # < 1 || # > Length[choices] &];
+
+	If[invalid =!= {},
+		Message[choose::badindex, First[invalid], Length[choices]];
+		Return[$Failed]
+	];
+
+	selected = choices[[indices]];
+	displayChoice[Lookup[data, "Subtitle", ""], Lookup[selected, "Text"]]
+];
+
+choose[output_, selection_] := (
+	Message[choose::badoutput, output];
+	$Failed
+);
+
+choose::badselection =
+"`1` is not a valid choice selection. Use an integer or a non-empty list of integers.";
+
+choose::nochoices =
+"`1` does not expose any choices.";
+
+choose::badindex =
+"Choice `1` is not available. Valid choices are 1 through `2`.";
+
+choose::badoutput =
+"`1` is not a move header or outcome output. Use a value returned by a move display function.";
 
 
 (* ::Section::Closed:: *)

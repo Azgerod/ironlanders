@@ -30,7 +30,7 @@ BeginPackage["MoveData`"];
 moves::usage = "Association of moves.";
 
 
-(* ::Section::Closed:: *)
+(* ::Section:: *)
 (*Implementation details*)
 
 
@@ -65,6 +65,60 @@ paras[items___] := Column[
 	Alignment -> Left
 ];
 
+choice[key_String, text_] := <|
+	"Type" -> "Choice",
+	"Key" -> key,
+	"Text" -> text
+|>;
+
+choiceGroup[label_String, choices_List] := <|
+	"Type" -> "ChoiceGroup",
+	"Label" -> label,
+	"Choices" -> choices
+|>;
+
+choiceGroupQ[item_] :=
+	AssociationQ[item] && Lookup[item, "Type", None] === "ChoiceGroup";
+
+numberedChoiceRow[index_Integer, text_] :=
+	p[ToString[index], ". ", text];
+
+choiceDisplayRows[choices_List] := Module[
+	{index = 0, rows = {}, item, groupChoice},
+	Do[
+		If[choiceGroupQ[item],
+			AppendTo[rows, p[b[item["Label"]]]];
+			Do[
+				index++;
+				AppendTo[rows, numberedChoiceRow[index, groupChoice["Text"]]],
+				{groupChoice, item["Choices"]}
+			],
+			index++;
+			AppendTo[rows, numberedChoiceRow[index, item["Text"]]]
+		],
+		{item, choices}
+	];
+	rows
+];
+
+flattenChoices[choices_List] := Module[
+	{flat = {}, item, groupLabel},
+	Do[
+		If[choiceGroupQ[item],
+			groupLabel = item["Label"];
+			flat = Join[flat, (Join[#, <|"Group" -> groupLabel|>] &) /@ item["Choices"]],
+			AppendTo[flat, item]
+		],
+		{item, choices}
+	];
+	flat
+];
+
+choiceSection[pre_List, choices_List, post_List : {}] := <|
+	"Text" -> Apply[paras, Join[pre, choiceDisplayRows[choices], post]],
+	"Choices" -> flattenChoices[choices]
+|>;
+
 
 (* ::Subsection::Closed:: *)
 (*Move association*)
@@ -81,6 +135,14 @@ moves = Association[];
 (*Face Danger*)
 
 
+faceDangerWeakChoices = {
+	choice["delay", p["You are delayed, lose advantage, or face a new danger: Suffer \[Dash]1 momentum."]],
+	choice["harm", p["You are tired or hurt: ", i["Endure Harm"], " (1 harm)."]],
+	choice["stress", p["You are dispirited or afraid: ", i["Endure Stress"], " (1 stress)."]],
+	choice["supply", p["You sacrifice resources: Suffer \[Dash]1 supply."]]
+};
+
+
 moves["faceDanger"] = move[
 	"Face Danger",
 	paras[
@@ -94,12 +156,9 @@ moves["faceDanger"] = move[
 	paras[
 		p["You are successful. Take +1 momentum."]
 	],
-	paras[
-		p["You succeed, but face a troublesome cost. Choose one."],
-		p["\:2734 You are delayed, lose advantage, or face a new danger: Suffer \[Dash]1 momentum."],
-		p["\:2734 You are tired or hurt: ", i["Endure Harm"], " (1 harm)."],
-		p["\:2734 You are dispirited or afraid: ", i["Endure Stress"], " (1 stress)."],
-		p["\:2734 You sacrifice resources: Suffer \[Dash]1 supply."]
+	choiceSection[
+		{p["You succeed, but face a troublesome cost. Choose one."]},
+		faceDangerWeakChoices
 	],
 	paras[
 		p["You fail, or a momentary success is undermined by a dire turn of events. ", i["Pay the Price"], "."]
@@ -109,6 +168,12 @@ moves["faceDanger"] = move[
 
 (* ::Subsubsection::Closed:: *)
 (*Secure an Advantage*)
+
+
+secureAnAdvantageChoices = {
+	choice["momentum", p["Take +2 momentum."]],
+	choice["add", p["Add +1 on your next move (not a progress move)."]]
+};
 
 
 moves["secureAnAdvantage"] = move[
@@ -126,10 +191,9 @@ moves["secureAnAdvantage"] = move[
 		p["\:2734 Take +2 momentum."],
 		p["\:2734 Add +1 on your next move (not a progress move)."]
 	],
-	paras[
-		p["Choose one."],
-		p["\:2734 Take +2 momentum."],
-		p["\:2734 Add +1 on your next move (not a progress move)."]
+	choiceSection[
+		{p["Choose one."]},
+		secureAnAdvantageChoices
 	],
 	paras[
 		p["You fail or your assumptions betray you. ", i["Pay the Price"], "."]
@@ -162,26 +226,27 @@ moves["gatherInformation"] = move[
 (*Make Camp*)
 
 
+makeCampChoices = {
+	choice["recuperate", p["Recuperate: Take +1 health for you and any companions."]],
+	choice["partake", p["Partake: Suffer \[Dash]1 supply and take +1 health for you and any companions."]],
+	choice["relax", p["Relax: Take +1 spirit."]],
+	choice["focus", p["Focus: Take +1 momentum."]],
+	choice["prepare", p["Prepare: When you break camp, add +1 if you ", i["Undertake a Journey"], "."]]
+};
+
+
 moves["makeCamp"] = move[
 	"Make Camp",
 	paras[
 		p[b["When you rest and recover for several hours in the wild,"], " roll +supply."]
 	],
-	paras[
-		p["You and your allies may each choose two."],
-		p["\:2734 Recuperate: Take +1 health for you and any companions."],
-		p["\:2734 Partake: Suffer \[Dash]1 supply and take +1 health for you and any companions."],
-		p["\:2734 Relax: Take +1 spirit."],
-		p["\:2734 Focus: Take +1 momentum."],
-		p["\:2734 Prepare: When you break camp, add +1 if you ", i["Undertake a Journey"], "."]
+	choiceSection[
+		{p["You and your allies may each choose two."]},
+		makeCampChoices
 	],
-	paras[
-		p["You and your allies may each choose one."],
-		p["\:2734 Recuperate: Take +1 health for you and any companions."],
-		p["\:2734 Partake: Suffer \[Dash]1 supply and take +1 health for you and any companions."],
-		p["\:2734 Relax: Take +1 spirit."],
-		p["\:2734 Focus: Take +1 momentum."],
-		p["\:2734 Prepare: When you break camp, add +1 if you ", i["Undertake a Journey"], "."]
+	choiceSection[
+		{p["You and your allies may each choose one."]},
+		makeCampChoices
 	],
 	paras[
 		p["You take no comfort. ", i["Pay the Price"], "."]
@@ -260,6 +325,12 @@ moves["checkYourGear"] = move[
 (*Undertake a Journey*)
 
 
+journeyWaypointChoices = {
+	choice["resources", p["You make good use of your resources: Mark progress."]],
+	choice["speed", p["You move at speed: Mark progress and take +1 momentum, but suffer \[Dash]1 supply."]]
+};
+
+
 moves["undertakeAJourney"] = move[
 	"Undertake a Journey",
 	paras[
@@ -271,10 +342,9 @@ moves["undertakeAJourney"] = move[
 		p["\:2734 Epic journey: 1 tick per waypoint."],
 		p["Then, for each segment of your journey, roll +wits. If you are setting off from a community with which you share a bond, add +1 to your initial roll."]
 	],
-	paras[
-		p["You reach a waypoint. If the waypoint is unknown to you, envision it (", i["Ask the Oracle"], " if unsure). Then, choose one."],
-		p["\:2734 You make good use of your resources: Mark progress."],
-		p["\:2734 You move at speed: Mark progress and take +1 momentum, but suffer \[Dash]1 supply."]
+	choiceSection[
+		{p["You reach a waypoint. If the waypoint is unknown to you, envision it (", i["Ask the Oracle"], " if unsure). Then, choose one."]},
+		journeyWaypointChoices
 	],
 	paras[
 		p["You reach a waypoint and mark progress, but suffer \[Dash]1 supply."]
@@ -289,15 +359,20 @@ moves["undertakeAJourney"] = move[
 (*Reach Your Destination*)
 
 
+destinationFavorChoices = {
+	choice["move", p["Make another move now (not a progress move), and add +1."]],
+	choice["momentum", p["Take +1 momentum."]]
+};
+
+
 moves["reachYourDestination"] = move[
 	"Reach Your Destination",
 	paras[
 		p[b["When your journey comes to an end,"], " roll the challenge dice and compare to your progress. Momentum is ignored on this roll."]
 	],
-	paras[
-		p["The situation at your destination favors you. Choose one."],
-		p["\:2734 Make another move now (not a progress move), and add +1."],
-		p["\:2734 Take +1 momentum."]
+	choiceSection[
+		{p["The situation at your destination favors you. Choose one."]},
+		destinationFavorChoices
 	],
 	paras[
 		p["You arrive but face an unforeseen hazard or complication. Envision what you find (", i["Ask the Oracle"], " if unsure)."]
@@ -312,6 +387,15 @@ moves["reachYourDestination"] = move[
 (*Follow a Path*)
 
 
+followAPathWeakChoices = {
+	choice["longer", p["You took longer than expected."]],
+	choice["harm", p["You pressed on through pain, sickness, or weariness: ", i["Endure Harm"], "."]],
+	choice["stress", p["You suffered under the burden of foul weather, worries, or fearful locations: ", i["Endure Stress"], "."]],
+	choice["resources", p["You wasted resources."]],
+	choice["hazard", p["You face a complication or hazard at the destination. Envision what you find (", i["Ask the Oracle"], " if unsure)."]]
+};
+
+
 moves["followAPath"] = move[
 	"Follow a Path",
 	paras[
@@ -320,13 +404,9 @@ moves["followAPath"] = move[
 	paras[
 		p["You reach your destination and the situation favors you. Take +1 momentum."]
 	],
-	paras[
-		p["You complete the journey, but face a cost or complication. Choose one or more."],
-		p["\:2734 You took longer than expected."],
-		p["\:2734 You pressed on through pain, sickness, or weariness: ", i["Endure Harm"], "."],
-		p["\:2734 You suffered under the burden of foul weather, worries, or fearful locations: ", i["Endure Stress"], "."],
-		p["\:2734 You wasted resources."],
-		p["\:2734 You face a complication or hazard at the destination. Envision what you find (", i["Ask the Oracle"], " if unsure)."]
+	choiceSection[
+		{p["You complete the journey, but face a cost or complication. Choose one or more."]},
+		followAPathWeakChoices
 	],
 	paras[
 		p["You are waylaid by a dire threat, and must ", i["Pay the Price"], ". If you overcome this obstacle, you may push on safely to your destination."]
@@ -342,14 +422,19 @@ moves["followAPath"] = move[
 (*Begin the Scene*)
 
 
+beginSceneRankChoices = {
+	choice["troublesome", p["You have a clear advantage: Troublesome."]],
+	choice["dangerous", p["You are ready to act: Dangerous."]],
+	choice["formidable", p["You are unprepared or outmatched: Formidable."]]
+};
+
+
 moves["beginTheScene"] = Association[];
 moves["beginTheScene", "name"] = "Begin the Scene";
-moves["beginTheScene", "header"] = paras[
-	p[b["When you face an extended or complex challenge,"], " name your objective and choose a rank as appropriate to the situation."],
-	p["\:2734 You have a clear advantage: Troublesome."],
-	p["\:2734 You are ready to act: Dangerous."],
-	p["\:2734 You are unprepared or outmatched: Formidable."],
-	p["Then, activate a four\[Dash]segment countdown track and ", i["Face Danger"], " or ", i["Secure an Advantage"], " to take action."]
+moves["beginTheScene", "header"] = choiceSection[
+	{p[b["When you face an extended or complex challenge,"], " name your objective and choose a rank as appropriate to the situation."]},
+	beginSceneRankChoices,
+	{p["Then, activate a four\[Dash]segment countdown track and ", i["Face Danger"], " or ", i["Secure an Advantage"], " to take action."]}
 ];
 
 
@@ -398,10 +483,9 @@ moves["secureAnAdvantageScene"] = move[
 		p["\:2734 Take +2 momentum."],
 		p["\:2734 Add +1 on your next move (not a progress move)."]
 	],
-	paras[
-		p["Choose one."],
-		p["\:2734 Take +2 momentum."],
-		p["\:2734 Add +1 on your next move (not a progress move)."]
+	choiceSection[
+		{p["Choose one."]},
+		secureAnAdvantageChoices
 	],
 	paras[
 		p["You fail or your assumptions betray you. Mark a countdown segment and ", i["Pay the Price"], ". ", b["On a match,"], " mark two segments and ", i["Pay the Price"], "."]
@@ -438,6 +522,12 @@ moves["finishTheScene"] = move[
 (*Swear an Iron Vow*)
 
 
+vowObstacleChoices = {
+	choice["pressOn", p["You press on: Suffer \[Dash]2 momentum, and do what you must to overcome this obstacle."]],
+	choice["giveUp", p["You give up: ", i["Forsake Your Vow"], "."]]
+};
+
+
 moves["swearAnIronVow"] = move[
 	"Swear an Iron Vow",
 	paras[
@@ -449,10 +539,9 @@ moves["swearAnIronVow"] = move[
 	paras[
 		p["You are determined but begin your quest with more questions than answers. Take +1 momentum, and envision what you do to find a path forward."]
 	],
-	paras[
-		p["You face a significant obstacle before you can begin your quest. Envision what stands in your way (", i["Ask the Oracle"], " if unsure), and choose one."],
-		p["\:2734 You press on: Suffer \[Dash]2 momentum, and do what you must to overcome this obstacle."],
-		p["\:2734 You give up: ", i["Forsake Your Vow"], "."]
+	choiceSection[
+		{p["You face a significant obstacle before you can begin your quest. Envision what stands in your way (", i["Ask the Oracle"], " if unsure), and choose one."]},
+		vowObstacleChoices
 	]
 ];
 
@@ -484,6 +573,12 @@ moves["reachAMilestone", "header"] = paras[
 (*Fulfill Your Vow*)
 
 
+vowUndoneChoices = {
+	choice["recommit", p["You recommit: Clear all but one filled progress, and raise the quest\[CloseCurlyQuote]s rank by one (if not already epic)."]],
+	choice["giveUp", p["You give up: ", i["Forsake Your Vow"], "."]]
+};
+
+
 moves["fulfillYourVow"] = move[
 	"Fulfill Your Vow",
 	paras[
@@ -495,10 +590,9 @@ moves["fulfillYourVow"] = move[
 	paras[
 		p["There is more to be done or you realize the truth of your quest. Envision what you discover (", i["Ask the Oracle"], " if unsure). Then, mark experience (troublesome=0; dangerous=1; formidable=2; extreme=3; epic=4). You may ", i["Swear an Iron Vow"], " to set things right. If you do, add +1."]
 	],
-	paras[
-		p["Your quest is undone. Envision what happens (", i["Ask the Oracle"], " if unsure), and choose one."],
-		p["\:2734 You recommit: Clear all but one filled progress, and raise the quest\[CloseCurlyQuote]s rank by one (if not already epic)."],
-		p["\:2734 You give up: ", i["Forsake Your Vow"], "."]
+	choiceSection[
+		{p["Your quest is undone. Envision what happens (", i["Ask the Oracle"], " if unsure), and choose one."]},
+		vowUndoneChoices
 	]
 ];
 
@@ -534,13 +628,18 @@ moves["advance", "header"] = paras[
 (*Pay the Price*)
 
 
+payThePriceChoices = {
+	choice["obvious", p["Make the most obvious negative outcome happen."]],
+	choice["oracle", p["Envision two negative outcomes. Rate one as \[OpenCurlyQuote]likely\[CloseCurlyQuote], and ", i["Ask the Oracle"], " using the Yes/No table. On a \[OpenCurlyQuote]yes\[CloseCurlyQuote], make that outcome happen. Otherwise, make it the other."]],
+	choice["table", p["Roll on the Pay the Price table. If you have difficulty interpreting the result to fit the current situation, roll again."]]
+};
+
+
 moves["payThePrice"] = Association[];
 moves["payThePrice", "name"] = "Pay the Price";
-moves["payThePrice", "header"] = paras[
-	p[b["When you suffer the outcome of a move,"], " choose one."],
-	p["\:2734 Make the most obvious negative outcome happen."],
-	p["\:2734 Envision two negative outcomes. Rate one as \[OpenCurlyQuote]likely\[CloseCurlyQuote], and ", i["Ask the Oracle"], " using the Yes/No table. On a \[OpenCurlyQuote]yes\[CloseCurlyQuote], make that outcome happen. Otherwise, make it the other."],
-	p["\:2734 Roll on the Pay the Price table. If you have difficulty interpreting the result to fit the current situation, roll again."]
+moves["payThePrice", "header"] = choiceSection[
+	{p[b["When you suffer the outcome of a move,"], " choose one."]},
+	payThePriceChoices
 ];
 
 
@@ -548,15 +647,20 @@ moves["payThePrice", "header"] = paras[
 (*Ask the Oracle*)
 
 
+askTheOracleChoices = {
+	choice["conclusion", p["Draw a conclusion: Decide the answer based on the most interesting and obvious result."]],
+	choice["yesNo", p["Ask a yes/no question: Decide the odds of a \[OpenCurlyQuote]yes\[CloseCurlyQuote], and roll on the Yes/No table to check the answer."]],
+	choice["pickTwo", p["Pick two: Envision two options. Rate one as \[OpenCurlyQuote]likely\[CloseCurlyQuote], and roll on the Yes/No table to see if it is true. If not, it is the other."]],
+	choice["prompt", p["Spark an idea: Brainstorm or use a random prompt."]]
+};
+
+
 moves["askTheOracle"] = Association[];
 moves["askTheOracle", "name"] = "Ask the Oracle";
-moves["askTheOracle", "header"] = paras[
-	p[b["When you seek to resolve questions, discover details in the world, determine how other characters respond, or trigger encounters or events,"], " you may\[Ellipsis]"],
-	p["\:2734 Draw a conclusion: Decide the answer based on the most interesting and obvious result."],
-	p["\:2734 Ask a yes/no question: Decide the odds of a \[OpenCurlyQuote]yes\[CloseCurlyQuote], and roll on the Yes/No table to check the answer."],
-	p["\:2734 Pick two: Envision two options. Rate one as \[OpenCurlyQuote]likely\[CloseCurlyQuote], and roll on the Yes/No table to see if it is true. If not, it is the other."],
-	p["\:2734 Spark an idea: Brainstorm or use a random prompt."],
-	p[b["On a match,"], " an extreme result or twist has occurred."]
+moves["askTheOracle", "header"] = choiceSection[
+	{p[b["When you seek to resolve questions, discover details in the world, determine how other characters respond, or trigger encounters or events,"], " you may\[Ellipsis]"]},
+	askTheOracleChoices,
+	{p[b["On a match,"], " an extreme result or twist has occurred."]}
 ];
 
 
@@ -603,38 +707,36 @@ moves["aidYourAlly", "header"] = paras[
 (*Sojourn*)
 
 
+sojournChoices = {
+	choiceGroup["Clear a condition", {
+		choice["mend", p["Mend: Clear a wounded debility and take +1 health."]],
+		choice["hearten", p["Hearten: Clear a shaken debility and take +1 spirit."]],
+		choice["equip", p["Equip: Clear an unprepared debility and take +1 supply."]]
+	}],
+	choiceGroup["Recover", {
+		choice["recuperate", p["Recuperate: Take +2 health for yourself and any companions."]],
+		choice["consort", p["Consort: Take +2 spirit."]],
+		choice["provision", p["Provision: Take +2 supply."]],
+		choice["plan", p["Plan: Take +2 momentum."]]
+	}],
+	choiceGroup["Provide Aid", {
+		choice["quest", p["Take a quest: Envision what this community needs, or what trouble it is facing (", i["Ask the Oracle"], " if unsure). If you choose to help, ", i["Swear an Iron Vow"], " and add +1."]]
+	}]
+};
+
+
 moves["sojourn"] = move[
 	"Sojourn",
 	paras[
 		p[b["When you spend time in a community seeking assistance,"], " roll +heart. If you share a bond, add +1."]
 	],
-	paras[
-		p["You and your allies may each choose two from within the categories below. If you share a bond, choose one more."],
-		p[b["Clear a condition"]],
-		p["\:2734 Mend: Clear a wounded debility and take +1 health."],
-		p["\:2734 Hearten: Clear a shaken debility and take +1 spirit."],
-		p["\:2734 Equip: Clear an unprepared debility and take +1 supply."],
-		p[b["Recover"]],
-		p["\:2734 Recuperate: Take +2 health for yourself and any companions."],
-		p["\:2734 Consort: Take +2 spirit."],
-		p["\:2734 Provision: Take +2 supply."],
-		p["\:2734 Plan: Take +2 momentum."],
-		p[b["Provide Aid"]],
-		p["\:2734 Take a quest: Envision what this community needs, or what trouble it is facing (", i["Ask the Oracle"], " if unsure). If you choose to help, ", i["Swear an Iron Vow"], " and add +1."]
+	choiceSection[
+		{p["You and your allies may each choose two from within the categories below. If you share a bond, choose one more."]},
+		sojournChoices
 	],
-	paras[
-		p["You and your allies may each choose one from within the categories below. If you share a bond, choose one more."],
-		p[b["Clear a condition"]],
-		p["\:2734 Mend: Clear a wounded debility and take +1 health."],
-		p["\:2734 Hearten: Clear a shaken debility and take +1 spirit."],
-		p["\:2734 Equip: Clear an unprepared debility and take +1 supply."],
-		p[b["Recover"]],
-		p["\:2734 Recuperate: Take +2 health for yourself and any companions."],
-		p["\:2734 Consort: Take +2 spirit."],
-		p["\:2734 Provision: Take +2 supply."],
-		p["\:2734 Plan: Take +2 momentum."],
-		p[b["Provide Aid"]],
-		p["\:2734 Take a quest: Envision what this community needs, or what trouble it is facing (", i["Ask the Oracle"], " if unsure). If you choose to help, ", i["Swear an Iron Vow"], " and add +1."]
+	choiceSection[
+		{p["You and your allies may each choose one from within the categories below. If you share a bond, choose one more."]},
+		sojournChoices
 	],
 	paras[
 		p["You find no help here. ", i["Pay the Price"], "."]
@@ -662,15 +764,20 @@ moves["sojournFocus"] = move[
 (*Forge a Bond*)
 
 
+spiritMomentumChoices = {
+	choice["spirit", p["Take +1 spirit."]],
+	choice["momentum", p["Take +2 momentum."]]
+};
+
+
 moves["forgeABond"] = move[
 	"Forge a Bond",
 	paras[
 		p[b["When you spend significant time with a person or community, stand together to face hardships, or make sacrifices for their cause,"], " you can attempt to create a bond. When you do, roll +heart. If you make this move after you successfully ", i["Fulfill Your Vow"], " to their benefit, you may reroll any dice."]
 	],
-	paras[
-		p["Make note of the bond, mark a tick on your bond progress track, and choose one."],
-		p["\:2734 Take +1 spirit."],
-		p["\:2734 Take +2 momentum."]
+	choiceSection[
+		{p["Make note of the bond, mark a tick on your bond progress track, and choose one."]},
+		spiritMomentumChoices
 	],
 	paras[
 		p["They ask something more of you first. Envision what it is (", i["Ask the Oracle"], " if unsure), do it (or ", i["Swear an Iron Vow"], "), and mark the bond. If you refuse or fail, ", i["Pay the Price"], "."]
@@ -690,10 +797,9 @@ moves["testYourBond"] = move[
 	paras[
 		p[b["When your bond is tested through conflict, betrayal, or circumstance,"], " roll +heart."]
 	],
-	paras[
-		p["This test has strengthened your bond. Choose one."],
-		p["\:2734 Take +1 spirit."],
-		p["\:2734 Take +2 momentum."]
+	choiceSection[
+		{p["This test has strengthened your bond. Choose one."]},
+		spiritMomentumChoices
 	],
 	paras[
 		p["Your bond is fragile and you must prove your loyalty. Envision what they ask of you (", i["Ask the Oracle"], " if unsure), and do it (or ", i["Swear an Iron Vow"], "). If you refuse or fail, clear the bond and ", i["Pay the Price"], "."]
@@ -708,23 +814,29 @@ moves["testYourBond"] = move[
 (*Draw the Circle*)
 
 
+boastChoices = {
+	choice["firstStrike", p["Grant first strike: Your foe has initiative."]],
+	choice["bare", p["Bare yourself: Take no benefit of armor or shield; your foe\[CloseCurlyQuote]s harm is +1."]],
+	choice["noIron", p["Hold no iron: Take no benefit of weapons; your harm is 1."]],
+	choice["bloody", p["Bloody yourself: ", i["Endure Harm"], " (1 harm)."]],
+	choice["death", p["To the death: One way or another, this fight must end with death."]]
+};
+
+
 moves["drawTheCircle"] = move[
 	"Draw the Circle",
 	paras[
 		p[b["When you challenge someone to a formal duel, or accept a challenge,"], " roll +heart. If you share a bond with this community, add +1."]
 	],
-	paras[
-		p["Take +1 momentum. You may also choose up to two boasts and take +1 momentum for each."],
-		p["Then, make moves to resolve the fight. If you are the victor, you may make a lawful demand, and your opponent must comply or forfeit their honor and standing. If you refuse the challenge, surrender, or are defeated, they make a demand of you."]
+	choiceSection[
+		{p["Take +1 momentum. You may also choose up to two boasts and take +1 momentum for each."]},
+		boastChoices,
+		{p["Then, make moves to resolve the fight. If you are the victor, you may make a lawful demand, and your opponent must comply or forfeit their honor and standing. If you refuse the challenge, surrender, or are defeated, they make a demand of you."]}
 	],
-	paras[
-		p["You may choose one boast in exchange for +1 momentum."],
-		p["\:2734 Grant first strike: Your foe has initiative."],
-		p["\:2734 Bare yourself: Take no benefit of armor or shield; your foe\[CloseCurlyQuote]s harm is +1."],
-		p["\:2734 Hold no iron: Take no benefit of weapons; your harm is 1."],
-		p["\:2734 Bloody yourself: ", i["Endure Harm"], " (1 harm)."],
-		p["\:2734 To the death: One way or another, this fight must end with death."],
-		p["Then, make moves to resolve the fight. If you are the victor, you may make a lawful demand, and your opponent must comply or forfeit their honor and standing. If you refuse the challenge, surrender, or are defeated, they make a demand of you."]
+	choiceSection[
+		{p["You may choose one boast in exchange for +1 momentum."]},
+		boastChoices,
+		{p["Then, make moves to resolve the fight. If you are the victor, you may make a lawful demand, and your opponent must comply or forfeit their honor and standing. If you refuse the challenge, surrender, or are defeated, they make a demand of you."]}
 	],
 	paras[
 		p["You begin the duel at a disadvantage. Your foe has initiative. ", i["Pay the Price"], "."],
@@ -762,6 +874,12 @@ moves["writeYourEpilogue"] = move[
 (*Enter the Fray*)
 
 
+enterTheFrayWeakChoices = {
+	choice["bolster", p["Bolster your position: Take +2 momentum."]],
+	choice["initiative", p["Prepare to act: Take initiative."]]
+};
+
+
 moves["enterTheFray"] = move[
 	"Enter the Fray",
 	paras[
@@ -779,10 +897,9 @@ moves["enterTheFray"] = move[
 	paras[
 		p["Take +2 momentum. You have initiative."]
 	],
-	paras[
-		p["Choose one."],
-		p["\:2734 Bolster your position: Take +2 momentum."],
-		p["\:2734 Prepare to act: Take initiative."]
+	choiceSection[
+		{p["Choose one."]},
+		enterTheFrayWeakChoices
 	],
 	paras[
 		p["Combat begins with you at a disadvantage. ", i["Pay the Price"], ". Your foe has initiative."]
@@ -815,15 +932,20 @@ moves["strike"] = move[
 (*Clash*)
 
 
+clashStrongChoices = {
+	choice["bolster", p["You bolster your position: Take +1 momentum."]],
+	choice["opening", p["You find an opening: Inflict +1 harm."]]
+};
+
+
 moves["clash"] = move[
 	"Clash",
 	paras[
 		p[b["When your foe has initiative and you fight with them in close quarters,"], " roll +iron. When you exchange a volley at range, or shoot at an advancing foe, roll +edge."]
 	],
-	paras[
-		p["Inflict your harm and choose one. You have the initiative."],
-		p["\:2734 You bolster your position: Take +1 momentum."],
-		p["\:2734 You find an opening: Inflict +1 harm."]
+	choiceSection[
+		{p["Inflict your harm and choose one. You have the initiative."]},
+		clashStrongChoices
 	],
 	paras[
 		p["Inflict your harm, but then ", i["Pay the Price"], ". Your foe has initiative."]
@@ -876,6 +998,16 @@ moves["battle"] = move[
 (*End the Fight*)
 
 
+endTheFightWeakChoices = {
+	choice["harm", p["It\[CloseCurlyQuote]s worse than you thought: ", i["Endure Harm"], "."]],
+	choice["stress", p["You are overcome: ", i["Endure Stress"], "."]],
+	choice["danger", p["Your victory is short\[Dash]lived: A new danger or foe appears, or an existing danger worsens."]],
+	choice["collateral", p["You suffer collateral damage: Something of value is lost or broken, or someone important must pay the cost."]],
+	choice["objective", p["You\[CloseCurlyQuote]ll pay for it: An objective falls out of reach."]],
+	choice["vengeance", p["Others won\[CloseCurlyQuote]t forget: You are marked for vengeance."]]
+};
+
+
 moves["endTheFight"] = move[
 	"End the Fight",
 	paras[
@@ -885,14 +1017,9 @@ moves["endTheFight"] = move[
 	paras[
 		p["This foe is no longer in the fight. They are killed, taken out of action, driven off, or forced to surrender as appropriate to the situation and your intent (", i["Ask the Oracle"], " if unsure)."]
 	],
-	paras[
-		p["As above, but you must also choose one."],
-		p["\:2734 It\[CloseCurlyQuote]s worse than you thought: ", i["Endure Harm"], "."],
-		p["\:2734 You are overcome: ", i["Endure Stress"], "."],
-		p["\:2734 Your victory is short\[Dash]lived: A new danger or foe appears, or an existing danger worsens."],
-		p["\:2734 You suffer collateral damage: Something of value is lost or broken, or someone important must pay the cost."],
-		p["\:2734 You\[CloseCurlyQuote]ll pay for it: An objective falls out of reach."],
-		p["\:2734 Others won\[CloseCurlyQuote]t forget: You are marked for vengeance."]
+	choiceSection[
+		{p["As above, but you must also choose one."]},
+		endTheFightWeakChoices
 	],
 	paras[
 		p["You have lost this fight. ", i["Pay the Price"], "."]
@@ -908,15 +1035,20 @@ moves["endTheFight"] = move[
 (*Endure Harm*)
 
 
+endureHarmStrongChoices = {
+	choice["shake", p["Shake it off: If your health is greater than 0, suffer \[Dash]1 momentum in exchange for +1 health."]],
+	choice["embrace", p["Embrace the pain: Take +1 momentum."]]
+};
+
+
 moves["endureHarm"] = move[
 	"Endure Harm",
 	paras[
 		p[b["When you face physical damage,"], " suffer \[Dash]health equal to your foe\[CloseCurlyQuote]s rank or as appropriate to the situation. If your health is 0, suffer \[Dash]momentum equal to any remaining \[Dash]health. Then, roll +health or +iron, whichever is higher."]
 	],
-	paras[
-		p["Choose one."],
-		p["\:2734 Shake it off: If your health is greater than 0, suffer \[Dash]1 momentum in exchange for +1 health."],
-		p["\:2734 Embrace the pain: Take +1 momentum."]
+	choiceSection[
+		{p["Choose one."]},
+		endureHarmStrongChoices
 	],
 	paras[
 		p["You press on."]
@@ -931,6 +1063,12 @@ moves["endureHarm"] = move[
 (*Face Death*)
 
 
+faceDeathWeakChoices = {
+	choice["sacrifice", p["You die, but not before making a noble sacrifice. Envision your final moments."]],
+	choice["quest", p["Death desires something of you in exchange for your life. Envision what it wants (", i["Ask the Oracle"], " if unsure), and ", i["Swear an Iron Vow"], " (formidable or extreme) to complete that quest. If you fail to score a hit when you ", i["Swear an Iron Vow"], ", or refuse the quest, you are dead. Otherwise, you return to the mortal world and are now cursed. You may only clear the cursed debility by completing the quest."]]
+};
+
+
 moves["faceDeath"] = move[
 	"Face Death",
 	paras[
@@ -939,10 +1077,9 @@ moves["faceDeath"] = move[
 	paras[
 		p["Death rejects you. You are cast back into the mortal world."]
 	],
-	paras[
-		p["Choose one."],
-		p["\:2734 You die, but not before making a noble sacrifice. Envision your final moments."],
-		p["\:2734 Death desires something of you in exchange for your life. Envision what it wants (", i["Ask the Oracle"], " if unsure), and ", i["Swear an Iron Vow"], " (formidable or extreme) to complete that quest. If you fail to score a hit when you ", i["Swear an Iron Vow"], ", or refuse the quest, you are dead. Otherwise, you return to the mortal world and are now cursed. You may only clear the cursed debility by completing the quest."]
+	choiceSection[
+		{p["Choose one."]},
+		faceDeathWeakChoices
 	],
 	paras[
 		p["You are dead."]
@@ -977,15 +1114,20 @@ moves["companionEndureHarm"] = move[
 (*Endure Stress*)
 
 
+endureStressStrongChoices = {
+	choice["shake", p["Shake it off: If your spirit is greater than 0, suffer \[Dash]1 momentum in exchange for +1 spirit."]],
+	choice["embrace", p["Embrace the darkness: Take +1 momentum."]]
+};
+
+
 moves["endureStress"] = move[
 	"Endure Stress",
 	paras[
 		p[b["When you face mental shock or despair,"], " suffer \[Dash]spirit equal to your foe\[CloseCurlyQuote]s rank or as appropriate to the situation. If your spirit is 0, suffer \[Dash]momentum equal to any remaining \[Dash]spirit. Then, roll +spirit or +heart, whichever is higher."]
 	],
-	paras[
-		p["Choose one."],
-		p["\:2734 Shake it off: If your spirit is greater than 0, suffer \[Dash]1 momentum in exchange for +1 spirit."],
-		p["\:2734 Embrace the darkness: Take +1 momentum."]
+	choiceSection[
+		{p["Choose one."]},
+		endureStressStrongChoices
 	],
 	paras[
 		p["You press on."]
@@ -1000,6 +1142,12 @@ moves["endureStress"] = move[
 (*Face Desolation*)
 
 
+faceDesolationWeakChoices = {
+	choice["sacrifice", p["Your spirit or sanity breaks, but not before you make a noble sacrifice. Envision your final moments."]],
+	choice["vision", p["You see a vision of a dreaded event coming to pass. Envision that dark future (", i["Ask the Oracle"], " if unsure), and ", i["Swear an Iron Vow"], " (formidable or extreme) to prevent it. If you fail to score a hit when you ", i["Swear an Iron Vow"], ", or refuse the quest, you are lost. Otherwise, you return to your senses and are now tormented. You may only clear the tormented debility by completing the quest."]]
+};
+
+
 moves["faceDesolation"] = move[
 	"Face Desolation",
 	paras[
@@ -1008,10 +1156,9 @@ moves["faceDesolation"] = move[
 	paras[
 		p["You resist and press on."]
 	],
-	paras[
-		p["Choose one."],
-		p["\:2734 Your spirit or sanity breaks, but not before you make a noble sacrifice. Envision your final moments."],
-		p["\:2734 You see a vision of a dreaded event coming to pass. Envision that dark future (", i["Ask the Oracle"], " if unsure), and ", i["Swear an Iron Vow"], " (formidable or extreme) to prevent it. If you fail to score a hit when you ", i["Swear an Iron Vow"], ", or refuse the quest, you are lost. Otherwise, you return to your senses and are now tormented. You may only clear the tormented debility by completing the quest."]
+	choiceSection[
+		{p["Choose one."]},
+		faceDesolationWeakChoices
 	],
 	paras[
 		p["You succumb to despair or horror and are lost."]
@@ -1034,12 +1181,17 @@ moves["outOfSupply", "header"] = paras[
 (*Face a Setback*)
 
 
+faceSetbackChoices = {
+	choice["exchange", p["Exchange each additional \[Dash]momentum for any combination of \[Dash]health, \[Dash]spirit, or \[Dash]supply as appropriate to the circumstances."]],
+	choice["undermineProgress", p["Envision an event or discovery (", i["Ask the Oracle"], " if unsure) which undermines your progress in a current quest, journey, or fight. Then, for each additional \[Dash]momentum, clear 1 unit of progress on that track per its rank (troublesome=clear 3 progress; dangerous=clear 2 progress; formidable=clear 1 progress; extreme=clear 2 ticks; epic=clear 1 tick)."]]
+};
+
+
 moves["faceASetback"] = Association[];
 moves["faceASetback", "name"] = "Face a Setback";
-moves["faceASetback", "header"] = paras[
-	p[b["When your momentum is at its minimum (\[Dash]6), and you suffer additional \[Dash]momentum,"], " choose one."],
-	p["\:2734 Exchange each additional \[Dash]momentum for any combination of \[Dash]health, \[Dash]spirit, or \[Dash]supply as appropriate to the circumstances."],
-	p["\:2734 Envision an event or discovery (", i["Ask the Oracle"], " if unsure) which undermines your progress in a current quest, journey, or fight. Then, for each additional \[Dash]momentum, clear 1 unit of progress on that track per its rank (troublesome=clear 3 progress; dangerous=clear 2 progress; formidable=clear 1 progress; extreme=clear 2 ticks; epic=clear 1 tick)."]
+moves["faceASetback", "header"] = choiceSection[
+	{p[b["When your momentum is at its minimum (\[Dash]6), and you suffer additional \[Dash]momentum,"], " choose one."]},
+	faceSetbackChoices
 ];
 
 
@@ -1051,17 +1203,24 @@ moves["faceASetback", "header"] = paras[
 (*Discover a Site*)
 
 
+siteRankChoices = {
+	choice["troublesome", p["Troublesome site: 3 progress per area."]],
+	choice["dangerous", p["Dangerous site: 2 progress per area."]],
+	choice["formidable", p["Formidable site: 1 progress per area."]],
+	choice["extreme", p["Extreme site: 2 ticks per area."]],
+	choice["epic", p["Epic site: 1 tick per area."]]
+};
+
+
 moves["discoverASite"] = Association[];
 moves["discoverASite", "name"] = "Discover a Site";
-moves["discoverASite", "header"] = paras[
-	p[b["When you resolve to enter a perilous site in pursuit of an objective,"], " choose the theme and domain which best represent its nature, and give it a rank."],
-	p["\:2734 Troublesome site: 3 progress per area."],
-	p["\:2734 Dangerous site: 2 progress per area."],
-	p["\:2734 Formidable site: 1 progress per area."],
-	p["\:2734 Extreme site: 2 ticks per area."],
-	p["\:2734 Epic site: 1 tick per area."],
-	p["If you are returning to a previously explored site, roll both challenge dice, take the lowest value, and clear that number of progress boxes."],
-	p["Then, ", i["Delve the Depths"], " to explore this place."]
+moves["discoverASite", "header"] = choiceSection[
+	{p[b["When you resolve to enter a perilous site in pursuit of an objective,"], " choose the theme and domain which best represent its nature, and give it a rank."]},
+	siteRankChoices,
+	{
+		p["If you are returning to a previously explored site, roll both challenge dice, take the lowest value, and clear that number of progress boxes."],
+		p["Then, ", i["Delve the Depths"], " to explore this place."]
+	}
 ];
 
 
@@ -1093,13 +1252,20 @@ moves["delveTheDepths"] = move[
 (*Find an Opportunity*)
 
 
+findOpportunityChoices = {
+	choice["insight", p["Gain insight or prepare: Take +1 momentum."]],
+	choice["action", p["Take action now: You and any allies may make a move (not a progress move) which directly leverages the opportunity. When you do, add +1 and take +1 momentum on a hit."]]
+};
+
+
 moves["findAnOpportunity"] = Association[];
 moves["findAnOpportunity", "name"] = "Find an Opportunity";
-moves["findAnOpportunity", "header"] = paras[
-	p[b["When you encounter a helpful situation or feature within a site,"], " roll on the Find an Opportunity table."],
-	p["If you are making this move as a result of a strong hit on ", i["Delve the Depths"], ", you may pick or envision an opportunity instead of rolling. Then, choose one."],
-	p["\:2734 Gain insight or prepare: Take +1 momentum."],
-	p["\:2734 Take action now: You and any allies may make a move (not a progress move) which directly leverages the opportunity. When you do, add +1 and take +1 momentum on a hit."]
+moves["findAnOpportunity", "header"] = choiceSection[
+	{
+		p[b["When you encounter a helpful situation or feature within a site,"], " roll on the Find an Opportunity table."],
+		p["If you are making this move as a result of a strong hit on ", i["Delve the Depths"], ", you may pick or envision an opportunity instead of rolling. Then, choose one."]
+	},
+	findOpportunityChoices
 ];
 
 
@@ -1123,10 +1289,9 @@ moves["locateYourObjective"] = move[
 	paras[
 		p[b["When your exploration of a site comes to an end,"], " roll the challenge dice and compare to your progress. Momentum is ignored on this roll."]
 	],
-	paras[
-		p["You locate your objective and the situation favors you. Choose one."],
-		p["\:2734 Make another move now (not a progress move), and add +1."],
-		p["\:2734 Take +1 momentum."]
+	choiceSection[
+		{p["You locate your objective and the situation favors you. Choose one."]},
+		destinationFavorChoices
 	],
 	paras[
 		p["You locate your objective but face an unforeseen hazard or complication. Envision what you find (", i["Ask the Oracle"], " if unsure)."]
@@ -1139,6 +1304,16 @@ moves["locateYourObjective"] = move[
 
 (* ::Subsubsection::Closed:: *)
 (*Escape the Depths*)
+
+
+escapeDepthsWeakChoices = {
+	choice["harm", p["You are weary or wounded: ", i["Endure Harm"], "."]],
+	choice["stress", p["The experience leaves you shaken: ", i["Endure Stress"], "."]],
+	choice["delay", p["You are delayed, and it costs you."]],
+	choice["leftBehind", p["You leave behind something important."]],
+	choice["complication", p["You face a new complication as you emerge from the depths."]],
+	choice["revenge", p["A denizen plots their revenge."]]
+};
 
 
 moves["escapeTheDepths"] = move[
@@ -1154,14 +1329,9 @@ moves["escapeTheDepths"] = move[
 	paras[
 		p["You make your way safely out of the site. Take +1 momentum."]
 	],
-	paras[
-		p["You find your way out, but this place exacts its price. Choose one."],
-		p["\:2734 You are weary or wounded: ", i["Endure Harm"], "."],
-		p["\:2734 The experience leaves you shaken: ", i["Endure Stress"], "."],
-		p["\:2734 You are delayed, and it costs you."],
-		p["\:2734 You leave behind something important."],
-		p["\:2734 You face a new complication as you emerge from the depths."],
-		p["\:2734 A denizen plots their revenge."]
+	choiceSection[
+		{p["You find your way out, but this place exacts its price. Choose one."]},
+		escapeDepthsWeakChoices
 	],
 	paras[
 		p["A dire threat or imposing obstacle stands in your way. ", i["Reveal a Danger"], ". If you survive, you may make your escape."]
@@ -1188,16 +1358,21 @@ moves["markYourFailure", "header"] = paras[
 (*Learn from Your Failures*)
 
 
+learnFailuresStrongChoices = {
+	choice["adjust", p["Adjust your approach: Discard a single asset, and take 2 experience for each marked ability."]],
+	choice["oath", p["Make an oath: ", i["Swear an Iron Vow"], ", and reroll any dice."]],
+	choice["ready", p["Ready your next steps: Take +3 momentum."]]
+};
+
+
 moves["learnFromYourFailures"] = move[
 	"Learn from Your Failures",
 	paras[
 		p[b["When you spend time reflecting on your hardships and missteps,"], " and your failure track is 6 or greater, roll your challenge dice and compare to your progress. Momentum is ignored on this roll."]
 	],
-	paras[
-		p["You commit to making a dramatic change. Take 3 experience and clear all progress. Then, choose one."],
-		p["\:2734 Adjust your approach: Discard a single asset, and take 2 experience for each marked ability."],
-		p["\:2734 Make an oath: ", i["Swear an Iron Vow"], ", and reroll any dice."],
-		p["\:2734 Ready your next steps: Take +3 momentum."]
+	choiceSection[
+		{p["You commit to making a dramatic change. Take 3 experience and clear all progress. Then, choose one."]},
+		learnFailuresStrongChoices
 	],
 	paras[
 		p["You learn from your mistakes. Take 2 experience and clear all progress."]
