@@ -47,7 +47,7 @@ BeginPackage["IronLibrary`"];
 (*The following functions are exposed to the user.*)
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*State management*)
 
 
@@ -66,7 +66,7 @@ endChapter::usage =
 "endChapter[] saves the state for the next chapter and creates the next chapter notebook.";
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Character management*)
 
 
@@ -171,7 +171,7 @@ spendExperience::usage =
 spendExperience[n, character] adds n spent experience to character.";
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Moves*)
 
 
@@ -267,7 +267,7 @@ advance::usage =
 "advance[] displays the Advance move header.";
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*Fate moves*)
 
 
@@ -278,7 +278,10 @@ askTheOracle::usage =
 "askTheOracle[] displays the Ask the Oracle move header.
 askTheOracle[table] rolls on the oracle table table.
 askTheOracle[\"Yes/No\", odds] rolls on the Yes/No oracle using odds.
-askTheOracle[\"Yes/No\", yesOutcome, noOutcome] rolls on a 50/50 Yes/No oracle with the specified yes and no outcomes.";
+askTheOracle[\"Yes/No\", yesOutcome, noOutcome] rolls on a 50/50 Yes/No oracle with the specified yes and no outcomes.
+askTheOracle[\"Reveal a Danger\"] rolls on the alternate Reveal a Danger oracle.
+askTheOracle[\"Reveal a Danger\", theme, domain] rolls on the Reveal a Danger oracle for theme and domain.
+askTheOracle[\"Delve Site Feature\", theme, domain] rolls on the Delve Site Feature oracle for theme and domain.";
 
 
 (* ::Subsubsection::Closed:: *)
@@ -428,7 +431,7 @@ wieldARarity::usage =
 "wieldARarity[] displays the Wield a Rarity move header.";
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Stats*)
 
 
@@ -442,7 +445,7 @@ Supply::usage =
 "Supply is a stat";
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Option names*)
 
 
@@ -507,7 +510,7 @@ Epic::usage =
 Begin["`Private`"]; 
 
 
-(* ::Section:: *)
+(* ::Section::Closed:: *)
 (*Private helpers*)
 
 
@@ -515,25 +518,25 @@ Begin["`Private`"];
 (*The following code implements the public interface above.*)
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Bookkeeping helpers*)
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Library path variable*)
 
 
 If[ !ValueQ[$IronLibraryPath], $IronLibraryPath = If[StringQ[$InputFileName] && $InputFileName =!= "", $InputFileName, $Failed]]; 
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Library directory variable*)
 
 
 ironLibraryDirectory[] := DirectoryName[$IronLibraryPath];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Imports*)
 
 
@@ -541,7 +544,7 @@ Get[FileNameJoin[{ironLibraryDirectory[], "MoveData.wl"}]];
 Get[FileNameJoin[{ironLibraryDirectory[], "OracleTables.wl"}]];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Name normalization*)
 
 
@@ -549,7 +552,7 @@ normalizeName[s_String] := Module[{name}, name = ToLowerCase[StringTrim[s]]; nam
      StringTrim[name, "_"]]; 
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*State initialization*)
 
 
@@ -560,7 +563,7 @@ ensureStateInitialized[] := Module[{base, seed}, If[AssociationQ[$state], Return
      $state]; 
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Notebook/path helpers*)
 
 
@@ -574,7 +577,7 @@ canonicalPath[p_String] := FileNameJoin[FileNameSplit[ExpandFileName[p]]];
 samePathQ[a_String, b_String] := canonicalPath[a] === canonicalPath[b]; 
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Notebook-name parsing*)
 
 
@@ -584,7 +587,7 @@ parseNotebookBase::badname = "Notebook name `1` does not match the expected form
 makeNotebookBase[data_Association] := StringRiffle[{data["Story"], ToString[data["ChapterNumber"]], data["Arc"], ToString[data["ArcChapterNumber"]]}, "-"]; 
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*State paths*)
 
 
@@ -609,7 +612,7 @@ nextNotebookPath[] := Module[{parent, nextBase}, parent = parentNotebookDirector
       Return[$Failed]]; FileNameJoin[{parent, nextBase, StringJoin[nextBase, ".nb"]}]];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Low-level save/load*)
 
 
@@ -638,7 +641,7 @@ chapterOverride[storyDir_String, chapterNumber_Integer] :=
    Lookup[loadChapterOverrides[storyDir], ToString[chapterNumber], Missing["NoOverride"]]; 
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Notebook creation*)
 
 
@@ -683,7 +686,7 @@ createChapterNotebook[path_String] := Module[{cells}, If[FileExistsQ[path], Retu
      path]; 
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Header updates*)
 
 
@@ -784,7 +787,7 @@ ensureChapterOneBoilerplate[] := Module[
 ];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Story name derivation*)
 
 
@@ -794,7 +797,7 @@ storyNameFromSoloCharacter[] := Module[{}, If[ValueQ[$soloCharacter] && StringQ[
 beginStory::noname = "No story name was supplied, and $soloCharacter has not been set. Either call beginStory[name] or create a character first."; 
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Chapter notebook helper*)
 
 
@@ -869,7 +872,7 @@ propagateArcRename[storyDir_String, oldArc_String, oldArcStart_Integer, newArc_S
      results = (renameChapterDirectoryForArc[#1, oldArc, oldArcStart, newArc, currentChapterNumber, arcTitle] & ) /@ chapterDirs; If[MemberQ[results, $Failed], Return[$Failed]]; results]; 
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Chapter seeding*)
 
 
@@ -880,7 +883,7 @@ nextChapterSeed[] := Module[{base}, base = nextNotebookBase[]; If[base === $Fail
 stateForNextChapter[] := Module[{next, seed}, seed = nextChapterSeed[]; If[seed === $Failed, Return[$Failed]]; next = Association[$state]; next["seed"] = seed; next]; 
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*General mechanics helpers*)
 
 
@@ -984,7 +987,7 @@ getProgress[trackName_String, character_:$soloCharacter] := $state[character, "p
 getRank[trackName_String, character_:$soloCharacter] := $state[character, "progressTracks", trackName, "rank"];
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*General presentation helpers*)
 
 
@@ -1054,7 +1057,7 @@ moveTextStyle[x_] := Style[
 ];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Presentation preparation*)
 
 
@@ -1135,7 +1138,7 @@ actionRollResultDisplay[result_String, match_] := Module[{color, label}, color =
     Style[StringJoin[label, If[match, " (MATCH)", ""]], FontFamily -> "Futura", FontWeight -> Bold, FontSize -> scaledSize[42], FontTracking -> "Wide", color]]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Math column*)
 
 
@@ -1214,7 +1217,7 @@ ironFramed[x_] := Framed[
 ];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Display action roll*)
 
 
@@ -1224,7 +1227,7 @@ displayActionRoll[roll_Association] := Print[ironFramed[Grid[{{Item[header["Acti
       Spacings -> {2, {Automatic, rollHeaderBodyGap, rollBodyResultGap}}, FrameStyle -> None]]]; 
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Display momentum burn*)
 
 
@@ -1234,7 +1237,7 @@ displayMomentumBurn[burn_Association] := Print[ironFramed[Column[{Item[header["M
       Spacings -> {2, {Automatic, rollHeaderBodyGap, rollBodyResultGap}}]]]; 
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Display progress roll*)
 
 
@@ -1243,7 +1246,7 @@ displayProgressRoll[roll_Association] := Print[ironFramed[Grid[{{Item[header["Pr
       Alignment -> {{Center}, {Center, Top, Center}}, Spacings -> {2, {Automatic, rollHeaderBodyGap, rollBodyResultGap}}]]]; 
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Display oracle roll*)
 
 
@@ -1254,7 +1257,7 @@ displayOracleRoll[table_String, {d1_, d2_}, match_, outcome_String] :=
       Spacings -> {0, {Automatic, rollHeaderBodyGap, 1, 2}}]]]; 
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Oracle roll*)
 
 
@@ -1268,18 +1271,18 @@ oracleRoll[tableName_String, table_Association] := Module[{oracleDice, od1, od2,
 ];
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Move helpers*)
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Move outcome*)
 
 
 moveOutcome[move_String, result_String] := moves[move, result];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Move header presentation*)
 
 
@@ -1295,7 +1298,7 @@ displayMoveHeader[moveKey_String] :=
   ];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Move outcome presentation*)
 
 
@@ -1311,7 +1314,7 @@ displayMoveOutcome[moveKey_String, result_String] :=
   ];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Combined move display*)
 
 
@@ -1319,7 +1322,7 @@ displayMove[moveKey_String]:=displayMoveHeader[moveKey];
 displayMove[moveKey_String, roll_Association]:=displayMoveOutcome[moveKey, roll["result"]];
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Constants*)
 
 
@@ -1327,11 +1330,11 @@ stats = {Edge, Heart, Iron, Shadow, Wits, Health, Spirit, Supply};
 ranks = {Troublesome, Dangerous, Formidable, Extreme, Epic};
 
 
-(* ::Section:: *)
+(* ::Section::Closed:: *)
 (*General interface implementation*)
 
 
-(* ::Subsubsection:: *)
+(* ::Subsection::Closed:: *)
 (*Bookkeeping*)
 
 
@@ -1362,7 +1365,7 @@ endChapter[] := Module[{statePath, notebookPath}, statePath = nextStatePath[]; n
      If[saveExpressionToPath[statePath, stateForNextChapter[]] === $Failed, Return[$Failed]]; createChapterNotebook[notebookPath]; Association["StatePath" -> statePath, "NotebookPath" -> notebookPath]]; 
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsection::Closed:: *)
 (*Character management*)
 
 
@@ -1383,7 +1386,7 @@ setSoloCharacter[character_String] := Module[{},
 setSoloCharacter::nochar = "No character named `1` exists in the current state.";
 
 
-(* ::Subsubsection:: *)
+(* ::Subsection::Closed:: *)
 (*Action roll*)
 
 
@@ -1397,7 +1400,7 @@ actionRoll[(stat_)?statQ, character_String, opts:OptionsPattern[]] := Module[{ac
      If[OptionValue[Display], displayActionRoll[roll]]; roll]; 
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsection::Closed:: *)
 (*Burn momentum*)
 
 
@@ -1408,7 +1411,7 @@ burnMomentum[roll_Association, opts:OptionsPattern[]] := Module[{momentum, chall
      resetMomentum[roll["character"]]; If[OptionValue[Display], displayMomentumBurn[burn]]; burn]; 
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsection::Closed:: *)
 (*Progress roll*)
 
 
@@ -1434,7 +1437,7 @@ progressRoll[track_String, character_String, opts : OptionsPattern[]] := Module[
 ];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsection::Closed:: *)
 (*Suffer and take*)
 
 
@@ -1463,7 +1466,7 @@ takeSupply[n_Integer, character_ : $soloCharacter] :=
 	adjustSupply[n, character];
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsection::Closed:: *)
 (*Mark progress*)
 
 
@@ -1484,7 +1487,7 @@ markProgress[track_String, n_Integer, character_ : $soloCharacter] := Module[
 ];
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsection::Closed:: *)
 (*Add a bond*)
 
 
@@ -1494,7 +1497,7 @@ addBond[bond_String, character_ : $soloCharacter] := Module[{},
 ];
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsection::Closed:: *)
 (*Mark/spend experience*)
 
 
@@ -1673,7 +1676,7 @@ forsakeYourVow[] := displayMove["forsakeYourVow"];
 advance[] := displayMove["advance"];
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Fate moves*)
 
 
@@ -1692,6 +1695,9 @@ askTheOracle[] := displayMove["askTheOracle"];
 askTheOracle[tableName_String] := oracleRoll[tableName, oracles[tableName]];
 askTheOracle["Yes/No", odds_String] := oracleRoll["Yes/No: " <> odds, oracles["Yes/No: " <> odds]];
 askTheOracle["Yes/No", yesOutcome_String, noOutcome_String] := oracleRoll["Yes/No", yesNo[yesOutcome, noOutcome]];
+askTheOracle["Reveal a Danger"] := oracleRoll["Reveal a Danger: Alternate", revealDangerAlternateTable];
+askTheOracle["Reveal a Danger", theme_String, domain_String] := oracleRoll["Reveal a Danger ("<>theme<>", "<>domain<>")", revealDangerCombinedTable[theme, domain]];
+askTheOracle["Delve Site Feature", theme_String, domain_String] := oracleRoll["Delve Site Feature ("<>theme<>", "<>domain<>")", delveSiteFeatureTable[theme, domain]];
 
 
 (* ::Subsection::Closed:: *)

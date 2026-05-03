@@ -23,12 +23,15 @@
 BeginPackage["OracleTables`"];
 
 
-(* ::Section::Closed:: *)
+(* ::Section:: *)
 (*Public symbols*)
 
 
 oracles::usage = "Association of oracle tables.";
-YesNo::usage = "YesNo[yesOutcome, noOutcome] returns a Yes/No oracle table with those two outcomes.";
+yesNo::usage = "YesNo[yesOutcome, noOutcome] returns a Yes/No oracle table with those two outcomes.";
+revealDangerCombinedTable::usage = "revealDangerCombinedTable[theme, domain] constructs the full oracle table for Reveal a Danger using the given theme and domain.";
+revealDangerAlternateTable::usage = "revealDangerAlternateTable is an oracle table for Reveal a Danger with no specified theme nor domain.";
+delveSiteFeatureTable::usage = "delveSiteFeatureTable[theme, domain] constructs the full oracle table for Delve features using the given theme and domain.";
 
 
 (* ::Section:: *)
@@ -47,6 +50,30 @@ Begin["`Private`"];
 
 
 oracles = <||>;
+
+
+(* ::Subsection::Closed:: *)
+(*Pay the Price*)
+
+
+oracles["Pay the Price"] = <|
+	2 -> "Roll again and apply that result but make it worse. If you roll this result yet again, think of something dreadful that changes the course of your quest (Ask the Oracle if unsure).",
+	5 -> "A person or community you trusted loses faith in you, or acts against you.",
+	9 -> "A person or community you care about is exposed to danger.",
+	16 -> "You are separated from something or someone.",
+	23 -> "Your action has an unintended effect.",
+	32 -> "Something of value is lost or destroyed.",
+	41 -> "The current situation worsens.",
+	50 -> "A new danger or foe is revealed.",
+	59 -> "It causes a delay or puts you at a disadvantage.",
+	68 -> "It is harmful.",
+	76 -> "It is stressful.",
+	85 -> "A surprising development complicates your quest.",
+	90 -> "It wastes resources.",
+	94 -> "It forces you to act against your best intentions.",
+	98 -> "A friend, companion, or ally is put in harm\[CloseCurlyQuote]s way (or you are, if alone).",
+	100 -> "Roll twice more on this table. Both results occur. If they are the same result, make it worse."
+|>;
 
 
 (* ::Subsection::Closed:: *)
@@ -71,6 +98,887 @@ oracles["Yes/No: Likely"] = yesNo["Likely"];
 oracles["Yes/No: 50/50"] = yesNo["50/50"];
 oracles["Yes/No: Unlikely"] = yesNo["Unlikely"];
 oracles["Yes/No: Small Chance"] = yesNo["Small Chance"];
+
+
+(* ::Subsection::Closed:: *)
+(*Encounter Index*)
+
+
+oracles["Encounter Index"] = <|
+	1 -> "Atanya: Dangerous Firstborn (Delve 112)",
+	2 -> "Basilisk: Extreme Beast (Ironsworn 151)",
+	5 -> "Bear: Formidable Animal (Ironsworn 147)",
+	7 -> "Bladewing: Dangerous Animal (Delve 114)",
+	8 -> "Blighthound: Formidable Horror (Delve 128)",
+	9 -> "Blood Thorn: Dangerous Anomaly (Delve 138)",
+	12 -> "Boar: Dangerous Animal (Ironsworn 148)",
+	13 -> "Bog Rot: Dangerous Horror (Delve 129)",
+	14 -> "Bonehorde: Extreme Horror (Delve 130)",
+	16 -> "Bonewalker: Dangerous Horror (Ironsworn 157)",
+	18 -> "Broken: Troublesome Ironlander (Ironsworn 138)",
+	20 -> "Carrion Newt: Formidable Animal (Delve 115)",
+	22 -> "Cave Lion: Formidable Animal (Delve 116)",
+	23 -> "Chimera: Extreme Horror (Ironsworn 158)",
+	25 -> "Chitter: Dangerous Beast (Delve 121)",
+	26 -> "Circle of Stones: Dangerous Anomaly (Delve 140)",
+	29 -> "Common Folk: Troublesome Ironlander (Ironsworn 139)",
+	31 -> "Deep Rat: Troublesome Animal (Delve 117)",
+	33 -> "Elder Beast: Extreme Beast (Ironsworn 152)",
+	35 -> "Elf: Dangerous Firstborn (Ironsworn 142)",
+	37 -> "Frostbound: Formidable Horror (Ironsworn 158)",
+	39 -> "Gaunt: Dangerous Animal (Ironsworn 148)",
+	41 -> "Giant: Extreme Firstborn (Ironsworn 143)",
+	42 -> "Glimmer: Dangerous Anomaly (Delve 142)",
+	43 -> "Gloom: Dangerous Anomaly (Delve 144)",
+	45 -> "Gnarl: Extreme Beast (Delve 122)",
+	47 -> "Harrow Spider: Dangerous Beast (Ironsworn 153)",
+	49 -> "Haunt: Formidable Horror (Ironsworn 159)",
+	50 -> "Hollow: Extreme Horror (Ironsworn 160)",
+	53 -> "Hunter: Dangerous Ironlander (Ironsworn 139)",
+	55 -> "Husk: Formidable Ironlander (Delve 110)",
+	56 -> "Iron Revenant: Extreme Horror (Ironsworn 161)",
+	57 -> "Iron-Wracked Beast: Formidable Beast (Delve 123)",
+	58 -> "Kraken: Epic Beast (Delve 124)",
+	59 -> "Leviathan: Epic Beast (Ironsworn 154)",
+	60 -> "Maelstrom: Dangerous Anomaly (Delve 146)",
+	62 -> "Mammoth: Extreme Beast (Ironsworn 155)",
+	64 -> "Marsh Rat: Troublesome Animal (Ironsworn 149)",
+	65 -> "Merrow: Dangerous Firstborn (Delve 113)",
+	67 -> "Mystic: Dangerous Ironlander (Ironsworn 140)",
+	69 -> "Nightmare Spider: Dangerous Animal (Delve 118)",
+	71 -> "Nightspawn: Formidable Beast (Delve 125)",
+	72 -> "Primordial: Extreme Firstborn (Ironsworn 144)",
+	75 -> "Raider: Dangerous Ironlander (Ironsworn 140)",
+	76 -> "Rhaskar: Extreme Beast (Delve 126)",
+	77 -> "Shroud Crab: Troublesome Animal (Delve 119)",
+	79 -> "Sodden: Formidable Horror (Ironsworn 162)",
+	80 -> "Tempest: Dangerous Anomaly (Delve 148)",
+	81 -> "Thrall: Dangerous Horror (Delve 131)",
+	83 -> "Trog: Dangerous Animal (Delve 120)",
+	85 -> "Troll: Formidable Firstborn (Ironsworn 145)",
+	87 -> "Varou: Dangerous Firstborn (Ironsworn 146)",
+	90 -> "Warrior: Dangerous Ironlander (Ironsworn 141)",
+	91 -> "Wight: Formidable Horror (Delve 132)",
+	94 -> "Wolf: Dangerous Animal (Ironsworn 150)",
+	95 -> "Wyrm: Epic Beast (Delve 127)",
+	97 -> "Wyvern: Extreme Beast (Ironsworn 156)",
+	100 -> "Zealot: Troublesome Ironlander (Delve 111)"
+|>;
+
+
+(* ::Subsection::Closed:: *)
+(*Harm and Stress Outcome oracles*)
+
+
+(* ::Subsubsection:: *)
+(*Harm Outcome*)
+
+
+oracles["Harm Outcome"] = <|
+	10 -> "The harm is mortal. Face Death.",
+	20 -> "You are dying. You need to Heal within an hour or two, or Face Death.",
+	35 -> "You are unconscious and out of action. If left alone, you come back to your senses in an hour or two. If you are vulnerable to a foe not inclined to show mercy, Face Death.",
+	50 -> "You are reeling and fighting to stay conscious. If you engage in any vigorous activity (such as running or fighting) before taking a breather for a few minutes, roll on this table again (before resolving the other move).",
+	100 -> "You are battered but still standing."
+|>;
+
+
+(* ::Subsubsection:: *)
+(*Stress Outcome*)
+
+
+oracles["Stress Outcome"] = <|
+	10 -> "You are overwhelmed. Face Desolation.",
+	25 -> "You give up. Forsake Your Vow (if possible, one relevant to the current crisis).",
+	50 -> "You give in to a fear or compulsion, and act against your better instincts.",
+	100 -> "You persevere."
+|>;
+
+
+(* ::Subsection::Closed:: *)
+(*Feature base tables*)
+
+
+featureBaseTables = Association[];
+
+
+(* ::Subsubsection::Closed:: *)
+(*Theme Feature: Ancient*)
+
+
+featureBaseTables["Ancient"] = <|
+	4 -> "Evidence of lost knowledge",
+	8 -> "Inscrutable relics",
+	12 -> "Ancient artistry or craft",
+	16 -> "Preserved corpses or fossils",
+	20 -> "Visions of this place in another time"
+|>;
+
+
+(* ::Subsubsection::Closed:: *)
+(*Theme Feature: Corrupted*)
+
+
+featureBaseTables["Corrupted"] = <|
+	4 -> "Mystic focus or conduit",
+	8 -> "Strange environmental disturbances",
+	12 -> "Mystic runes or markings",
+	16 -> "Blight or decay",
+	20 -> "Evidence of a foul ritual"
+|>;
+
+
+(* ::Subsubsection::Closed:: *)
+(*Theme Feature: Fortified*)
+
+
+featureBaseTables["Fortified"] = <|
+	4 -> "Camp or quarters",
+	8 -> "Guarded location",
+	12 -> "Storage or repository",
+	16 -> "Work or training area",
+	20 -> "Command center or leadership"
+|>;
+
+
+(* ::Subsubsection::Closed:: *)
+(*Theme Feature: Hallowed*)
+
+
+featureBaseTables["Hallowed"] = <|
+	4 -> "Temple or altar",
+	8 -> "Offerings or atonements",
+	12 -> "Religious relic or idol",
+	16 -> "Consecrated ground",
+	20 -> "Dwellings or gathering place"
+|>;
+
+
+(* ::Subsubsection::Closed:: *)
+(*Theme Feature: Haunted*)
+
+
+featureBaseTables["Haunted"] = <|
+	4 -> "Tomb or burial site",
+	8 -> "Blood was spilled here",
+	12 -> "Unnatural mists or darkness",
+	16 -> "Messages from beyond the grave",
+	20 -> "Apparitions of a person or event"
+|>;
+
+
+(* ::Subsubsection::Closed:: *)
+(*Theme Feature: Infested*)
+
+
+featureBaseTables["Infested"] = <|
+	4 -> "Inhabited nest",
+	8 -> "Abandoned nest",
+	12 -> "Ravaged terrain or architecture",
+	16 -> "Remains or carrion",
+	20 -> "Hoarded food"
+|>;
+
+
+(* ::Subsubsection::Closed:: *)
+(*Theme Feature: Ravaged*)
+
+
+featureBaseTables["Ravaged"] = <|
+	4 -> "Path of destruction",
+	8 -> "Abandoned or ruined dwelling",
+	12 -> "Untouched or preserved area",
+	16 -> "Traces of what was lost",
+	20 -> "Ill-fated victims"
+|>;
+
+
+(* ::Subsubsection::Closed:: *)
+(*Theme Feature: Wild*)
+
+
+featureBaseTables["Wild"] = <|
+	4 -> "Denizen\[CloseCurlyQuote]s lair",
+	8 -> "Territorial markings",
+	12 -> "Impressive flora or fauna",
+	16 -> "Hunting ground or watering hole",
+	20 -> "Remains or carrion"
+|>;
+
+
+(* ::Subsubsection::Closed:: *)
+(*Domain Feature: Barrow*)
+
+
+featureBaseTables["Barrow"] = <|
+	43 -> "Burial chambers",
+	56 -> "Maze of narrow passages",
+	64 -> "Shrine",
+	68 -> "Stately vault",
+	72 -> "Offerings to the dead",
+	76 -> "Statuary or tapestries",
+	80 -> "Remains of a grave robber",
+	84 -> "Mass grave",
+	88 -> "Exhumed corpses",
+	98 -> "Something unusual or unexpected",
+	99 -> "You transition into a new theme",
+	100 -> "You transition into a new domain"
+|>;
+
+
+(* ::Subsubsection::Closed:: *)
+(*Domain Feature: Cavern*)
+
+
+featureBaseTables["Cavern"] = <|
+	43 -> "Twisting passages",
+	56 -> "Cramped caves",
+	64 -> "Vast chamber",
+	68 -> "Subterranean waterway",
+	72 -> "Cave pool",
+	76 -> "Natural bridge",
+	80 -> "Towering stone formations",
+	84 -> "Natural illumination",
+	88 -> "Dark pit",
+	98 -> "Something unusual or unexpected",
+	99 -> "You transition into a new theme",
+	100 -> "You transition into a new domain"
+|>;
+
+
+(* ::Subsubsection::Closed:: *)
+(*Domain Feature: Frozen Cavern*)
+
+
+featureBaseTables["Frozen Cavern"] = <|
+	43 -> "Maze of icy tunnels",
+	56 -> "Glistening cave",
+	64 -> "Vast chamber",
+	68 -> "Frigid waterway",
+	72 -> "Icy pools",
+	76 -> "Magnificent ice formations",
+	80 -> "Frozen waterfall",
+	84 -> "Deep crevasses",
+	88 -> "Discovery locked in the ice",
+	98 -> "Something unusual or unexpected",
+	99 -> "You transition into a new theme",
+	100 -> "You transition into a new domain"
+|>;
+
+
+(* ::Subsubsection::Closed:: *)
+(*Domain Feature: Icereach*)
+
+
+featureBaseTables["Icereach"] = <|
+	43 -> "Plains of ice and snow",
+	56 -> "Seawater channel",
+	64 -> "Icy highlands",
+	68 -> "Crevasse",
+	72 -> "Ice floes",
+	76 -> "Ship trapped in ice",
+	80 -> "Animal herd or habitat",
+	84 -> "Frozen carcass",
+	88 -> "Camp or outpost",
+	98 -> "Something unusual or unexpected",
+	99 -> "You transition into a new theme",
+	100 -> "You transition into a new domain"
+|>;
+
+
+(* ::Subsubsection::Closed:: *)
+(*Domain Feature: Mine*)
+
+
+featureBaseTables["Mine"] = <|
+	43 -> "Cramped tunnels",
+	56 -> "Mine works",
+	64 -> "Excavated chamber",
+	68 -> "Mineshaft",
+	72 -> "Collapsed tunnel",
+	76 -> "Cluttered storage",
+	80 -> "Housing or common areas",
+	84 -> "Flooded chamber",
+	88 -> "Unearthed secret",
+	98 -> "Something unusual or unexpected",
+	99 -> "You transition into a new theme",
+	100 -> "You transition into a new domain"
+|>;
+
+
+(* ::Subsubsection::Closed:: *)
+(*Domain Feature: Pass*)
+
+
+featureBaseTables["Pass"] = <|
+	43 -> "Winding mountain path",
+	56 -> "Snowfield or glacial rocks",
+	64 -> "River gorge",
+	68 -> "Crashing waterfall",
+	72 -> "Highland lake",
+	76 -> "Forgotten cairn",
+	80 -> "Bridge",
+	84 -> "Overlook",
+	88 -> "Camp or outpost",
+	98 -> "Something unusual or unexpected",
+	99 -> "You transition into a new theme",
+	100 -> "You transition into a new domain"
+|>;
+
+
+(* ::Subsubsection::Closed:: *)
+(*Domain Feature: Ruin*)
+
+
+featureBaseTables["Ruin"] = <|
+	43 -> "Crumbling corridors and chambers",
+	56 -> "Collapsed architecture",
+	64 -> "Rubble-choked hall",
+	68 -> "Courtyard",
+	72 -> "Archive or library",
+	76 -> "Broken statuary or fading murals",
+	80 -> "Preserved vault",
+	84 -> "Temple to forgotten gods",
+	88 -> "Mausoleum",
+	98 -> "Something unusual or unexpected",
+	99 -> "You transition into a new theme",
+	100 -> "You transition into a new domain"
+|>;
+
+
+(* ::Subsubsection::Closed:: *)
+(*Domain Feature: Sea Cave*)
+
+
+featureBaseTables["Sea Cave"] = <|
+	43 -> "Watery tunnels",
+	56 -> "Eroded chamber",
+	64 -> "Flooded chamber",
+	68 -> "Vast chamber",
+	72 -> "Dry passages",
+	76 -> "Freshwater inlet",
+	80 -> "Rocky island",
+	84 -> "Waterborne debris",
+	88 -> "Shipwreck or boat",
+	98 -> "Something unusual or unexpected",
+	99 -> "You transition into a new theme",
+	100 -> "You transition into a new domain"
+|>;
+
+
+(* ::Subsubsection::Closed:: *)
+(*Domain Feature: Shadowfen*)
+
+
+featureBaseTables["Shadowfen"] = <|
+	43 -> "Narrow path through a fetid bog",
+	56 -> "Stagnant waterway",
+	64 -> "Flooded thicket",
+	68 -> "Island of dry land",
+	72 -> "Submerged discovery",
+	76 -> "Preserved corpses",
+	80 -> "Overgrown structure",
+	84 -> "Tall reeds",
+	88 -> "Camp or outpost",
+	98 -> "Something unusual or unexpected",
+	99 -> "You transition into a new theme",
+	100 -> "You transition into a new domain"
+|>;
+
+
+(* ::Subsubsection::Closed:: *)
+(*Domain Feature: Stronghold*)
+
+
+featureBaseTables["Stronghold"] = <|
+	43 -> "Connecting passageways",
+	56 -> "Barracks or common quarters",
+	64 -> "Large hall",
+	68 -> "Workshop or library",
+	72 -> "Command center or leadership",
+	76 -> "Ladder or stairwell",
+	80 -> "Storage",
+	84 -> "Kitchen or larder",
+	88 -> "Courtyard",
+	98 -> "Something unusual or unexpected",
+	99 -> "You transition into a new theme",
+	100 -> "You transition into a new domain"
+|>;
+
+
+(* ::Subsubsection::Closed:: *)
+(*Domain Feature: Tanglewood*)
+
+
+featureBaseTables["Tanglewood"] = <|
+	43 -> "Dense thicket",
+	56 -> "Overgrown path",
+	64 -> "Waterway",
+	68 -> "Clearing",
+	72 -> "Elder tree",
+	76 -> "Brambles",
+	80 -> "Overgrown structure",
+	84 -> "Rocky outcrop",
+	88 -> "Camp or outpost",
+	98 -> "Something unusual or unexpected",
+	99 -> "You transition into a new theme",
+	100 -> "You transition into a new domain"
+|>;
+
+
+(* ::Subsubsection::Closed:: *)
+(*Domain Feature: Underkeep*)
+
+
+featureBaseTables["Underkeep"] = <|
+	43 -> "Carved passages",
+	56 -> "Hall or chamber",
+	64 -> "Stairs into the depths",
+	68 -> "Grand doorway or entrance",
+	72 -> "Tomb or catacombs",
+	76 -> "Rough-hewn cave",
+	80 -> "Foundry or workshop",
+	84 -> "Shrine or temple",
+	88 -> "Imposing architecture or artistry",
+	98 -> "Something unusual or unexpected",
+	99 -> "You transition into a new theme",
+	100 -> "You transition into a new domain"
+|>;
+
+
+(* ::Subsection::Closed:: *)
+(*Danger base tables*)
+
+
+dangerBaseTables = Association[];
+
+
+(* ::Subsubsection::Closed:: *)
+(*Theme Danger: Ancient*)
+
+
+dangerBaseTables["Ancient"] = <|
+	5 -> "Ancient trap",
+	10 -> "Hazardous architecture or terrain",
+	12 -> "Blocked or broken path",
+	14 -> "Denizen protects an ancient secret",
+	16 -> "Denizen reveres an ancient power",
+	18 -> "Living relics of a lost age",
+	20 -> "Ancient evil resurgent",
+	22 -> "Warnings of a long-buried danger",
+	24 -> "Ancient disease or contamination",
+	26 -> "Artifact of terrible purpose",
+	28 -> "Evidence of ancient wrongs",
+	30 -> "Others seek power or knowledge"
+|>;
+
+
+(* ::Subsubsection::Closed:: *)
+(*Theme Danger: Corrupted*)
+
+
+dangerBaseTables["Corrupted"] = <|
+	5 -> "Denizen spawned from dark magic",
+	10 -> "Denizen controls dark magic",
+	12 -> "Denizen corrupted by dark magic",
+	14 -> "Corruption marks you",
+	16 -> "Innocents held in thrall",
+	18 -> "Revelations of a terrible truth",
+	20 -> "Mystic trap or trigger",
+	22 -> "Mystic barrier or ward",
+	24 -> "Illusions lead you astray",
+	26 -> "Dark ritual in progress",
+	28 -> "Lingering effects of a dark ritual",
+	30 -> "Dread harbingers of a greater magic"
+|>;
+
+
+(* ::Subsubsection::Closed:: *)
+(*Theme Danger: Fortified*)
+
+
+dangerBaseTables["Fortified"] = <|
+	5 -> "Denizen patrols the area",
+	10 -> "Denizen on guard",
+	12 -> "Denizen ready to sound the alarm",
+	14 -> "Denizen sets an ambush",
+	16 -> "Denizen lures you into a trap",
+	18 -> "Denizens converge on this area",
+	20 -> "Pets or underlings",
+	22 -> "Unexpected alliance revealed",
+	24 -> "Nefarious plans revealed",
+	26 -> "Unexpected leader revealed",
+	28 -> "Trap",
+	30 -> "Alarm trigger"
+|>;
+
+
+(* ::Subsubsection::Closed:: *)
+(*Theme Danger: Hallowed*)
+
+
+dangerBaseTables["Hallowed"] = <|
+	5 -> "Denizen defends their sanctum",
+	10 -> "Denizen enacts the will of their god",
+	12 -> "Denizen seeks martyrdom",
+	14 -> "Secret of the faith is revealed",
+	16 -> "Greater purpose is revealed",
+	18 -> "Unexpected disciples are revealed",
+	20 -> "Divine manifestations",
+	22 -> "Aspect of the faith beguiles you",
+	24 -> "Unexpected leader is revealed",
+	26 -> "Embodiment of a god or myth",
+	28 -> "Protective ward or barrier",
+	30 -> "Prophecies reveal a dark fate"
+|>;
+
+
+(* ::Subsubsection::Closed:: *)
+(*Theme Danger: Haunted*)
+
+
+dangerBaseTables["Haunted"] = <|
+	5 -> "Denizen haunts this area",
+	10 -> "Unsettling sounds or signs",
+	12 -> "Denizen attacks without warning",
+	14 -> "Denizen makes a costly demand",
+	16 -> "Denizen seizes your body or mind",
+	18 -> "Denizen taunts or lures you",
+	20 -> "A disturbing truth is revealed",
+	22 -> "Frightening visions",
+	24 -> "Environment is used against you",
+	26 -> "Trickery leads you astray",
+	28 -> "True nature of this place is revealed",
+	30 -> "Sudden, shocking manifestation"
+|>;
+
+
+(* ::Subsubsection::Closed:: *)
+(*Theme Danger: Infested*)
+
+
+dangerBaseTables["Infested"] = <|
+	5 -> "Denizens swarm and attack",
+	10 -> "Toxic or sickening environment",
+	12 -> "Denizen stalks you",
+	14 -> "Denizen takes or destroys something",
+	16 -> "Denizen shows surprising cleverness",
+	18 -> "Denizen guided by a greater threat",
+	20 -> "Denizen blocks the path",
+	22 -> "Denizen funnels you on a new path",
+	24 -> "Denizen undermines the path",
+	26 -> "Denizen lays in wait",
+	28 -> "Trap or snare",
+	30 -> "Victim\[CloseCurlyQuote]s horrible fate is revealed"
+|>;
+
+
+(* ::Subsubsection::Closed:: *)
+(*Theme Danger: Ravaged*)
+
+
+dangerBaseTables["Ravaged"] = <|
+	5 -> "Precarious architecture or terrain",
+	10 -> "Imminent collapse or destruction",
+	12 -> "Path undermined",
+	14 -> "Blocked or broken path",
+	16 -> "Vestiges of a destructive force",
+	18 -> "Unexpected environmental threat",
+	20 -> "Echoes of a troubling past",
+	22 -> "Signs of a horrible fate",
+	24 -> "Denizen seeks retribution",
+	26 -> "Denizen leverages the environment",
+	28 -> "Denizen restores what was lost",
+	30 -> "Ravages return anew"
+|>;
+
+
+(* ::Subsubsection::Closed:: *)
+(*Theme Danger: Wild*)
+
+
+dangerBaseTables["Wild"] = <|
+	5 -> "Denizen hunts",
+	10 -> "Denizen strikes without warning",
+	12 -> "Denizen leverages the environment",
+	14 -> "Denizen wields unexpected abilities",
+	16 -> "Denizen guided by a greater threat",
+	18 -> "Denizen protects something",
+	20 -> "Hazardous terrain",
+	22 -> "Weather or environmental threat",
+	24 -> "Benign aspect becomes a threat",
+	26 -> "Overzealous hunter",
+	28 -> "Evidence of a victim\[CloseCurlyQuote]s fate",
+	30 -> "Ill-fated victim in danger"
+|>;
+
+
+(* ::Subsubsection::Closed:: *)
+(*Domain Danger: Barrow*)
+
+
+dangerBaseTables["Barrow"] = <|
+	33 -> "Denizen guards this area",
+	36 -> "Trap",
+	39 -> "Death makes its presence known",
+	42 -> "Crumbling architecture",
+	45 -> "Grave goods with hidden dangers"
+|>;
+
+
+(* ::Subsubsection::Closed:: *)
+(*Domain Danger: Cavern*)
+
+
+dangerBaseTables["Cavern"] = <|
+	33 -> "Denizen lairs here",
+	36 -> "Cave-in",
+	39 -> "Flooding",
+	42 -> "Perilous climb or descent",
+	45 -> "Fissure or sinkhole"
+|>;
+
+
+(* ::Subsubsection::Closed:: *)
+(*Domain Danger: Frozen Cavern*)
+
+
+dangerBaseTables["Frozen Cavern"] = <|
+	33 -> "Denizen lairs here",
+	36 -> "Fracturing ice",
+	39 -> "Crumbling chasm",
+	42 -> "Bitter chill",
+	45 -> "Disorienting reflections"
+|>;
+
+
+(* ::Subsubsection::Closed:: *)
+(*Domain Danger: Icereach*)
+
+
+dangerBaseTables["Icereach"] = <|
+	33 -> "Denizen hunts",
+	36 -> "Fragile ice above watery depths",
+	39 -> "Perilous climb or descent",
+	42 -> "Avalanche or icefall",
+	45 -> "Foul weather"
+|>;
+
+
+(* ::Subsubsection::Closed:: *)
+(*Domain Danger: Mine*)
+
+
+dangerBaseTables["Mine"] = <|
+	33 -> "Cave-in",
+	36 -> "Flooding",
+	39 -> "Unstable platforms or architecture",
+	42 -> "Hazardous gas pocket",
+	45 -> "Weakened terrain"
+|>;
+
+
+(* ::Subsubsection::Closed:: *)
+(*Domain Danger: Pass*)
+
+
+dangerBaseTables["Pass"] = <|
+	33 -> "Denizen lairs here",
+	36 -> "Denizen hunts",
+	39 -> "Perilous climb or descent",
+	42 -> "Avalanche or rockslide",
+	45 -> "Foul weather"
+|>;
+
+
+(* ::Subsubsection::Closed:: *)
+(*Domain Danger: Ruin*)
+
+
+dangerBaseTables["Ruin"] = <|
+	33 -> "Ancient mechanism or trap",
+	36 -> "Collapsing wall or ceiling",
+	39 -> "Blocked or broken passage",
+	42 -> "Unstable floor above a new danger",
+	45 -> "Ancient secrets best left buried"
+|>;
+
+
+(* ::Subsubsection::Closed:: *)
+(*Domain Danger: Sea Cave*)
+
+
+dangerBaseTables["Sea Cave"] = <|
+	33 -> "Denizen strikes without warning",
+	36 -> "Denizen lurks below",
+	39 -> "Flooding",
+	42 -> "Rushing current",
+	45 -> "Claustrophobic squeeze"
+|>;
+
+
+(* ::Subsubsection::Closed:: *)
+(*Domain Danger: Shadowfen*)
+
+
+dangerBaseTables["Shadowfen"] = <|
+	33 -> "Denizen hunts",
+	36 -> "Deep water blocks the path",
+	39 -> "Toxic environment",
+	42 -> "Concealing or disorienting mist",
+	45 -> "Hidden quagmire"
+|>;
+
+
+(* ::Subsubsection::Closed:: *)
+(*Domain Danger: Stronghold*)
+
+
+dangerBaseTables["Stronghold"] = <|
+	33 -> "Blocked or guarded path",
+	36 -> "Caught in the open",
+	39 -> "Chokepoint",
+	42 -> "Trap",
+	45 -> "Alarm trigger"
+|>;
+
+
+(* ::Subsubsection::Closed:: *)
+(*Domain Danger: Tanglewood*)
+
+
+dangerBaseTables["Tanglewood"] = <|
+	33 -> "Denizen hunts",
+	36 -> "Denizen lairs here",
+	39 -> "Trap or snare",
+	42 -> "Path leads you astray",
+	45 -> "Entangling plant life"
+|>;
+
+
+(* ::Subsubsection::Closed:: *)
+(*Domain Danger: Underkeep*)
+
+
+dangerBaseTables["Underkeep"] = <|
+	33 -> "Ancient mechanism or trap",
+	36 -> "Crumbling architecture",
+	39 -> "Blocked or broken passage",
+	42 -> "Artifact with a hidden danger",
+	45 -> "Denizen lurks in darkness"
+|>;
+
+
+(* ::Subsection::Closed:: *)
+(*Delving oracles*)
+
+
+(* ::Subsubsection::Closed:: *)
+(*Delve Site Feature*)
+
+
+delveSiteFeatureTable[theme_String, domain_String] :=
+	Join[featureBaseTables[theme], featureBaseTables[domain]];
+
+
+(* ::Subsubsection::Closed:: *)
+(*Delve the Depths Weak Hit: Edge*)
+
+
+oracles["Delve the Depths Weak Hit: Edge"] = <|
+	45 -> "Mark progress and Reveal a Danger.",
+	65 -> "Mark progress.",
+	75 -> "Choose one: Mark progress or Find an Opportunity.",
+	80 -> "Take both: Mark progress and Find an Opportunity.",
+	100 -> "Mark progress twice and Reveal a Danger."
+|>;
+
+
+(* ::Subsubsection::Closed:: *)
+(*Delve the Depths Weak Hit: Shadow*)
+
+
+oracles["Delve the Depths Weak Hit: Shadow"] = <|
+	30 -> "Mark progress and Reveal a Danger.",
+	65 -> "Mark progress.",
+	90 -> "Choose one: Mark progress or Find an Opportunity.",
+	99 -> "Take both: Mark progress and Find an Opportunity.",
+	100 -> "Mark progress twice and Reveal a Danger."
+|>;
+
+
+(* ::Subsubsection::Closed:: *)
+(*Delve the Depths Weak Hit: Wits*)
+
+
+oracles["Delve the Depths Weak Hit: Wits"] = <|
+	40 -> "Mark progress and Reveal a Danger.",
+	55 -> "Mark progress.",
+	80 -> "Choose one: Mark progress or Find an Opportunity.",
+	99 -> "Take both: Mark progress and Find an Opportunity.",
+	100 -> "Mark progress twice and Reveal a Danger."
+|>;
+
+
+(* ::Subsubsection::Closed:: *)
+(*Find an Opportunity*)
+
+
+oracles["Find an Opportunity"] = <|
+	25 -> "The terrain favors you, or you find a hidden path.",
+	45 -> "An aspect of the history or nature of this place is revealed.",
+	57 -> "You locate a secure area.",
+	68 -> "A clue offers insight or direction.",
+	78 -> "You get the drop on a denizen.",
+	86 -> "This area provides an opportunity to scavenge, forage, or hunt.",
+	90 -> "You locate an interesting or helpful object.",
+	94 -> "You are alerted to a potential threat.",
+	98 -> "You encounter a denizen who might support you.",
+	100 -> "You encounter a denizen in need of help."
+|>;
+
+
+(* ::Subsubsection::Closed:: *)
+(*Reveal a Danger: Base Table*)
+
+
+revealDangerBaseTable = <|
+	57 -> "You encounter a hostile denizen.",
+	68 -> "You face an environmental or architectural hazard.",
+	76 -> "A discovery undermines or complicates your quest.",
+	79 -> "You confront a harrowing situation or sensation.",
+	82 -> "You face the consequences of an earlier choice or approach.",
+	85 -> "Your way is blocked or trapped.",
+	88 -> "A resource is diminished, broken, or lost.",
+	91 -> "You face a perplexing mystery or tough choice.",
+	94 -> "You lose your way or are delayed.",
+	100 -> "Roll twice more on this table. Both results occur. If they are the same result, make it worse."
+|>;
+
+
+(* ::Subsubsection::Closed:: *)
+(*Reveal a Danger: Alternate Table*)
+
+
+revealDangerAlternateTable = <|
+	22 -> "You encounter a hostile denizen.",
+	42 -> "You face an environmental or architectural hazard.",
+	58 -> "A discovery undermines or complicates your quest.",
+	64 -> "You confront a harrowing situation or sensation.",
+	70 -> "You face the consequences of an earlier choice or approach.",
+	76 -> "Your way is blocked or trapped.",
+	82 -> "A resource is diminished, broken, or lost.",
+	88 -> "You face a perplexing mystery or tough choice.",
+	94 -> "You lose your way or are delayed.",
+	100 -> "Roll twice more on this table. Both results occur. If they are the same result, make it worse."
+|>;
+
+
+(* ::Subsubsection::Closed:: *)
+(*Reveal a Danger: Combined Table*)
+
+
+revealDangerCombinedTable[theme_String, domain_String] := Join[dangerBaseTables[theme],dangerBaseTables[domain],revealDangerBaseTable];
 
 
 (* ::Subsection::Closed:: *)
@@ -2194,10 +3102,7 @@ oracles["Character: Name (Firstborn - Troll)"] = <|
 
 
 (* ::Subsection::Closed:: *)
-(*Delve site oracles*)
-
-
-(* NEED TO SORT OUT DELVE DOMAIN/THEME CARDS. LIKE YES/NO *)
+(*Delve Site oracles*)
 
 
 (* ::Subsubsection::Closed:: *)
@@ -2233,673 +3138,6 @@ oracles["Delve Site: Domain"] = <|
 	83 -> "Stronghold: A fortress secured against trespassers",
 	95 -> "Tanglewood: A perilous forest of eternal shadow",
 	100 -> "Underkeep: An age-old subterranean dungeon"
-|>;
-
-
-(* ::Subsubsection::Closed:: *)
-(*Delve Site: Danger*)
-
-
-(* PLACEHOLDER *)
-
-
-(* ::Subsubsection::Closed:: *)
-(*Theme Feature: Ancient*)
-
-
-oracles["Theme Feature: Ancient"] = <|
-	4 -> "Evidence of lost knowledge",
-	8 -> "Inscrutable relics",
-	12 -> "Ancient artistry or craft",
-	16 -> "Preserved corpses or fossils",
-	20 -> "Visions of this place in another time"
-|>;
-
-
-(* ::Subsubsection::Closed:: *)
-(*Theme Danger: Ancient*)
-
-
-oracles["Theme Danger: Ancient"] = <|
-	5 -> "Ancient trap",
-	10 -> "Hazardous architecture or terrain",
-	12 -> "Blocked or broken path",
-	14 -> "Denizen protects an ancient secret",
-	16 -> "Denizen reveres an ancient power",
-	18 -> "Living relics of a lost age",
-	20 -> "Ancient evil resurgent",
-	22 -> "Warnings of a long-buried danger",
-	24 -> "Ancient disease or contamination",
-	26 -> "Artifact of terrible purpose",
-	28 -> "Evidence of ancient wrongs",
-	30 -> "Others seek power or knowledge"
-|>;
-
-
-(* ::Subsubsection::Closed:: *)
-(*Theme Feature: Corrupted*)
-
-
-oracles["Theme Feature: Corrupted"] = <|
-	4 -> "Mystic focus or conduit",
-	8 -> "Strange environmental disturbances",
-	12 -> "Mystic runes or markings",
-	16 -> "Blight or decay",
-	20 -> "Evidence of a foul ritual"
-|>;
-
-
-(* ::Subsubsection::Closed:: *)
-(*Theme Danger: Corrupted*)
-
-
-oracles["Theme Danger: Corrupted"] = <|
-	5 -> "Denizen spawned from dark magic",
-	10 -> "Denizen controls dark magic",
-	12 -> "Denizen corrupted by dark magic",
-	14 -> "Corruption marks you",
-	16 -> "Innocents held in thrall",
-	18 -> "Revelations of a terrible truth",
-	20 -> "Mystic trap or trigger",
-	22 -> "Mystic barrier or ward",
-	24 -> "Illusions lead you astray",
-	26 -> "Dark ritual in progress",
-	28 -> "Lingering effects of a dark ritual",
-	30 -> "Dread harbingers of a greater magic"
-|>;
-
-
-(* ::Subsubsection::Closed:: *)
-(*Theme Feature: Fortified*)
-
-
-oracles["Theme Feature: Fortified"] = <|
-	4 -> "Camp or quarters",
-	8 -> "Guarded location",
-	12 -> "Storage or repository",
-	16 -> "Work or training area",
-	20 -> "Command center or leadership"
-|>;
-
-
-(* ::Subsubsection::Closed:: *)
-(*Theme Danger: Fortified*)
-
-
-oracles["Theme Danger: Fortified"] = <|
-	5 -> "Denizen patrols the area",
-	10 -> "Denizen on guard",
-	12 -> "Denizen ready to sound the alarm",
-	14 -> "Denizen sets an ambush",
-	16 -> "Denizen lures you into a trap",
-	18 -> "Denizens converge on this area",
-	20 -> "Pets or underlings",
-	22 -> "Unexpected alliance revealed",
-	24 -> "Nefarious plans revealed",
-	26 -> "Unexpected leader revealed",
-	28 -> "Trap",
-	30 -> "Alarm trigger"
-|>;
-
-
-(* ::Subsubsection::Closed:: *)
-(*Theme Feature: Hallowed*)
-
-
-oracles["Theme Feature: Hallowed"] = <|
-	4 -> "Temple or altar",
-	8 -> "Offerings or atonements",
-	12 -> "Religious relic or idol",
-	16 -> "Consecrated ground",
-	20 -> "Dwellings or gathering place"
-|>;
-
-
-(* ::Subsubsection::Closed:: *)
-(*Theme Danger: Hallowed*)
-
-
-oracles["Theme Danger: Hallowed"] = <|
-	5 -> "Denizen defends their sanctum",
-	10 -> "Denizen enacts the will of their god",
-	12 -> "Denizen seeks martyrdom",
-	14 -> "Secret of the faith is revealed",
-	16 -> "Greater purpose is revealed",
-	18 -> "Unexpected disciples are revealed",
-	20 -> "Divine manifestations",
-	22 -> "Aspect of the faith beguiles you",
-	24 -> "Unexpected leader is revealed",
-	26 -> "Embodiment of a god or myth",
-	28 -> "Protective ward or barrier",
-	30 -> "Prophecies reveal a dark fate"
-|>;
-
-
-(* ::Subsubsection::Closed:: *)
-(*Theme Feature: Haunted*)
-
-
-oracles["Theme Feature: Haunted"] = <|
-	4 -> "Tomb or burial site",
-	8 -> "Blood was spilled here",
-	12 -> "Unnatural mists or darkness",
-	16 -> "Messages from beyond the grave",
-	20 -> "Apparitions of a person or event"
-|>;
-
-
-(* ::Subsubsection::Closed:: *)
-(*Theme Danger: Haunted*)
-
-
-oracles["Theme Danger: Haunted"] = <|
-	5 -> "Denizen haunts this area",
-	10 -> "Unsettling sounds or signs",
-	12 -> "Denizen attacks without warning",
-	14 -> "Denizen makes a costly demand",
-	16 -> "Denizen seizes your body or mind",
-	18 -> "Denizen taunts or lures you",
-	20 -> "A disturbing truth is revealed",
-	22 -> "Frightening visions",
-	24 -> "Environment is used against you",
-	26 -> "Trickery leads you astray",
-	28 -> "True nature of this place is revealed",
-	30 -> "Sudden, shocking manifestation"
-|>;
-
-
-(* ::Subsubsection::Closed:: *)
-(*Theme Feature: Infested*)
-
-
-oracles["Theme Feature: Infested"] = <|
-	4 -> "Inhabited nest",
-	8 -> "Abandoned nest",
-	12 -> "Ravaged terrain or architecture",
-	16 -> "Remains or carrion",
-	20 -> "Hoarded food"
-|>;
-
-
-(* ::Subsubsection::Closed:: *)
-(*Theme Danger: Infested*)
-
-
-oracles["Theme Danger: Infested"] = <|
-	5 -> "Denizens swarm and attack",
-	10 -> "Toxic or sickening environment",
-	12 -> "Denizen stalks you",
-	14 -> "Denizen takes or destroys something",
-	16 -> "Denizen shows surprising cleverness",
-	18 -> "Denizen guided by a greater threat",
-	20 -> "Denizen blocks the path",
-	22 -> "Denizen funnels you on a new path",
-	24 -> "Denizen undermines the path",
-	26 -> "Denizen lays in wait",
-	28 -> "Trap or snare",
-	30 -> "Victim\[CloseCurlyQuote]s horrible fate is revealed"
-|>;
-
-
-(* ::Subsubsection::Closed:: *)
-(*Theme Feature: Ravaged*)
-
-
-oracles["Theme Feature: Ravaged"] = <|
-	4 -> "Path of destruction",
-	8 -> "Abandoned or ruined dwelling",
-	12 -> "Untouched or preserved area",
-	16 -> "Traces of what was lost",
-	20 -> "Ill-fated victims"
-|>;
-
-
-(* ::Subsubsection::Closed:: *)
-(*Theme Danger: Ravaged*)
-
-
-oracles["Theme Danger: Ravaged"] = <|
-	5 -> "Precarious architecture or terrain",
-	10 -> "Imminent collapse or destruction",
-	12 -> "Path undermined",
-	14 -> "Blocked or broken path",
-	16 -> "Vestiges of a destructive force",
-	18 -> "Unexpected environmental threat",
-	20 -> "Echoes of a troubling past",
-	22 -> "Signs of a horrible fate",
-	24 -> "Denizen seeks retribution",
-	26 -> "Denizen leverages the environment",
-	28 -> "Denizen restores what was lost",
-	30 -> "Ravages return anew"
-|>;
-
-
-(* ::Subsubsection::Closed:: *)
-(*Theme Feature: Wild*)
-
-
-oracles["Theme Feature: Wild"] = <|
-	4 -> "Denizen\[CloseCurlyQuote]s lair",
-	8 -> "Territorial markings",
-	12 -> "Impressive flora or fauna",
-	16 -> "Hunting ground or watering hole",
-	20 -> "Remains or carrion"
-|>;
-
-
-(* ::Subsubsection::Closed:: *)
-(*Theme Danger: Wild*)
-
-
-oracles["Theme Danger: Wild"] = <|
-	5 -> "Denizen hunts",
-	10 -> "Denizen strikes without warning",
-	12 -> "Denizen leverages the environment",
-	14 -> "Denizen wields unexpected abilities",
-	16 -> "Denizen guided by a greater threat",
-	18 -> "Denizen protects something",
-	20 -> "Hazardous terrain",
-	22 -> "Weather or environmental threat",
-	24 -> "Benign aspect becomes a threat",
-	26 -> "Overzealous hunter",
-	28 -> "Evidence of a victim\[CloseCurlyQuote]s fate",
-	30 -> "Ill-fated victim in danger"
-|>;
-
-
-(* ::Subsubsection::Closed:: *)
-(*Domain Feature: Barrow*)
-
-
-oracles["Domain Feature: Barrow"] = <|
-	43 -> "Burial chambers",
-	56 -> "Maze of narrow passages",
-	64 -> "Shrine",
-	68 -> "Stately vault",
-	72 -> "Offerings to the dead",
-	76 -> "Statuary or tapestries",
-	80 -> "Remains of a grave robber",
-	84 -> "Mass grave",
-	88 -> "Exhumed corpses",
-	98 -> "Something unusual or unexpected",
-	99 -> "You transition into a new theme",
-	100 -> "You transition into a new domain"
-|>;
-
-
-(* ::Subsubsection::Closed:: *)
-(*Domain Danger: Barrow*)
-
-
-oracles["Domain Danger: Barrow"] = <|
-	33 -> "Denizen guards this area",
-	36 -> "Trap",
-	39 -> "Death makes its presence known",
-	42 -> "Crumbling architecture",
-	45 -> "Grave goods with hidden dangers"
-|>;
-
-
-(* ::Subsubsection::Closed:: *)
-(*Domain Feature: Cavern*)
-
-
-oracles["Domain Feature: Cavern"] = <|
-	43 -> "Twisting passages",
-	56 -> "Cramped caves",
-	64 -> "Vast chamber",
-	68 -> "Subterranean waterway",
-	72 -> "Cave pool",
-	76 -> "Natural bridge",
-	80 -> "Towering stone formations",
-	84 -> "Natural illumination",
-	88 -> "Dark pit",
-	98 -> "Something unusual or unexpected",
-	99 -> "You transition into a new theme",
-	100 -> "You transition into a new domain"
-|>;
-
-
-(* ::Subsubsection::Closed:: *)
-(*Domain Danger: Cavern*)
-
-
-oracles["Domain Danger: Cavern"] = <|
-	33 -> "Denizen lairs here",
-	36 -> "Cave-in",
-	39 -> "Flooding",
-	42 -> "Perilous climb or descent",
-	45 -> "Fissure or sinkhole"
-|>;
-
-
-(* ::Subsubsection::Closed:: *)
-(*Domain Feature: Frozen Cavern*)
-
-
-oracles["Domain Feature: Frozen Cavern"] = <|
-	43 -> "Maze of icy tunnels",
-	56 -> "Glistening cave",
-	64 -> "Vast chamber",
-	68 -> "Frigid waterway",
-	72 -> "Icy pools",
-	76 -> "Magnificent ice formations",
-	80 -> "Frozen waterfall",
-	84 -> "Deep crevasses",
-	88 -> "Discovery locked in the ice",
-	98 -> "Something unusual or unexpected",
-	99 -> "You transition into a new theme",
-	100 -> "You transition into a new domain"
-|>;
-
-
-(* ::Subsubsection::Closed:: *)
-(*Domain Danger: Frozen Cavern*)
-
-
-oracles["Domain Danger: Frozen Cavern"] = <|
-	33 -> "Denizen lairs here",
-	36 -> "Fracturing ice",
-	39 -> "Crumbling chasm",
-	42 -> "Bitter chill",
-	45 -> "Disorienting reflections"
-|>;
-
-
-(* ::Subsubsection::Closed:: *)
-(*Domain Feature: Icereach*)
-
-
-oracles["Domain Feature: Icereach"] = <|
-	43 -> "Plains of ice and snow",
-	56 -> "Seawater channel",
-	64 -> "Icy highlands",
-	68 -> "Crevasse",
-	72 -> "Ice floes",
-	76 -> "Ship trapped in ice",
-	80 -> "Animal herd or habitat",
-	84 -> "Frozen carcass",
-	88 -> "Camp or outpost",
-	98 -> "Something unusual or unexpected",
-	99 -> "You transition into a new theme",
-	100 -> "You transition into a new domain"
-|>;
-
-
-(* ::Subsubsection::Closed:: *)
-(*Domain Danger: Icereach*)
-
-
-oracles["Domain Danger: Icereach"] = <|
-	33 -> "Denizen hunts",
-	36 -> "Fragile ice above watery depths",
-	39 -> "Perilous climb or descent",
-	42 -> "Avalanche or icefall",
-	45 -> "Foul weather"
-|>;
-
-
-(* ::Subsubsection::Closed:: *)
-(*Domain Feature: Mine*)
-
-
-oracles["Domain Feature: Mine"] = <|
-	43 -> "Cramped tunnels",
-	56 -> "Mine works",
-	64 -> "Excavated chamber",
-	68 -> "Mineshaft",
-	72 -> "Collapsed tunnel",
-	76 -> "Cluttered storage",
-	80 -> "Housing or common areas",
-	84 -> "Flooded chamber",
-	88 -> "Unearthed secret",
-	98 -> "Something unusual or unexpected",
-	99 -> "You transition into a new theme",
-	100 -> "You transition into a new domain"
-|>;
-
-
-(* ::Subsubsection::Closed:: *)
-(*Domain Danger: Mine*)
-
-
-oracles["Domain Danger: Mine"] = <|
-	33 -> "Cave-in",
-	36 -> "Flooding",
-	39 -> "Unstable platforms or architecture",
-	42 -> "Hazardous gas pocket",
-	45 -> "Weakened terrain"
-|>;
-
-
-(* ::Subsubsection::Closed:: *)
-(*Domain Feature: Pass*)
-
-
-oracles["Domain Feature: Pass"] = <|
-	43 -> "Winding mountain path",
-	56 -> "Snowfield or glacial rocks",
-	64 -> "River gorge",
-	68 -> "Crashing waterfall",
-	72 -> "Highland lake",
-	76 -> "Forgotten cairn",
-	80 -> "Bridge",
-	84 -> "Overlook",
-	88 -> "Camp or outpost",
-	98 -> "Something unusual or unexpected",
-	99 -> "You transition into a new theme",
-	100 -> "You transition into a new domain"
-|>;
-
-
-(* ::Subsubsection::Closed:: *)
-(*Domain Danger: Pass*)
-
-
-oracles["Domain Danger: Pass"] = <|
-	33 -> "Denizen lairs here",
-	36 -> "Denizen hunts",
-	39 -> "Perilous climb or descent",
-	42 -> "Avalanche or rockslide",
-	45 -> "Foul weather"
-|>;
-
-
-(* ::Subsubsection::Closed:: *)
-(*Domain Feature: Ruin*)
-
-
-oracles["Domain Feature: Ruin"] = <|
-	43 -> "Crumbling corridors and chambers",
-	56 -> "Collapsed architecture",
-	64 -> "Rubble-choked hall",
-	68 -> "Courtyard",
-	72 -> "Archive or library",
-	76 -> "Broken statuary or fading murals",
-	80 -> "Preserved vault",
-	84 -> "Temple to forgotten gods",
-	88 -> "Mausoleum",
-	98 -> "Something unusual or unexpected",
-	99 -> "You transition into a new theme",
-	100 -> "You transition into a new domain"
-|>;
-
-
-(* ::Subsubsection::Closed:: *)
-(*Domain Danger: Ruin*)
-
-
-oracles["Domain Danger: Ruin"] = <|
-	33 -> "Ancient mechanism or trap",
-	36 -> "Collapsing wall or ceiling",
-	39 -> "Blocked or broken passage",
-	42 -> "Unstable floor above a new danger",
-	45 -> "Ancient secrets best left buried"
-|>;
-
-
-(* ::Subsubsection::Closed:: *)
-(*Domain Feature: Sea Cave*)
-
-
-oracles["Domain Feature: Sea Cave"] = <|
-	43 -> "Watery tunnels",
-	56 -> "Eroded chamber",
-	64 -> "Flooded chamber",
-	68 -> "Vast chamber",
-	72 -> "Dry passages",
-	76 -> "Freshwater inlet",
-	80 -> "Rocky island",
-	84 -> "Waterborne debris",
-	88 -> "Shipwreck or boat",
-	98 -> "Something unusual or unexpected",
-	99 -> "You transition into a new theme",
-	100 -> "You transition into a new domain"
-|>;
-
-
-(* ::Subsubsection::Closed:: *)
-(*Domain Danger: Sea Cave*)
-
-
-oracles["Domain Danger: Sea Cave"] = <|
-	33 -> "Denizen strikes without warning",
-	36 -> "Denizen lurks below",
-	39 -> "Flooding",
-	42 -> "Rushing current",
-	45 -> "Claustrophobic squeeze"
-|>;
-
-
-(* ::Subsubsection::Closed:: *)
-(*Domain Feature: Shadowfen*)
-
-
-oracles["Domain Feature: Shadowfen"] = <|
-	43 -> "Narrow path through a fetid bog",
-	56 -> "Stagnant waterway",
-	64 -> "Flooded thicket",
-	68 -> "Island of dry land",
-	72 -> "Submerged discovery",
-	76 -> "Preserved corpses",
-	80 -> "Overgrown structure",
-	84 -> "Tall reeds",
-	88 -> "Camp or outpost",
-	98 -> "Something unusual or unexpected",
-	99 -> "You transition into a new theme",
-	100 -> "You transition into a new domain"
-|>;
-
-
-(* ::Subsubsection::Closed:: *)
-(*Domain Danger: Shadowfen*)
-
-
-oracles["Domain Danger: Shadowfen"] = <|
-	33 -> "Denizen hunts",
-	36 -> "Deep water blocks the path",
-	39 -> "Toxic environment",
-	42 -> "Concealing or disorienting mist",
-	45 -> "Hidden quagmire"
-|>;
-
-
-(* ::Subsubsection::Closed:: *)
-(*Domain Feature: Stronghold*)
-
-
-oracles["Domain Feature: Stronghold"] = <|
-	43 -> "Connecting passageways",
-	56 -> "Barracks or common quarters",
-	64 -> "Large hall",
-	68 -> "Workshop or library",
-	72 -> "Command center or leadership",
-	76 -> "Ladder or stairwell",
-	80 -> "Storage",
-	84 -> "Kitchen or larder",
-	88 -> "Courtyard",
-	98 -> "Something unusual or unexpected",
-	99 -> "You transition into a new theme",
-	100 -> "You transition into a new domain"
-|>;
-
-
-(* ::Subsubsection::Closed:: *)
-(*Domain Danger: Stronghold*)
-
-
-oracles["Domain Danger: Stronghold"] = <|
-	33 -> "Blocked or guarded path",
-	36 -> "Caught in the open",
-	39 -> "Chokepoint",
-	42 -> "Trap",
-	45 -> "Alarm trigger"
-|>;
-
-
-(* ::Subsubsection::Closed:: *)
-(*Domain Feature: Tanglewood*)
-
-
-oracles["Domain Feature: Tanglewood"] = <|
-	43 -> "Dense thicket",
-	56 -> "Overgrown path",
-	64 -> "Waterway",
-	68 -> "Clearing",
-	72 -> "Elder tree",
-	76 -> "Brambles",
-	80 -> "Overgrown structure",
-	84 -> "Rocky outcrop",
-	88 -> "Camp or outpost",
-	98 -> "Something unusual or unexpected",
-	99 -> "You transition into a new theme",
-	100 -> "You transition into a new domain"
-|>;
-
-
-(* ::Subsubsection::Closed:: *)
-(*Domain Danger: Tanglewood*)
-
-
-oracles["Domain Danger: Tanglewood"] = <|
-	33 -> "Denizen hunts",
-	36 -> "Denizen lairs here",
-	39 -> "Trap or snare",
-	42 -> "Path leads you astray",
-	45 -> "Entangling plant life"
-|>;
-
-
-(* ::Subsubsection::Closed:: *)
-(*Domain Feature: Underkeep*)
-
-
-oracles["Domain Feature: Underkeep"] = <|
-	43 -> "Carved passages",
-	56 -> "Hall or chamber",
-	64 -> "Stairs into the depths",
-	68 -> "Grand doorway or entrance",
-	72 -> "Tomb or catacombs",
-	76 -> "Rough-hewn cave",
-	80 -> "Foundry or workshop",
-	84 -> "Shrine or temple",
-	88 -> "Imposing architecture or artistry",
-	98 -> "Something unusual or unexpected",
-	99 -> "You transition into a new theme",
-	100 -> "You transition into a new domain"
-|>;
-
-
-(* ::Subsubsection::Closed:: *)
-(*Domain Danger: Underkeep*)
-
-
-oracles["Domain Danger: Underkeep"] = <|
-	33 -> "Ancient mechanism or trap",
-	36 -> "Crumbling architecture",
-	39 -> "Blocked or broken passage",
-	42 -> "Artifact with a hidden danger",
-	45 -> "Denizen lurks in darkness"
 |>;
 
 
@@ -3507,6 +3745,17 @@ oracles["Monstrosity: Abilities"] = <|
 
 
 (* ::Subsubsection::Closed:: *)
+(*Threat Action*)
+
+
+oracles["Threat Action"] = <|
+	30 -> "The threat readies its next step, or a new danger looms. If you are in a position to prevent this development, you may attempt to do so. If you succeed, Reach a Milestone. Otherwise, mark menace.",
+	70 -> "The threat works subtly to advance toward its goal, or the danger escalates. Mark menace.",
+	100 -> "The threat makes a dramatic and immediate move, or a major event reveals new complications. Mark menace twice."
+|>;
+
+
+(* ::Subsubsection::Closed:: *)
 (*Threat: Category*)
 
 
@@ -3521,17 +3770,6 @@ oracles["Threat: Category"] = <|
 	94 -> "Power-Hungry Mystic",
 	99 -> "Zealous Cult",
 	100 -> "Roll Twice"
-|>;
-
-
-(* ::Subsubsection::Closed:: *)
-(*Threat: Action*)
-
-
-oracles["Threat: Action"] = <|
-	30 -> "The threat readies its next step, or a new danger looms. If you are in a position to prevent this development, you may attempt to do so. If you succeed, Reach a Milestone. Otherwise, mark menace.",
-	70 -> "The threat works subtly to advance toward its goal, or the danger escalates. Mark menace.",
-	100 -> "The threat makes a dramatic and immediate move, or a major event reveals new complications. Mark menace twice."
 |>;
 
 
@@ -4201,7 +4439,7 @@ oracles["Scale: Rank (Journey)"] = <|
 |>;
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*Scale: Rank (Foe)*)
 
 
