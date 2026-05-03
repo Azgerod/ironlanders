@@ -430,7 +430,7 @@ moves["finishTheScene"] = move[
 ];
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Quest moves*)
 
 
@@ -526,7 +526,7 @@ moves["advance", "header"] = paras[
 ];
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Fate moves*)
 
 
@@ -604,6 +604,61 @@ moves["aidYourAlly", "header"] = paras[
 
 (* ::Subsubsection:: *)
 (*Sojourn*)
+
+
+moves["sojourn"] = move[
+	"Sojourn",
+	paras[
+		p[b["When you spend time in a community seeking assistance,"], " roll +heart. If you share a bond, add +1."]
+	],
+	paras[
+		p["You and your allies may each choose two from within the categories below. If you share a bond, choose one more."],
+		p[b["Clear a condition"]],
+		p["\:2734 Mend: Clear a wounded debility and take +1 health."],
+		p["\:2734 Hearten: Clear a shaken debility and take +1 spirit."],
+		p["\:2734 Equip: Clear an unprepared debility and take +1 supply."],
+		p[b["Recover"]],
+		p["\:2734 Recuperate: Take +2 health for yourself and any companions."],
+		p["\:2734 Consort: Take +2 spirit."],
+		p["\:2734 Provision: Take +2 supply."],
+		p["\:2734 Plan: Take +2 momentum."],
+		p[b["Provide Aid"]],
+		p["\:2734 Take a quest: Envision what this community needs, or what trouble it is facing (", i["Ask the Oracle"], " if unsure). If you choose to help, ", i["Swear an Iron Vow"], " and add +1."]
+	],
+	paras[
+		p["You and your allies may each choose one from within the categories below. If you share a bond, choose one more."],
+		p[b["Clear a condition"]],
+		p["\:2734 Mend: Clear a wounded debility and take +1 health."],
+		p["\:2734 Hearten: Clear a shaken debility and take +1 spirit."],
+		p["\:2734 Equip: Clear an unprepared debility and take +1 supply."],
+		p[b["Recover"]],
+		p["\:2734 Recuperate: Take +2 health for yourself and any companions."],
+		p["\:2734 Consort: Take +2 spirit."],
+		p["\:2734 Provision: Take +2 supply."],
+		p["\:2734 Plan: Take +2 momentum."],
+		p[b["Provide Aid"]],
+		p["\:2734 Take a quest: Envision what this community needs, or what trouble it is facing (", i["Ask the Oracle"], " if unsure). If you choose to help, ", i["Swear an Iron Vow"], " and add +1."]
+	],
+	paras[
+		p["You find no help here. ", i["Pay the Price"], "."]
+	]
+];
+
+moves["sojournFocus"] = move[
+	"Sojourn: Focus",
+	paras[
+		p[b["On a hit on the "], bi["Sojourn"], b[" move,"], " you and your allies may each focus on one of your chosen recover actions and roll +heart again. If you share a bond, add +1."]
+	],
+	paras[
+		p["Take +2 more for your focused action."]
+	],
+	paras[
+		p["Take +1 more for your focused action."]
+	],
+	paras[
+		p["It goes badly and you lose all benefits for your focused action."]
+	]
+];
 
 
 (* ::Subsubsection:: *)
@@ -702,7 +757,7 @@ moves["writeYourEpilogue"] = move[
 ];
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Combat moves*)
 
 
@@ -824,9 +879,6 @@ moves["battle"] = move[
 (*End the Fight*)
 
 
-(* NEED TO IMPLEMENT END THE FIGHT'S ALTERNATE STARFORGED INITIATIVE-CONDITIONALITY *)
-
-
 moves["endTheFight"] = move[
 	"End the Fight",
 	paras[
@@ -851,7 +903,7 @@ moves["endTheFight"] = move[
 ];
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Suffer moves*)
 
 
@@ -994,7 +1046,7 @@ moves["faceASetback", "header"] = paras[
 ];
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Delve moves*)
 
 
@@ -1159,7 +1211,7 @@ moves["learnFromYourFailures"] = move[
 ];
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Threat moves*)
 
 

@@ -39,7 +39,7 @@
 BeginPackage["IronLibrary`"];
 
 
-(* ::Section:: *)
+(* ::Section::Closed:: *)
 (*Public interface*)
 
 
@@ -158,7 +158,7 @@ addBond::usage =
 addBond[bond, character] adds bond to character and marks progress on the bonds track.";
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Adding/removing progress tracks*)
 
 
@@ -308,6 +308,14 @@ compel[actionRoll] displays the Compel outcome corresponding to actionRoll.";
 aidYourAlly::usage =
 "aidYourAlly[] displays the Aid Your Ally move header.";
 
+sojourn::usage = 
+"sojourn[] displays the Sojourn move header.
+sojourn[actionRoll] displays the Sojourn outcome corresponding to actionRoll.";
+
+sojournFocus::usage = 
+"sojournFocus[] displays the Sojourn Focus move header.
+sojournFocus[actionRoll] displays the Sojourn Focus outcome corresponding to actionRoll.";
+
 forgeABond::usage =
 "forgeABond[] displays the Forge a Bond move header.
 forgeABond[actionRoll] displays the Forge a Bond outcome corresponding to actionRoll.";
@@ -350,7 +358,8 @@ battle[actionRoll] displays the Battle outcome corresponding to actionRoll.";
 
 endTheFight::usage =
 "endTheFight[] displays the End the Fight move header.
-endTheFight[progressRoll] displays the End the Fight outcome corresponding to progressRoll.";
+endTheFight[progressRoll] displays the End the Fight outcome corresponding to progressRoll.
+endTheFight[progressRoll, Initiative -> initiative] displays the End the Fight outcome with a worse outcome if initiative is False.";
 
 
 (* ::Subsubsection::Closed:: *)
@@ -495,6 +504,9 @@ Adds::usage =
 ArcName::usage =
 "ArcName is an option for beginChapter that specifies the arc name to use for the current chapter.";
 
+Initiative::usage =
+"Initiative is a True/False option for endTheFight, which specifies whether the character has initiative.";
+
 
 (* ::Subsection::Closed:: *)
 (*Rank symbols*)
@@ -523,7 +535,7 @@ Epic::usage =
 Begin["`Private`"]; 
 
 
-(* ::Section:: *)
+(* ::Section::Closed:: *)
 (*Private helpers*)
 
 
@@ -896,7 +908,7 @@ nextChapterSeed[] := Module[{base}, base = nextNotebookBase[]; If[base === $Fail
 stateForNextChapter[] := Module[{next, seed}, seed = nextChapterSeed[]; If[seed === $Failed, Return[$Failed]]; next = Association[$state]; next["seed"] = seed; next]; 
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*General mechanics helpers*)
 
 
@@ -1335,6 +1347,21 @@ displayMove[moveKey_String]:=displayMoveHeader[moveKey];
 displayMove[moveKey_String, roll_Association]:=displayMoveOutcome[moveKey, roll["result"]];
 
 
+(* ::Subsubsection::Closed:: *)
+(*End the Fight transformer*)
+
+
+endTheFightTransformer[roll_Association, initiative_] := Module[
+  {map, transformed},
+  map = {"strongHit" -> "weakHit", "weakHit" -> "miss", "miss" -> "miss"};
+  transformed = Association[roll];
+  If[! TrueQ[initiative],
+    transformed["result"] = Replace[transformed["result"], map]
+  ];
+  transformed
+];
+
+
 (* ::Subsection::Closed:: *)
 (*Constants*)
 
@@ -1343,7 +1370,7 @@ stats = {Edge, Heart, Iron, Shadow, Wits, Health, Spirit, Supply};
 ranks = {Troublesome, Dangerous, Formidable, Extreme, Epic};
 
 
-(* ::Section:: *)
+(* ::Section::Closed:: *)
 (*General interface implementation*)
 
 
@@ -1610,7 +1637,7 @@ undertakeAJourney[actionRoll_Association] := displayMove["undertakeAJourney", ac
 
 
 reachYourDestination[] := displayMove["reachYourDestination"];
-reachYourDestination[actionRoll_Association] := displayMove["reachYourDestination", actionRoll];
+reachYourDestination[progressRoll_Association] := displayMove["reachYourDestination", progressRoll];
 
 
 (* ::Subsubsection:: *)
@@ -1653,7 +1680,7 @@ secureAnAdvantageScene[actionRoll_Association] := displayMove["secureAnAdvantage
 
 
 finishTheScene[] := displayMove["finishTheScene"];
-finishTheScene[actionRoll_Association] := displayMove["finishTheScene", actionRoll];
+finishTheScene[progressRoll_Association] := displayMove["finishTheScene", progressRoll];
 
 
 (* ::Subsection::Closed:: *)
@@ -1680,7 +1707,7 @@ reachAMilestone[] := displayMove["reachAMilestone"];
 
 
 fulfillYourVow[] := displayMove["fulfillYourVow"];
-fulfillYourVow[actionRoll_Association] := displayMove["fulfillYourVow", actionRoll];
+fulfillYourVow[progressRoll_Association] := displayMove["fulfillYourVow", progressRoll];
 
 
 (* ::Subsubsection:: *)
@@ -1741,6 +1768,17 @@ aidYourAlly[] := displayMove["aidYourAlly"];
 
 
 (* ::Subsubsection:: *)
+(*Sojourn*)
+
+
+sojourn[] := displayMove["sojourn"];
+sojourn[actionRoll_Association] := displayMove["sojourn", actionRoll];
+
+sojournFocus[] := displayMove["sojournFocus"];
+sojournFocus[actionRoll_Association] := displayMove["sojournFocus", actionRoll];
+
+
+(* ::Subsubsection:: *)
 (*Forge a Bond*)
 
 
@@ -1764,19 +1802,19 @@ drawTheCircle[] := displayMove["drawTheCircle"];
 drawTheCircle[actionRoll_Association] := displayMove["drawTheCircle", actionRoll];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Write Your Epilogue*)
 
 
 writeYourEpilogue[] := displayMove["writeYourEpilogue"];
-writeYourEpilogue[actionRoll_Association] := displayMove["writeYourEpilogue", actionRoll];
+writeYourEpilogue[progressRoll_Association] := displayMove["writeYourEpilogue", progressRoll];
 
 
 (* ::Subsection::Closed:: *)
 (*Combat moves*)
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Enter the Fray*)
 
 
@@ -1784,7 +1822,7 @@ enterTheFray[] := displayMove["enterTheFray"];
 enterTheFray[actionRoll_Association] := displayMove["enterTheFray", actionRoll];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Strike*)
 
 
@@ -1792,7 +1830,7 @@ strike[] := displayMove["strike"];
 strike[actionRoll_Association] := displayMove["strike", actionRoll];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Clash*)
 
 
@@ -1800,14 +1838,14 @@ clash[] := displayMove["clash"];
 clash[actionRoll_Association] := displayMove["clash", actionRoll];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Turn the Tide*)
 
 
 turnTheTide[] := displayMove["turnTheTide"];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Battle*)
 
 
@@ -1815,12 +1853,13 @@ battle[] := displayMove["battle"];
 battle[actionRoll_Association] := displayMove["battle", actionRoll];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*End the Fight*)
 
 
+Options[endTheFight] = {Initiative -> True};
 endTheFight[] := displayMove["endTheFight"];
-endTheFight[actionRoll_Association] := displayMove["endTheFight", actionRoll];
+endTheFight[actionRoll_Association, opts:OptionsPattern[]] := displayMove["endTheFight", endTheFightTransformer[actionRoll, OptionValue[Initiative]]];
 
 
 (* ::Subsection::Closed:: *)
@@ -1919,7 +1958,7 @@ revealADanger[] := displayMove["revealADanger"];
 
 
 locateYourObjective[] := displayMove["locateYourObjective"];
-locateYourObjective[actionRoll_Association] := displayMove["locateYourObjective", actionRoll];
+locateYourObjective[progressRoll_Association] := displayMove["locateYourObjective", progressRoll];
 
 
 (* ::Subsubsection::Closed:: *)
@@ -1934,7 +1973,7 @@ escapeTheDepths[actionRoll_Association] := displayMove["escapeTheDepths", action
 (*Failure moves*)
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Mark Your Failure*)
 
 
@@ -1946,7 +1985,7 @@ markYourFailure[] := displayMove["markYourFailure"];
 
 
 learnFromYourFailures[] := displayMove["learnFromYourFailures"];
-learnFromYourFailures[actionRoll_Association] := displayMove["learnFromYourFailures", actionRoll];
+learnFromYourFailures[progressRoll_Association] := displayMove["learnFromYourFailures", progressRoll];
 
 
 (* ::Subsection::Closed:: *)
