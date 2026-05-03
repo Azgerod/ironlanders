@@ -74,7 +74,7 @@ setSoloCharacter::usage =
 "setSoloCharacter[character] sets the solo character to character.";
 
 createCharacter::usage =
-"createCharacter[Name -> name, Assets -> {a1, a2, a3}, Edge -> edge, Heart -> heart, Iron -> iron, Shadow -> shadow, Wits -> wits, BackgroundVow -> {vowName, vowRank}, Bonds -> {b1, b2, b3}] creates a character and sets it as the solo character.";
+"createCharacter[name, {a1, a2, a3}, edge, heart, iron, shadow, wits, {vowName, vowRank}, {b1, b2, b3}] creates a character and sets it as the solo character.";
 
 
 (* ::Subsection::Closed:: *)
@@ -101,6 +101,21 @@ burnMomentum::usage =
 progressRoll::usage =
 "progressRoll[track] makes a progress roll against track for the solo character.
 progressRoll[track, character] makes a progress roll against track for character.";
+
+
+(* ::Subsection::Closed:: *)
+(*Reroll*)
+
+
+reroll::usage =
+"reroll[roll, die] rerolls die in roll and returns the modified roll.
+reroll[roll, {die1, die2, ...}] rerolls the specified dice in roll and returns the modified roll.
+
+Possible dice are ActionDie, ChallengeDice, LargerChallengeDie, and SmallerChallengeDie.
+
+ActionDie may only be used with action rolls. Challenge dice may be rerolled in action rolls and progress rolls.
+
+reroll[..., Display -> False] suppresses display.";
 
 
 (* ::Subsection::Closed:: *)
@@ -468,35 +483,35 @@ Supply::usage =
 
 
 (* ::Subsection::Closed:: *)
-(*Option names*)
+(*Option names and public symbols*)
 
 
 Name::usage =
-"Name is an option for createCharacter that specifies the character name.";
+"Name is a public symbol reserved by IronLibrary.";
 
 Edge::usage =
-"Edge is one of the five Ironsworn stats and an option for createCharacter.";
+"Edge is one of the five Ironsworn stats.";
 
 Heart::usage =
-"Heart is one of the five Ironsworn stats and an option for createCharacter.";
+"Heart is one of the five Ironsworn stats.";
 
 Iron::usage =
-"Iron is one of the five Ironsworn stats and an option for createCharacter.";
+"Iron is one of the five Ironsworn stats.";
 
 Shadow::usage =
-"Shadow is one of the five Ironsworn stats and an option for createCharacter.";
+"Shadow is one of the five Ironsworn stats.";
 
 Wits::usage =
-"Wits is one of the five Ironsworn stats and an option for createCharacter.";
+"Wits is one of the five Ironsworn stats.";
 
 Assets::usage =
-"Assets is an option for createCharacter that specifies a list of three asset names.";
+"Assets is a public symbol reserved by IronLibrary.";
 
 BackgroundVow::usage =
-"BackgroundVow is an option for createCharacter that specifies the character's background vow.";
+"BackgroundVow is a public symbol reserved by IronLibrary.";
 
 Bonds::usage =
-"Bonds is an option for createCharacter that specifies the character's starting bonds.";
+"Bonds is a public symbol reserved by IronLibrary.";
 
 Adds::usage =
 "Adds is an option for actionRoll that specifies an association of named bonuses.";
@@ -506,6 +521,9 @@ ArcName::usage =
 
 Initiative::usage =
 "Initiative is a True/False option for endTheFight, which specifies whether the character has initiative.";
+
+Display::usage =
+"Display is an option that specifies whether a function should display its result.";
 
 
 (* ::Subsection::Closed:: *)
@@ -528,6 +546,23 @@ Epic::usage =
 "Epic is a rank.";
 
 
+(* ::Subsection::Closed:: *)
+(*Reroll selection symbols*)
+
+
+ActionDie::usage =
+"ActionDie specifies the action die for reroll.";
+
+ChallengeDice::usage =
+"ChallengeDice specifies both challenge dice for reroll.";
+
+LargerChallengeDie::usage =
+"LargerChallengeDie specifies the larger challenge die for reroll. If the challenge dice are tied, the first challenge die is selected.";
+
+SmallerChallengeDie::usage =
+"SmallerChallengeDie specifies the smaller challenge die for reroll. If the challenge dice are tied, the first challenge die is selected.";
+
+
 (* ::Section::Closed:: *)
 (*Private context header*)
 
@@ -535,7 +570,7 @@ Epic::usage =
 Begin["`Private`"]; 
 
 
-(* ::Section::Closed:: *)
+(* ::Section:: *)
 (*Private helpers*)
 
 
@@ -544,7 +579,7 @@ Begin["`Private`"];
 
 
 (* ::Subsection::Closed:: *)
-(*Bookkeeping helpers*)
+(*Package bootstrap*)
 
 
 (* ::Subsubsection::Closed:: *)
@@ -578,6 +613,17 @@ normalizeName[s_String] := Module[{name}, name = ToLowerCase[StringTrim[s]]; nam
 
 
 (* ::Subsubsection::Closed:: *)
+(*Display naming*)
+
+
+titleCaseName[s_String] := StringRiffle[Capitalize /@ StringSplit[StringReplace[StringTrim[s], {"_" -> " ", "-" -> " "}], WhitespaceCharacter..], " "]; 
+
+
+(* ::Subsection::Closed:: *)
+(*Core naming and state model helpers*)
+
+
+(* ::Subsubsection::Closed:: *)
 (*State initialization*)
 
 
@@ -586,6 +632,95 @@ newState[seed_] := $state = Association["journey" -> Association[], "combats" ->
 ensureStateInitialized[] := Module[{base, seed}, If[AssociationQ[$state], Return[$state]]; base = currentNotebookBase[]; 
      seed = If[StringQ[base] && Quiet[parseNotebookBase[base] =!= $Failed, parseNotebookBase::badname], chapterSeedFromBase[base], Automatic]; newState[seed]; If[seed =!= Automatic, seedChapter[]]; 
      $state]; 
+
+
+(* ::Subsubsection::Closed:: *)
+(*Symbol to string conversion*)
+
+
+symString[symbol_] := ToLowerCase[SymbolName[symbol]]; 
+
+
+(* ::Subsubsection::Closed:: *)
+(*Constants*)
+
+
+stats = {Edge, Heart, Iron, Shadow, Wits, Health, Spirit, Supply}; 
+ranks = {Troublesome, Dangerous, Formidable, Extreme, Epic};
+
+
+(* ::Subsubsection::Closed:: *)
+(*Argument tests*)
+
+
+statQ[input_] := MemberQ[stats, input]; 
+rankQ[input_] := MemberQ[ranks, input]; 
+statValueQ[input_Integer] := 1 <= input <= 5; 
+
+
+(* ::Subsubsection::Closed:: *)
+(*Progress tracks*)
+
+
+progressTrack[(rank_)?rankQ, progress_:0] := 
+   Association["rank" -> rank, "progress" -> progress];
+progressRollResult = actionRollResult;
+
+
+(* ::Subsubsection::Closed:: *)
+(*Attribute getters*)
+
+
+getAttr[attr_String, character_:$soloCharacter] := $state[character, attr];
+getAttr[attr_, character_:$soloCharacter] := getAttr[symString[attr], character];
+
+getEdge[character_:$soloCharacter] := getAttr["edge", character];
+getHeart[character_:$soloCharacter] := getAttr["heart", character];
+getIron[character_:$soloCharacter] := getAttr["iron", character];
+getShadow[character_:$soloCharacter] := getAttr["shadow", character];
+getWits[character_:$soloCharacter] := getAttr["wits", character];
+
+getDebilities[character_:$soloCharacter] := getAttr["debilities", character];
+
+getMomentum[character_:$soloCharacter] := getAttr["momentum", character];
+getMomentumReset[character_:$soloCharacter] := Max[0, 2 - Length[getDebilities[character]]];
+getMomentumMax[character_:$soloCharacter] := 10 - Length[getDebilities[character]];
+
+getHealth[character_:$soloCharacter] := getAttr["health", character];
+getSpirit[character_:$soloCharacter] := getAttr["spirit", character];
+getSupply[character_:$soloCharacter] := getAttr["supply", character];
+
+
+(* ::Subsubsection::Closed:: *)
+(*Attribute adjusters and setters*)
+
+
+resetMomentum[character_:$soloCharacter] :=
+	$state[character, "momentum"] = getMomentumReset[character];
+
+adjustMomentum[n_Integer, character_ : $soloCharacter] :=
+	$state[character, "momentum"] += n;
+
+adjustHealth[n_Integer, character_ : $soloCharacter] :=
+	$state[character, "health"] += n;
+
+adjustSpirit[n_Integer, character_ : $soloCharacter] :=
+	$state[character, "spirit"] += n;
+
+adjustSupply[n_Integer, character_ : $soloCharacter] :=
+	$state[character, "supply"] += n;
+
+
+(* ::Subsubsection::Closed:: *)
+(*Progress track getters*)
+
+
+getProgress[trackName_String, character_:$soloCharacter] := $state[character, "progressTracks", trackName, "progress"];
+getRank[trackName_String, character_:$soloCharacter] := $state[character, "progressTracks", trackName, "rank"];
+
+
+(* ::Subsection::Closed:: *)
+(*Notebook and chapter lifecycle helpers*)
 
 
 (* ::Subsubsection::Closed:: *)
@@ -610,6 +745,16 @@ parseNotebookBase[name_String] := Module[{match}, match = StringCases[name, Regu
      If[match === {}, Message[parseNotebookBase::badname, name]; Return[$Failed]]; AssociationThread[{"Story", "ChapterNumber", "Arc", "ArcChapterNumber"}, First[match]]]; 
 parseNotebookBase::badname = "Notebook name `1` does not match the expected form story-chapter-arc-arcchapter."; 
 makeNotebookBase[data_Association] := StringRiffle[{data["Story"], ToString[data["ChapterNumber"]], data["Arc"], ToString[data["ArcChapterNumber"]]}, "-"]; 
+
+
+(* ::Subsubsection::Closed:: *)
+(*Story name derivation*)
+
+
+storyRootDirectory[] := Module[{dir}, dir = currentNotebookDirectory[]; If[dir === $Failed, Return[$Failed]]; dir]; 
+storyNameFromRoot[] := Module[{root}, root = storyRootDirectory[]; If[root === $Failed, Return[$Failed]]; Last[FileNameSplit[root]]]; 
+storyNameFromSoloCharacter[] := Module[{}, If[ValueQ[$soloCharacter] && StringQ[$soloCharacter], $soloCharacter, Message[beginStory::noname]; $Failed]]; 
+beginStory::noname = "No story name was supplied, and $soloCharacter has not been set. Either call beginStory[name] or create a character first."; 
 
 
 (* ::Subsubsection::Closed:: *)
@@ -667,10 +812,20 @@ chapterOverride[storyDir_String, chapterNumber_Integer] :=
 
 
 (* ::Subsubsection::Closed:: *)
+(*Chapter seeding*)
+
+
+chapterSeedFromBase[base_String] := Abs[Hash[{"IronLibrary", "chapter-seed", base}]]; 
+seedChapter[] := Module[{seed}, If[ !AssociationQ[$state] ||  !KeyExistsQ[$state, "seed"], Message[seedChapter::noseed]; Return[$Failed]]; seed = $state["seed"]; SeedRandom[seed]; seed]; 
+seedChapter::noseed = "The current state does not contain a seed."; 
+nextChapterSeed[] := Module[{base}, base = nextNotebookBase[]; If[base === $Failed, Return[$Failed]]; chapterSeedFromBase[base]]; 
+stateForNextChapter[] := Module[{next, seed}, seed = nextChapterSeed[]; If[seed === $Failed, Return[$Failed]]; next = Association[$state]; next["seed"] = seed; next]; 
+
+
+(* ::Subsubsection::Closed:: *)
 (*Notebook creation*)
 
 
-titleCaseName[s_String] := StringRiffle[Capitalize /@ StringSplit[StringReplace[StringTrim[s], {"_" -> " ", "-" -> " "}], WhitespaceCharacter..], " "]; 
 romanNumeral[(n_Integer)?Positive] := RomanNumeral[n]; 
 chapterTitleSubtitleFromPath[path_String] := Module[{base, data, storyDir, override, arcTitle, title, subtitle}, base = FileBaseName[path]; data = parseNotebookBase[base]; 
      If[data === $Failed, Return[$Failed]]; storyDir = DirectoryName[DirectoryName[path]]; override = chapterOverride[storyDir, data["ChapterNumber"]]; 
@@ -712,7 +867,7 @@ createChapterNotebook[path_String] := Module[{cells}, If[FileExistsQ[path], Retu
 
 
 (* ::Subsubsection::Closed:: *)
-(*Header updates*)
+(*Header and boilerplate updates*)
 
 
 deleteTaggedCells[nb_, tag_String] := Module[{cells}, cells = Cells[nb, CellTags -> tag]; If[cells =!= {}, NotebookDelete /@ cells]; ]; 
@@ -808,22 +963,12 @@ ensureChapterOneBoilerplate[] := Module[
 	];
 
 	NotebookSave[nb];
-	heading
+		heading
 ];
 
 
 (* ::Subsubsection::Closed:: *)
-(*Story name derivation*)
-
-
-storyRootDirectory[] := Module[{dir}, dir = currentNotebookDirectory[]; If[dir === $Failed, Return[$Failed]]; dir]; 
-storyNameFromRoot[] := Module[{root}, root = storyRootDirectory[]; If[root === $Failed, Return[$Failed]]; Last[FileNameSplit[root]]]; 
-storyNameFromSoloCharacter[] := Module[{}, If[ValueQ[$soloCharacter] && StringQ[$soloCharacter], $soloCharacter, Message[beginStory::noname]; $Failed]]; 
-beginStory::noname = "No story name was supplied, and $soloCharacter has not been set. Either call beginStory[name] or create a character first."; 
-
-
-(* ::Subsubsection::Closed:: *)
-(*Chapter notebook helper*)
+(*Story and chapter renaming*)
 
 
 chapterNotebookQ[] := Module[{base}, base = currentNotebookBase[]; If[ !StringQ[base], Return[False]]; Quiet[parseNotebookBase[base] =!= $Failed, parseNotebookBase::badname]]; 
@@ -897,19 +1042,8 @@ propagateArcRename[storyDir_String, oldArc_String, oldArcStart_Integer, newArc_S
      results = (renameChapterDirectoryForArc[#1, oldArc, oldArcStart, newArc, currentChapterNumber, arcTitle] & ) /@ chapterDirs; If[MemberQ[results, $Failed], Return[$Failed]]; results]; 
 
 
-(* ::Subsubsection::Closed:: *)
-(*Chapter seeding*)
-
-
-chapterSeedFromBase[base_String] := Abs[Hash[{"IronLibrary", "chapter-seed", base}]]; 
-seedChapter[] := Module[{seed}, If[ !AssociationQ[$state] ||  !KeyExistsQ[$state, "seed"], Message[seedChapter::noseed]; Return[$Failed]]; seed = $state["seed"]; SeedRandom[seed]; seed]; 
-seedChapter::noseed = "The current state does not contain a seed."; 
-nextChapterSeed[] := Module[{base}, base = nextNotebookBase[]; If[base === $Failed, Return[$Failed]]; chapterSeedFromBase[base]]; 
-stateForNextChapter[] := Module[{next, seed}, seed = nextChapterSeed[]; If[seed === $Failed, Return[$Failed]]; next = Association[$state]; next["seed"] = seed; next]; 
-
-
 (* ::Subsection::Closed:: *)
-(*General mechanics helpers*)
+(*Roll and oracle mechanics*)
 
 
 (* ::Subsubsection::Closed:: *)
@@ -923,6 +1057,12 @@ actionRollResult[challengeDice_List, actionScore_Integer] :=
 		Count[challengeDice, die_ /; actionScore > die]
 	];
 rollOracleDice = rollChallengeDice;
+
+
+(* ::Subsubsection::Closed:: *)
+(*Oracle roll helpers*)
+
+
 oracleRollValue[{tensDie_Integer, onesDie_Integer}]:=Module[{tensValue, onesValue},
 	tensValue = If[tensDie==10, 0, tensDie*10];
 	onesValue = If[onesDie==10, 0, onesDie];
@@ -933,105 +1073,111 @@ oracleRollOutcome[table_Association, value_Integer] := Module[{key},
 	table[key]
 ];
 
+oracleRoll[tableName_String, table_Association] := Module[{oracleDice, od1, od2, value, outcome, match},
+	oracleDice = {od1, od2} = rollOracleDice[];
+	value = oracleRollValue[oracleDice];
+	outcome = oracleRollOutcome[table, value];
+	match = (od1==od2);
+	displayOracleRoll[tableName, oracleDice, match, outcome];
+	<|"oracleDice" -> oracleDice, "value" -> value, "outcome" -> outcome, "match" -> match|>
+];
 
-
-(* ::Subsubsection::Closed:: *)
-(*Argument tests*)
-
-
-statQ[input_] := MemberQ[stats, input]; 
-rankQ[input_] := MemberQ[ranks, input]; 
-statValueQ[input_Integer] := 1 <= input <= 5; 
-
-
-(* ::Subsubsection::Closed:: *)
-(*Progress tracks*)
-
-
-progressTrack[(rank_)?rankQ, progress_:0] := 
-   Association["rank" -> rank, "progress" -> progress];
-progressRollResult = actionRollResult;
 
 
 (* ::Subsubsection::Closed:: *)
-(*Symbol to string conversion*)
+(*Roll type predicates and reroll support*)
 
 
-symString[symbol_] := ToLowerCase[SymbolName[symbol]]; 
+actionRollQ[roll_Association] :=
+	KeyExistsQ[roll, "actionDie"] &&
+	KeyExistsQ[roll, "actionScore"] &&
+	KeyExistsQ[roll, "challengeDice"];
 
+progressRollQ[roll_Association] :=
+	KeyExistsQ[roll, "progressScore"] &&
+	KeyExistsQ[roll, "challengeDice"] &&
+	!KeyExistsQ[roll, "actionDie"];
 
-(* ::Subsubsection::Closed:: *)
-(*Attribute Getters*)
+rollQ[roll_Association] :=
+	actionRollQ[roll] || progressRollQ[roll];
 
+rerollSelectionQ[ActionDie] := True;
+rerollSelectionQ[ChallengeDice] := True;
+rerollSelectionQ[LargerChallengeDie] := True;
+rerollSelectionQ[SmallerChallengeDie] := True;
+rerollSelectionQ[_] := False;
 
-getAttr[attr_String, character_:$soloCharacter] := $state[character, attr];
-getAttr[attr_, character_:$soloCharacter] := getAttr[symString[attr], character];
+challengeDieIndex[LargerChallengeDie, challengeDice_List] :=
+	First @ FirstPosition[challengeDice, Max[challengeDice]];
 
-getEdge[character_:$soloCharacter] := getAttr["edge", character];
-getHeart[character_:$soloCharacter] := getAttr["heart", character];
-getIron[character_:$soloCharacter] := getAttr["iron", character];
-getShadow[character_:$soloCharacter] := getAttr["shadow", character];
-getWits[character_:$soloCharacter] := getAttr["wits", character];
+challengeDieIndex[SmallerChallengeDie, challengeDice_List] :=
+	First @ FirstPosition[challengeDice, Min[challengeDice]];
 
-getDebilities[character_:$soloCharacter] := getAttr["debilities", character];
+normalizeRerollSelection[die_] :=
+	normalizeRerollSelection[{die}];
 
-getMomentum[character_:$soloCharacter] := getAttr["momentum", character];
-getMomentumReset[character_:$soloCharacter] := Max[0, 2 - Length[getDebilities[character]]];
-getMomentumMax[character_:$soloCharacter] := 10 - Length[getDebilities[character]];
+normalizeRerollSelection[dice_List] :=
+	DeleteDuplicates[dice];
 
-getHealth[character_:$soloCharacter] := getAttr["health", character];
-getSpirit[character_:$soloCharacter] := getAttr["spirit", character];
-getSupply[character_:$soloCharacter] := getAttr["supply", character];
+rerollChallengeDieIndices[selection_List, challengeDice_List] := Module[{indices},
+	indices = {};
 
+	If[MemberQ[selection, ChallengeDice],
+		indices = Join[indices, {1, 2}]
+	];
 
-(* ::Subsubsection::Closed:: *)
-(*Attribute adjusters and setters*)
+	If[
+		MemberQ[selection, LargerChallengeDie] &&
+		MemberQ[selection, SmallerChallengeDie],
+		indices = Join[indices, {1, 2}],
+		If[MemberQ[selection, LargerChallengeDie],
+			AppendTo[indices, challengeDieIndex[LargerChallengeDie, challengeDice]]
+		];
 
+		If[MemberQ[selection, SmallerChallengeDie],
+			AppendTo[indices, challengeDieIndex[SmallerChallengeDie, challengeDice]]
+		]
+	];
 
-resetMomentum[character_:$soloCharacter] :=
-	$state[character, "momentum"] = getMomentumReset[character];
+	DeleteDuplicates[indices]
+];
 
-adjustMomentum[n_Integer, character_ : $soloCharacter] :=
-	$state[character, "momentum"] += n;
+reroll::baddie =
+"`1` is not a valid reroll selection. Use ActionDie, ChallengeDice, LargerChallengeDie, or SmallerChallengeDie.";
 
-adjustHealth[n_Integer, character_ : $soloCharacter] :=
-	$state[character, "health"] += n;
+reroll::badroll =
+"`1` is not an action roll or progress roll association.";
 
-adjustSpirit[n_Integer, character_ : $soloCharacter] :=
-	$state[character, "spirit"] += n;
+reroll::actiondie =
+"ActionDie can only be rerolled in an action roll.";
 
-adjustSupply[n_Integer, character_ : $soloCharacter] :=
-	$state[character, "supply"] += n;
+reroll::empty =
+"No dice were specified for reroll.";
 
-
-(* ::Subsubsection::Closed:: *)
-(*Progress track getters*)
-
-
-getProgress[trackName_String, character_:$soloCharacter] := $state[character, "progressTracks", trackName, "progress"];
-getRank[trackName_String, character_:$soloCharacter] := $state[character, "progressTracks", trackName, "rank"];
+reroll::badchallenge =
+"Could not determine which challenge die to reroll from selection `1`.";
 
 
 (* ::Subsection::Closed:: *)
-(*General presentation helpers*)
-
-
-(* ::Subsubsection::Closed:: *)
-(*Shared presentation constants*)
-
-
-rollHeaderBodyGap = scaled[3];
-rollBodyResultGap = scaled[3];
-$ironDisplayScale = 0.8;
+(*Presentation helpers*)
 
 
 (* ::Subsubsection::Closed:: *)
 (*Scaling*)
 
 
+$ironDisplayScale = 0.8;
 scaled[n_?NumericQ] := $ironDisplayScale n;
 
 scaledSize[n_?NumericQ] := Round[scaled[n]];
+
+
+(* ::Subsubsection::Closed:: *)
+(*Shared layout constants*)
+
+
+rollHeaderBodyGap = scaled[3];
+rollBodyResultGap = scaled[3];
 
 
 (* ::Subsubsection::Closed:: *)
@@ -1083,7 +1229,7 @@ moveTextStyle[x_] := Style[
 
 
 (* ::Subsubsection::Closed:: *)
-(*Presentation preparation*)
+(*Image assets and outcome styling*)
 
 
 emptyD6Image = Image[CompressedData["\n1:eJztnU9v03YYx6Oxw459CewdcNzNsU1Iy7+EVqTtAWhRU0TLCmqQpgGCllO6\nSyqB4ETpYblVGlKvVOMdbL1X2k69bu/A8zeppTQLjhP/7Mfx832kD1KrisrP\nx88fx5V+399/PLv6TaFQaHzn/zO7/JO9ubn889\
@@ -1243,7 +1389,7 @@ ironFramed[x_] := Framed[
 
 
 (* ::Subsubsection::Closed:: *)
-(*Display action roll*)
+(*Action roll display*)
 
 
 displayActionRoll[roll_Association] := Print[ironFramed[Grid[{{Item[header["Action Roll", Capitalize[symString[roll["stat"]]]], Alignment -> Left], SpanFromLeft}, 
@@ -1253,7 +1399,7 @@ displayActionRoll[roll_Association] := Print[ironFramed[Grid[{{Item[header["Acti
 
 
 (* ::Subsubsection::Closed:: *)
-(*Display momentum burn*)
+(*Momentum burn display*)
 
 
 displayMomentumBurn[burn_Association] := Print[ironFramed[Column[{Item[header["Momentum Burn", StringJoin[ToString[burn["momentum"]], " \[Rule] ", ToString[burn["momentumReset"]]]], Alignment -> Left], 
@@ -1263,7 +1409,7 @@ displayMomentumBurn[burn_Association] := Print[ironFramed[Column[{Item[header["M
 
 
 (* ::Subsubsection::Closed:: *)
-(*Display progress roll*)
+(*Progress roll display*)
 
 
 displayProgressRoll[roll_Association] := Print[ironFramed[Grid[{{Item[header["Progress Roll", roll["trackName"]], Alignment -> Left]}, 
@@ -1272,7 +1418,7 @@ displayProgressRoll[roll_Association] := Print[ironFramed[Grid[{{Item[header["Pr
 
 
 (* ::Subsubsection::Closed:: *)
-(*Display oracle roll*)
+(*Oracle roll display*)
 
 
 displayOracleRoll[table_String, {d1_, d2_}, match_, outcome_String] := 
@@ -1283,21 +1429,107 @@ displayOracleRoll[table_String, {d1_, d2_}, match_, outcome_String] :=
 
 
 (* ::Subsubsection::Closed:: *)
-(*Oracle roll*)
+(*Reroll display*)
 
 
-oracleRoll[tableName_String, table_Association] := Module[{oracleDice, od1, od2, value, outcome, match},
-	oracleDice = {od1, od2} = rollOracleDice[];
-	value = oracleRollValue[oracleDice];
-	outcome = oracleRollOutcome[table, value];
-	match = (od1==od2);
-	displayOracleRoll[tableName, oracleDice, match, outcome];
-	<|"oracleDice" -> oracleDice, "value" -> value, "outcome" -> outcome, "match" -> match|>
+rerollDieLabel[ActionDie] := "Action die";
+rerollDieLabel[ChallengeDice] := "Both challenge dice";
+rerollDieLabel[LargerChallengeDie] := "Larger challenge die";
+rerollDieLabel[SmallerChallengeDie] := "Smaller challenge die";
+rerollDieLabel[other_] := ToString[Unevaluated[other]];
+
+rerollSubtitle[selection_List] := Module[{labels},
+	labels = rerollDieLabel /@ selection;
+	If[
+		Length[labels] == 1,
+		First[labels],
+		StringRiffle[Most[labels], ", "] <> " & " <> Last[labels]
+	]
 ];
+
+displayRerollActionRoll[roll_Association] :=
+	Print[
+		ironFramed[
+			Grid[
+				{
+					{
+						Item[
+							header["Reroll", rerollSubtitle[roll["reroll", "selection"]]],
+							Alignment -> Left
+						],
+						SpanFromLeft
+					},
+					{
+						mathColumn[
+							roll["actionDie"],
+							roll["statValue"],
+							roll["adds"],
+							roll["actionScore"],
+							roll["actionDieCancelled"],
+							roll["momentum"]
+						],
+						rollColumn[
+							roll["actionScore"],
+							roll["challengeDice"]
+						]
+					},
+					{
+						Item[
+							actionRollResultDisplay[roll["result"], roll["match"]],
+							Alignment -> Center
+						],
+						SpanFromLeft
+					}
+				},
+				Dividers -> {None, {False, False, False, False}},
+				Alignment -> {{Left, Center, Center}, {Top, Top, Bottom}},
+				Spacings -> {2, {Automatic, rollHeaderBodyGap, rollBodyResultGap}},
+				FrameStyle -> None
+			]
+		]
+	];
+
+displayRerollProgressRoll[roll_Association] :=
+	Print[
+		ironFramed[
+			Grid[
+				{
+					{
+						Item[
+							header["Reroll", rerollSubtitle[roll["reroll", "selection"]]],
+							Alignment -> Left
+						]
+					},
+					{
+						rollColumn[
+							roll["progressScore"],
+							roll["challengeDice"],
+							{False, False}
+						]
+					},
+					{
+						Item[
+							actionRollResultDisplay[roll["result"], roll["match"]],
+							Alignment -> Center
+						]
+					}
+				},
+				Alignment -> {{Center}, {Center, Top, Center}},
+				Spacings -> {2, {Automatic, rollHeaderBodyGap, rollBodyResultGap}}
+			]
+		]
+	];
+
+displayReroll[roll_Association] :=
+	If[
+		KeyExistsQ[roll, "actionDie"],
+		displayRerollActionRoll[roll],
+		displayRerollProgressRoll[roll]
+	];
 
 
 (* ::Subsection::Closed:: *)
-(*Move helpers*)
+(*Move presentation helpers*)
 
 
 (* ::Subsubsection::Closed:: *)
@@ -1347,35 +1579,12 @@ displayMove[moveKey_String]:=displayMoveHeader[moveKey];
 displayMove[moveKey_String, roll_Association]:=displayMoveOutcome[moveKey, roll["result"]];
 
 
-(* ::Subsubsection::Closed:: *)
-(*End the Fight transformer*)
-
-
-endTheFightTransformer[roll_Association, initiative_] := Module[
-  {map, transformed},
-  map = {"strongHit" -> "weakHit", "weakHit" -> "miss", "miss" -> "miss"};
-  transformed = Association[roll];
-  If[! TrueQ[initiative],
-    transformed["result"] = Replace[transformed["result"], map]
-  ];
-  transformed
-];
+(* ::Section:: *)
+(*Core API implementation*)
 
 
 (* ::Subsection::Closed:: *)
-(*Constants*)
-
-
-stats = {Edge, Heart, Iron, Shadow, Wits, Health, Spirit, Supply}; 
-ranks = {Troublesome, Dangerous, Formidable, Extreme, Epic};
-
-
-(* ::Section::Closed:: *)
-(*General interface implementation*)
-
-
-(* ::Subsection::Closed:: *)
-(*Bookkeeping*)
+(*Story and chapter lifecycle*)
 
 
 resetIronSession[] := (Clear[$state, $soloCharacter]; ); 
@@ -1394,7 +1603,6 @@ beginStory[name_] := Module[{root, storyName, story, arc, base, storyDir, chapte
      Association["NotebookPath" -> notebookPath, "StoryDirectory" -> storyDir, "AlreadyBegun" -> False]]; 
 beginStory::badname = "Story name `1` is not a string."; 
 beginStory::direxists = "Cannot begin story because the target chapter directory already exists: `1`."; 
-beginStory::direxists = "Cannot begin story because the target chapter directory already exists: `1`."; 
 Options[beginChapter] = {ArcName -> Automatic}; 
 beginChapter[OptionsPattern[]] := Module[{path, loaded, arcName, renamed}, Clear[$state, $soloCharacter]; path = currentStatePath[]; If[path === $Failed, Return[$Failed]]; 
      loaded = loadStateFromPath[path]; If[loaded === $Failed, Return[$Failed]]; If[seedChapter[] === $Failed, Return[$Failed]]; arcName = OptionValue[ArcName]; 
@@ -1409,8 +1617,8 @@ endChapter[] := Module[{statePath, notebookPath}, statePath = nextStatePath[]; n
 (*Character management*)
 
 
-createCharacter[Name -> name_String, Assets -> assets:{_String, _String, _String}, Edge -> (edge_)?statValueQ, Heart -> (heart_)?statValueQ, Iron -> (iron_)?statValueQ, Shadow -> (shadow_)?statValueQ, 
-    Wits -> (wits_)?statValueQ, BackgroundVow -> {vowName_String, (vowRank_)?rankQ}, Bonds -> bonds:{___String} /; Length[bonds] <= 3] := 
+createCharacter[name_String, assets:{_String, _String, _String}, (edge_)?statValueQ, (heart_)?statValueQ, (iron_)?statValueQ, (shadow_)?statValueQ, 
+    (wits_)?statValueQ, {vowName_String, (vowRank_)?rankQ}, bonds:{___String} /; Length[bonds] <= 3] := 
    Module[{character}, ensureStateInitialized[]; character = Association["assets" -> assets, "edge" -> edge, "heart" -> heart, "iron" -> iron, "shadow" -> shadow, "wits" -> wits, "health" -> 5, 
        "spirit" -> 5, "supply" -> 5, "momentum" -> 2, "debilities" -> {}, "progressTracks" -> Association[vowName -> progressTrack[vowRank], "Bonds" -> progressTrack[Epic, 0.25*Length[bonds]], "Failures"->progressTrack[Epic]], 
        "bonds" -> bonds, "earnedExperience" -> 0, "spentExperience" -> 0]; AssociateTo[$state, name -> character]; $soloCharacter = name; $state[name]]; 
@@ -1478,7 +1686,7 @@ progressRoll[track_String, character_String, opts : OptionsPattern[]] := Module[
 
 
 (* ::Subsection::Closed:: *)
-(*Suffer and take*)
+(*Resource and momentum adjustment*)
 
 
 sufferMomentum[n_Integer, character_ : $soloCharacter] :=
@@ -1507,7 +1715,7 @@ takeSupply[n_Integer, character_ : $soloCharacter] :=
 
 
 (* ::Subsection::Closed:: *)
-(*Mark progress*)
+(*Progress mutation*)
 
 
 markProgress[track_String, n_Integer, character_ : $soloCharacter] := Module[
@@ -1528,7 +1736,7 @@ markProgress[track_String, n_Integer, character_ : $soloCharacter] := Module[
 
 
 (* ::Subsection::Closed:: *)
-(*Add a bond*)
+(*Bond management*)
 
 
 addBond[bond_String, character_ : $soloCharacter] := Module[{},
@@ -1538,7 +1746,7 @@ addBond[bond_String, character_ : $soloCharacter] := Module[{},
 
 
 (* ::Subsection::Closed:: *)
-(*Add/remove a progress track*)
+(*Progress track registration*)
 
 
 addProgressTrack[track_String, rank_?rankQ, character_:$soloCharacter] := character["progressTracks", track] = progressTrack[rank];
@@ -1546,7 +1754,7 @@ removeProgressTrack[track_String, character_:$soloCharacter] := character["progr
 
 
 (* ::Subsection::Closed:: *)
-(*Mark/spend experience*)
+(*Experience tracking*)
 
 
 markExperience[n_Integer, character_ : $soloCharacter] :=
@@ -1556,8 +1764,138 @@ spendExperience[n_Integer, character_ : $soloCharacter] :=
 	$state[character, "spentExperience"] += n;
 
 
+(* ::Subsection::Closed:: *)
+(*Reroll*)
+
+Options[reroll] = {Display -> True};
+
+reroll[roll_Association, die : Except[_List], opts : OptionsPattern[]] :=
+	reroll[roll, {die}, opts];
+
+reroll[roll_Association, dice_List, opts : OptionsPattern[]] := Module[
+	{
+		selection,
+		invalid,
+		newRoll,
+		oldActionDie,
+		oldChallengeDice,
+		actionDie,
+		momentum,
+		actionValue,
+		actionDieCancelled,
+		actionScore,
+		challengeDice,
+		challengeIndices,
+		cd1,
+		cd2
+	},
+
+	If[!rollQ[roll],
+		Message[reroll::badroll, roll];
+		Return[$Failed]
+	];
+
+	selection = normalizeRerollSelection[dice];
+
+	If[selection === {},
+		Message[reroll::empty];
+		Return[$Failed]
+	];
+
+	invalid = Select[selection, !rerollSelectionQ[#] &];
+
+	If[invalid =!= {},
+		Message[reroll::baddie, First[invalid]];
+		Return[$Failed]
+	];
+
+	If[progressRollQ[roll] && MemberQ[selection, ActionDie],
+		Message[reroll::actiondie];
+		Return[$Failed]
+	];
+
+	oldChallengeDice = roll["challengeDice"];
+	challengeDice = oldChallengeDice;
+
+	challengeIndices = rerollChallengeDieIndices[selection, oldChallengeDice];
+
+	If[!VectorQ[challengeIndices, MemberQ[{1, 2}, #] &],
+		Message[reroll::badchallenge, selection];
+		Return[$Failed]
+	];
+
+	Do[
+		challengeDice[[i]] = RandomInteger[{1, 10}],
+		{i, challengeIndices}
+	];
+
+	If[actionRollQ[roll],
+		oldActionDie = roll["actionDie"];
+
+		actionDie =
+			If[
+				MemberQ[selection, ActionDie],
+				rollActionDie[],
+				oldActionDie
+			];
+
+		momentum = roll["momentum"];
+
+		{actionValue, actionDieCancelled} =
+			If[
+				momentum < 0 && Abs[momentum] == actionDie,
+				{0, True},
+				{actionDie, False}
+			];
+
+		actionScore =
+			Min[
+				actionValue + Total[Values[roll["adds"]]] + roll["statValue"],
+				10
+			];
+
+		{cd1, cd2} = challengeDice;
+
+		newRoll = Association[roll];
+
+		newRoll["actionDie"] = actionDie;
+		newRoll["actionValue"] = actionValue;
+		newRoll["actionDieCancelled"] = actionDieCancelled;
+		newRoll["actionScore"] = actionScore;
+		newRoll["challengeDice"] = challengeDice;
+		newRoll["match"] = cd1 == cd2;
+		newRoll["result"] = actionRollResult[challengeDice, actionScore];
+
+		newRoll["reroll"] = Association[
+			"selection" -> selection,
+			"previousActionDie" -> oldActionDie,
+			"previousChallengeDice" -> oldChallengeDice,
+			"previousResult" -> roll["result"]
+		];,
+
+		{cd1, cd2} = challengeDice;
+
+		newRoll = Association[roll];
+
+		newRoll["challengeDice"] = challengeDice;
+		newRoll["match"] = cd1 == cd2;
+		newRoll["result"] = progressRollResult[challengeDice, roll["progressScore"]];
+
+		newRoll["reroll"] = Association[
+			"selection" -> selection,
+			"previousChallengeDice" -> oldChallengeDice,
+			"previousResult" -> roll["result"]
+		];
+	];
+
+	If[OptionValue[Display], displayReroll[newRoll]];
+
+	newRoll
+];
+
+
 (* ::Section::Closed:: *)
-(*Move interface implementation*)
+(*Move wrapper implementation*)
 
 
 (* ::Subsection::Closed:: *)
@@ -1857,6 +2195,16 @@ battle[actionRoll_Association] := displayMove["battle", actionRoll];
 (*End the Fight*)
 
 
+endTheFightTransformer[roll_Association, initiative_] := Module[
+  {map, transformed},
+  map = {"strongHit" -> "weakHit", "weakHit" -> "miss", "miss" -> "miss"};
+  transformed = Association[roll];
+  If[! TrueQ[initiative],
+    transformed["result"] = Replace[transformed["result"], map]
+  ];
+  transformed
+];
+
 Options[endTheFight] = {Initiative -> True};
 endTheFight[] := displayMove["endTheFight"];
 endTheFight[actionRoll_Association, opts:OptionsPattern[]] := displayMove["endTheFight", endTheFightTransformer[actionRoll, OptionValue[Initiative]]];
@@ -2031,7 +2379,7 @@ wieldARarity[] := displayMove["wieldARarity"];
 End[];
 
 
-(* ::Section::Closed:: *)
+(* ::Section:: *)
 (*Package footer*)
 
 
