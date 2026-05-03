@@ -23,7 +23,7 @@
 BeginPackage["OracleTables`"];
 
 
-(* ::Section:: *)
+(* ::Section::Closed:: *)
 (*Public symbols*)
 
 
@@ -34,7 +34,7 @@ revealDangerAlternateTable::usage = "revealDangerAlternateTable is an oracle tab
 delveSiteFeatureTable::usage = "delveSiteFeatureTable[theme, domain] constructs the full oracle table for Delve features using the given theme and domain.";
 
 
-(* ::Section:: *)
+(* ::Section::Closed:: *)
 (*Implementation details*)
 
 
@@ -170,7 +170,7 @@ oracles["Encounter Index"] = <|
 (*Harm and Stress Outcome oracles*)
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Harm Outcome*)
 
 
@@ -183,7 +183,7 @@ oracles["Harm Outcome"] = <|
 |>;
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Stress Outcome*)
 
 
@@ -2401,7 +2401,7 @@ oracles["Settlement: Quick Name (Suffix)"] = <|
 |>;
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Character oracles*)
 
 
@@ -3101,7 +3101,7 @@ oracles["Character: Name (Firstborn - Troll)"] = <|
 |>;
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Delve Site oracles*)
 
 
@@ -3330,7 +3330,7 @@ oracles["Delve Site: Name (Namesake)"] = <|
 |>;
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Delve Site: Name (Place - Barrow)*)
 
 
@@ -3348,7 +3348,7 @@ oracles["Delve Site: Name (Place - Barrow)"] = <|
 |>;
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Delve Site: Name (Place - Cavern)*)
 
 
@@ -3366,7 +3366,7 @@ oracles["Delve Site: Name (Place - Cavern)"] = <|
 |>;
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Delve Site: Name (Place - Frozen Cavern)*)
 
 
@@ -3384,7 +3384,7 @@ oracles["Delve Site: Name (Place - Frozen Cavern)"] = <|
 |>;
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Delve Site: Name (Place - Icereach)*)
 
 
@@ -3402,7 +3402,7 @@ oracles["Delve Site: Name (Place - Icereach)"] = <|
 |>;
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Delve Site: Name (Place - Mine)*)
 
 
@@ -3420,7 +3420,7 @@ oracles["Delve Site: Name (Place - Mine)"] = <|
 |>;
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Delve Site: Name (Place - Pass)*)
 
 
@@ -3438,7 +3438,7 @@ oracles["Delve Site: Name (Place - Pass)"] = <|
 |>;
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Delve Site: Name (Place - Ruin)*)
 
 
@@ -3456,7 +3456,7 @@ oracles["Delve Site: Name (Place - Ruin)"] = <|
 |>;
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Delve Site: Name (Place - Sea Cave)*)
 
 
@@ -3474,7 +3474,7 @@ oracles["Delve Site: Name (Place - Sea Cave)"] = <|
 |>;
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Delve Site: Name (Place - Shadowfen)*)
 
 
@@ -3492,7 +3492,7 @@ oracles["Delve Site: Name (Place - Shadowfen)"] = <|
 |>;
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Delve Site: Name (Place - Stronghold)*)
 
 
@@ -3510,7 +3510,7 @@ oracles["Delve Site: Name (Place - Stronghold)"] = <|
 |>;
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Delve Site: Name (Place - Tanglewood)*)
 
 
@@ -3528,7 +3528,7 @@ oracles["Delve Site: Name (Place - Tanglewood)"] = <|
 |>;
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Delve Site: Name (Place - Underkeep)*)
 
 
@@ -3740,7 +3740,7 @@ oracles["Monstrosity: Abilities"] = <|
 |>;
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Threat oracles*)
 
 
@@ -4201,7 +4201,7 @@ oracles["Combat: Event Target"] = <|
 |>;
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Magic oracles*)
 
 
@@ -4439,7 +4439,7 @@ oracles["Scale: Rank (Journey)"] = <|
 |>;
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Scale: Rank (Foe)*)
 
 

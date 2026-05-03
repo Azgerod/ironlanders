@@ -39,7 +39,7 @@
 BeginPackage["IronLibrary`"];
 
 
-(* ::Section:: *)
+(* ::Section::Closed:: *)
 (*Public interface*)
 
 
@@ -184,7 +184,7 @@ spendExperience::usage =
 spendExperience[n, character] adds n spent experience to character.";
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Moves*)
 
 
@@ -280,7 +280,7 @@ advance::usage =
 "advance[] displays the Advance move header.";
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Fate moves*)
 
 
@@ -535,7 +535,7 @@ Epic::usage =
 Begin["`Private`"]; 
 
 
-(* ::Section:: *)
+(* ::Section::Closed:: *)
 (*Private helpers*)
 
 
@@ -1370,7 +1370,7 @@ stats = {Edge, Heart, Iron, Shadow, Wits, Health, Spirit, Supply};
 ranks = {Troublesome, Dangerous, Formidable, Extreme, Epic};
 
 
-(* ::Section:: *)
+(* ::Section::Closed:: *)
 (*General interface implementation*)
 
 
@@ -1426,7 +1426,7 @@ setSoloCharacter[character_String] := Module[{},
 setSoloCharacter::nochar = "No character named `1` exists in the current state.";
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Action roll*)
 
 
@@ -1451,7 +1451,7 @@ burnMomentum[roll_Association, opts:OptionsPattern[]] := Module[{momentum, chall
      resetMomentum[roll["character"]]; If[OptionValue[Display], displayMomentumBurn[burn]]; burn]; 
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Progress roll*)
 
 
@@ -1564,7 +1564,7 @@ spendExperience[n_Integer, character_ : $soloCharacter] :=
 (*Adventure moves*)
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Face Danger*)
 
 
@@ -1572,7 +1572,7 @@ faceDanger[] := displayMove["faceDanger"];
 faceDanger[actionRoll_Association] := displayMove["faceDanger", actionRoll];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Secure an Advantage*)
 
 
@@ -1580,7 +1580,7 @@ secureAnAdvantage[] := displayMove["secureAnAdvantage"];
 secureAnAdvantage[actionRoll_Association] := displayMove["secureAnAdvantage", actionRoll];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Gather Information*)
 
 
@@ -1588,7 +1588,7 @@ gatherInformation[] := displayMove["gatherInformation"];
 gatherInformation[actionRoll_Association] := displayMove["gatherInformation", actionRoll];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Make Camp*)
 
 
@@ -1596,7 +1596,7 @@ makeCamp[] := displayMove["makeCamp"];
 makeCamp[actionRoll_Association] := displayMove["makeCamp", actionRoll];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Heal*)
 
 
@@ -1604,7 +1604,7 @@ heal[] := displayMove["heal"];
 heal[actionRoll_Association] := displayMove["heal", actionRoll];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Resupply*)
 
 
@@ -1612,7 +1612,7 @@ resupply[] := displayMove["resupply"];
 resupply[actionRoll_Association] := displayMove["resupply", actionRoll];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Check Your Gear*)
 
 
@@ -1624,7 +1624,7 @@ checkYourGear[actionRoll_Association] := displayMove["checkYourGear", actionRoll
 (*Journey moves*)
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Undertake a Journey*)
 
 
@@ -1632,7 +1632,7 @@ undertakeAJourney[] := displayMove["undertakeAJourney"];
 undertakeAJourney[actionRoll_Association] := displayMove["undertakeAJourney", actionRoll];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Reach Your Destination*)
 
 
@@ -1640,7 +1640,7 @@ reachYourDestination[] := displayMove["reachYourDestination"];
 reachYourDestination[progressRoll_Association] := displayMove["reachYourDestination", progressRoll];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Follow a Path*)
 
 
@@ -1652,14 +1652,14 @@ followAPath[actionRoll_Association] := displayMove["followAPath", actionRoll];
 (*Scene challenge moves*)
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Begin the Scene*)
 
 
 beginTheScene[] := displayMove["beginTheScene"];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Face Danger (Scene)*)
 
 
@@ -1667,7 +1667,7 @@ faceDangerScene[] := displayMove["faceDangerScene"];
 faceDangerScene[actionRoll_Association] := displayMove["faceDangerScene", actionRoll];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Secure an Advantage (Scene)*)
 
 
@@ -1675,7 +1675,7 @@ secureAnAdvantageScene[] := displayMove["secureAnAdvantageScene"];
 secureAnAdvantageScene[actionRoll_Association] := displayMove["secureAnAdvantageScene", actionRoll];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Finish the Scene*)
 
 
@@ -1687,7 +1687,7 @@ finishTheScene[progressRoll_Association] := displayMove["finishTheScene", progre
 (*Quest moves*)
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Swear an Iron Vow*)
 
 
@@ -1695,14 +1695,14 @@ swearAnIronVow[] := displayMove["swearAnIronVow"];
 swearAnIronVow[actionRoll_Association] := displayMove["swearAnIronVow", actionRoll];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Reach a Milestone*)
 
 
 reachAMilestone[] := displayMove["reachAMilestone"];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Fulfill Your Vow*)
 
 
@@ -1710,14 +1710,14 @@ fulfillYourVow[] := displayMove["fulfillYourVow"];
 fulfillYourVow[progressRoll_Association] := displayMove["fulfillYourVow", progressRoll];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Forsake Your Vow*)
 
 
 forsakeYourVow[] := displayMove["forsakeYourVow"];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Advance*)
 
 
@@ -1752,7 +1752,7 @@ askTheOracle["Delve Site Feature", theme_String, domain_String] := oracleRoll["D
 (*Relationship moves*)
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Compel*)
 
 
@@ -1760,14 +1760,14 @@ compel[] := displayMove["compel"];
 compel[actionRoll_Association] := displayMove["compel", actionRoll];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Aid Your Ally*)
 
 
 aidYourAlly[] := displayMove["aidYourAlly"];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Sojourn*)
 
 
@@ -1778,7 +1778,7 @@ sojournFocus[] := displayMove["sojournFocus"];
 sojournFocus[actionRoll_Association] := displayMove["sojournFocus", actionRoll];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Forge a Bond*)
 
 
@@ -1786,7 +1786,7 @@ forgeABond[] := displayMove["forgeABond"];
 forgeABond[actionRoll_Association] := displayMove["forgeABond", actionRoll];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Test Your Bond*)
 
 
@@ -1794,7 +1794,7 @@ testYourBond[] := displayMove["testYourBond"];
 testYourBond[actionRoll_Association] := displayMove["testYourBond", actionRoll];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Draw the Circle*)
 
 
@@ -1866,7 +1866,7 @@ endTheFight[actionRoll_Association, opts:OptionsPattern[]] := displayMove["endTh
 (*Suffer moves*)
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Endure Harm*)
 
 
@@ -1874,7 +1874,7 @@ endureHarm[] := displayMove["endureHarm"];
 endureHarm[actionRoll_Association] := displayMove["endureHarm", actionRoll];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Face Death*)
 
 
@@ -1882,7 +1882,7 @@ faceDeath[] := displayMove["faceDeath"];
 faceDeath[actionRoll_Association] := displayMove["faceDeath", actionRoll];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Companion Endure Harm*)
 
 
@@ -1890,7 +1890,7 @@ companionEndureHarm[] := displayMove["companionEndureHarm"];
 companionEndureHarm[actionRoll_Association] := displayMove["companionEndureHarm", actionRoll];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Endure Stress*)
 
 
@@ -1898,7 +1898,7 @@ endureStress[] := displayMove["endureStress"];
 endureStress[actionRoll_Association] := displayMove["endureStress", actionRoll];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Face Desolation*)
 
 
@@ -1906,14 +1906,14 @@ faceDesolation[] := displayMove["faceDesolation"];
 faceDesolation[actionRoll_Association] := displayMove["faceDesolation", actionRoll];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Out of Supply*)
 
 
 outOfSupply[] := displayMove["outOfSupply"];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Face a Setback*)
 
 
@@ -1992,14 +1992,14 @@ learnFromYourFailures[progressRoll_Association] := displayMove["learnFromYourFai
 (*Threat moves*)
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Advance a Threat*)
 
 
 advanceAThreat[] := displayMove["advanceAThreat"];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Take a Hiatus*)
 
 
@@ -2010,14 +2010,14 @@ takeAHiatus[] := displayMove["takeAHiatus"];
 (*Rarity moves*)
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Gain a Rarity*)
 
 
 gainARarity[] := displayMove["gainARarity"];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Wield a Rarity*)
 
 
@@ -2031,7 +2031,7 @@ wieldARarity[] := displayMove["wieldARarity"];
 End[];
 
 
-(* ::Section:: *)
+(* ::Section::Closed:: *)
 (*Package footer*)
 
 

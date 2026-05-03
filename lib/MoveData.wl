@@ -16,21 +16,21 @@
 (*Code*)
 
 
-(* ::Section:: *)
+(* ::Section::Closed:: *)
 (*Package header*)
 
 
 BeginPackage["MoveData`"];
 
 
-(* ::Section:: *)
+(* ::Section::Closed:: *)
 (*Public symbols*)
 
 
 moves::usage = "Association of moves.";
 
 
-(* ::Section:: *)
+(* ::Section::Closed:: *)
 (*Implementation details*)
 
 
@@ -41,7 +41,7 @@ moves::usage = "Association of moves.";
 Begin["`Private`"]; 
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Move insertion helper*)
 
 
@@ -73,11 +73,11 @@ paras[items___] := Column[
 moves = Association[];
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Adventure moves*)
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Face Danger*)
 
 
@@ -107,7 +107,7 @@ moves["faceDanger"] = move[
 ];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Secure an Advantage*)
 
 
@@ -137,7 +137,7 @@ moves["secureAnAdvantage"] = move[
 ];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Gather Information*)
 
 
@@ -158,7 +158,7 @@ moves["gatherInformation"] = move[
 ];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Make Camp*)
 
 
@@ -189,7 +189,7 @@ moves["makeCamp"] = move[
 ];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Heal*)
 
 
@@ -210,7 +210,7 @@ moves["heal"] = move[
 ];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Resupply*)
 
 
@@ -231,7 +231,7 @@ moves["resupply"] = move[
 ];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Check Your Gear*)
 
 
@@ -252,11 +252,11 @@ moves["checkYourGear"] = move[
 ];
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Journey moves*)
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Undertake a Journey*)
 
 
@@ -334,11 +334,11 @@ moves["followAPath"] = move[
 ];
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Scene challenge moves*)
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Begin the Scene*)
 
 
@@ -353,7 +353,7 @@ moves["beginTheScene", "header"] = paras[
 ];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Face Danger (Scene)*)
 
 
@@ -379,7 +379,7 @@ moves["faceDangerScene"] = move[
 ];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Secure an Advantage (Scene)*)
 
 
@@ -409,7 +409,7 @@ moves["secureAnAdvantageScene"] = move[
 ];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Finish the Scene*)
 
 
@@ -430,11 +430,11 @@ moves["finishTheScene"] = move[
 ];
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Quest moves*)
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Swear an Iron Vow*)
 
 
@@ -503,7 +503,7 @@ moves["fulfillYourVow"] = move[
 ];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Forsake Your Vow*)
 
 
@@ -515,7 +515,7 @@ moves["forsakeYourVow", "header"] = paras[
 ];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Advance*)
 
 
@@ -530,7 +530,7 @@ moves["advance", "header"] = paras[
 (*Fate moves*)
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Pay the Price*)
 
 
@@ -544,7 +544,7 @@ moves["payThePrice", "header"] = paras[
 ];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Ask the Oracle*)
 
 
@@ -560,7 +560,7 @@ moves["askTheOracle", "header"] = paras[
 ];
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Relationship moves*)
 
 
@@ -588,7 +588,7 @@ moves["compel"] = move[
 ];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Aid Your Ally*)
 
 
@@ -599,7 +599,7 @@ moves["aidYourAlly", "header"] = paras[
 ];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Sojourn*)
 
 
@@ -658,7 +658,7 @@ moves["sojournFocus"] = move[
 ];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Forge a Bond*)
 
 
@@ -681,7 +681,7 @@ moves["forgeABond"] = move[
 ];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Test Your Bond*)
 
 
@@ -704,7 +704,7 @@ moves["testYourBond"] = move[
 ];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Draw the Circle*)
 
 
@@ -733,7 +733,7 @@ moves["drawTheCircle"] = move[
 ];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Write Your Epilogue*)
 
 
@@ -754,7 +754,7 @@ moves["writeYourEpilogue"] = move[
 ];
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Combat moves*)
 
 
@@ -927,7 +927,7 @@ moves["endureHarm"] = move[
 ];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Face Death*)
 
 
@@ -950,7 +950,7 @@ moves["faceDeath"] = move[
 ];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Companion Endure Harm*)
 
 
@@ -973,7 +973,7 @@ moves["companionEndureHarm"] = move[
 ];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Endure Stress*)
 
 
@@ -996,7 +996,7 @@ moves["endureStress"] = move[
 ];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Face Desolation*)
 
 
@@ -1019,7 +1019,7 @@ moves["faceDesolation"] = move[
 ];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Out of Supply*)
 
 
@@ -1030,7 +1030,7 @@ moves["outOfSupply", "header"] = paras[
 ];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Face a Setback*)
 
 
@@ -1047,7 +1047,7 @@ moves["faceASetback", "header"] = paras[
 (*Delve moves*)
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Discover a Site*)
 
 
@@ -1065,7 +1065,7 @@ moves["discoverASite", "header"] = paras[
 ];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Delve the Depths*)
 
 
@@ -1089,7 +1089,7 @@ moves["delveTheDepths"] = move[
 ];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Find an Opportunity*)
 
 
@@ -1103,7 +1103,7 @@ moves["findAnOpportunity", "header"] = paras[
 ];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Reveal a Danger*)
 
 
@@ -1114,7 +1114,7 @@ moves["revealADanger", "header"] = paras[
 ];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Locate Your Objective*)
 
 
@@ -1137,7 +1137,7 @@ moves["locateYourObjective"] = move[
 ];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Escape the Depths*)
 
 
@@ -1173,7 +1173,7 @@ moves["escapeTheDepths"] = move[
 (*Failure moves*)
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Mark Your Failure*)
 
 
@@ -1184,7 +1184,7 @@ moves["markYourFailure", "header"] = paras[
 ];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Learn from Your Failures*)
 
 
@@ -1212,7 +1212,7 @@ moves["learnFromYourFailures"] = move[
 (*Threat moves*)
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Advance a Threat*)
 
 
@@ -1240,7 +1240,7 @@ moves["takeAHiatus", "header"] = paras[
 ];
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Rarity moves*)
 
 
@@ -1256,7 +1256,7 @@ moves["gainARarity", "header"] = paras[
 ];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Wield a Rarity*)
 
 
