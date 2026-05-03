@@ -39,7 +39,7 @@
 BeginPackage["IronLibrary`"];
 
 
-(* ::Section::Closed:: *)
+(* ::Section:: *)
 (*Public interface*)
 
 
@@ -184,7 +184,7 @@ spendExperience::usage =
 spendExperience[n, character] adds n spent experience to character.";
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Moves*)
 
 
@@ -280,7 +280,7 @@ advance::usage =
 "advance[] displays the Advance move header.";
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*Fate moves*)
 
 
@@ -291,7 +291,7 @@ askTheOracle::usage =
 "askTheOracle[] displays the Ask the Oracle move header.
 askTheOracle[table] rolls on the oracle table table.
 askTheOracle[\"Yes/No\", odds] rolls on the Yes/No oracle using odds.
-askTheOracle[\"Yes/No\", yesOutcome, noOutcome] rolls on a 50/50 Yes/No oracle with the specified yes and no outcomes.
+askTheOracle[\"Yes/No\", yesOutcome, noOutcome] rolls on the Yes/No oracle with the specified yes and no outcomes and \"Likely\" yes-odds.
 askTheOracle[\"Reveal a Danger\"] rolls on the alternate Reveal a Danger oracle.
 askTheOracle[\"Reveal a Danger\", theme, domain] rolls on the Reveal a Danger oracle for theme and domain.
 askTheOracle[\"Delve Site Feature\", theme, domain] rolls on the Delve Site Feature oracle for theme and domain.";
@@ -535,7 +535,7 @@ Epic::usage =
 Begin["`Private`"]; 
 
 
-(* ::Section::Closed:: *)
+(* ::Section:: *)
 (*Private helpers*)
 
 
@@ -1370,7 +1370,7 @@ stats = {Edge, Heart, Iron, Shadow, Wits, Health, Spirit, Supply};
 ranks = {Troublesome, Dangerous, Formidable, Extreme, Epic};
 
 
-(* ::Section::Closed:: *)
+(* ::Section:: *)
 (*General interface implementation*)
 
 
@@ -1426,7 +1426,7 @@ setSoloCharacter[character_String] := Module[{},
 setSoloCharacter::nochar = "No character named `1` exists in the current state.";
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Action roll*)
 
 
@@ -1451,7 +1451,7 @@ burnMomentum[roll_Association, opts:OptionsPattern[]] := Module[{momentum, chall
      resetMomentum[roll["character"]]; If[OptionValue[Display], displayMomentumBurn[burn]]; burn]; 
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Progress roll*)
 
 

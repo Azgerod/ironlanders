@@ -28,7 +28,7 @@ BeginPackage["OracleTables`"];
 
 
 oracles::usage = "Association of oracle tables.";
-yesNo::usage = "YesNo[yesOutcome, noOutcome] returns a Yes/No oracle table with those two outcomes.";
+yesNo::usage = "yesNo[yesOutcome, noOutcome] returns a Yes/No oracle table with those two outcomes.";
 revealDangerCombinedTable::usage = "revealDangerCombinedTable[theme, domain] constructs the full oracle table for Reveal a Danger using the given theme and domain.";
 revealDangerAlternateTable::usage = "revealDangerAlternateTable is an oracle table for Reveal a Danger with no specified theme nor domain.";
 delveSiteFeatureTable::usage = "delveSiteFeatureTable[theme, domain] constructs the full oracle table for Delve features using the given theme and domain.";
@@ -2401,7 +2401,7 @@ oracles["Settlement: Quick Name (Suffix)"] = <|
 |>;
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Character oracles*)
 
 
@@ -2945,7 +2945,7 @@ oracles["Character: Name (Ironlander Set 2)"] = <|
 
 
 (* ::Subsubsection::Closed:: *)
-(*Character: Name (Firstborn \[Dash] Elf)*)
+(*Character: Name (Firstborn - Elf)*)
 
 
 oracles["Character: Name (Firstborn - Elf)"] = <|
@@ -3003,7 +3003,7 @@ oracles["Character: Name (Firstborn - Elf)"] = <|
 
 
 (* ::Subsubsection::Closed:: *)
-(*Character: Name (Firstborn \[Dash] Giant)*)
+(*Character: Name (Firstborn - Giant)*)
 
 
 oracles["Character: Name (Firstborn - Giant)"] = <|
@@ -3036,7 +3036,7 @@ oracles["Character: Name (Firstborn - Giant)"] = <|
 
 
 (* ::Subsubsection::Closed:: *)
-(*Character: Name (Firstborn \[Dash] Varou)*)
+(*Character: Name (Firstborn - Varou)*)
 
 
 oracles["Character: Name (Firstborn - Varou)"] = <|
@@ -3069,7 +3069,7 @@ oracles["Character: Name (Firstborn - Varou)"] = <|
 
 
 (* ::Subsubsection::Closed:: *)
-(*Character: Name (Firstborn \[Dash] Troll)*)
+(*Character: Name (Firstborn - Troll)*)
 
 
 oracles["Character: Name (Firstborn - Troll)"] = <|
@@ -3101,7 +3101,7 @@ oracles["Character: Name (Firstborn - Troll)"] = <|
 |>;
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Delve Site oracles*)
 
 
@@ -3330,11 +3330,11 @@ oracles["Delve Site: Name (Namesake)"] = <|
 |>;
 
 
-(* ::Subsubsection::Closed:: *)
-(*Delve Site: Name (Place \[Dash] Barrow)*)
+(* ::Subsubsection:: *)
+(*Delve Site: Name (Place - Barrow)*)
 
 
-oracles["Delve Site: Name (Place \[Dash] Barrow)"] = <|
+oracles["Delve Site: Name (Place - Barrow)"] = <|
 	10 -> "Barrow",
 	20 -> "Boneyard",
 	30 -> "Chambers",
@@ -3348,11 +3348,11 @@ oracles["Delve Site: Name (Place \[Dash] Barrow)"] = <|
 |>;
 
 
-(* ::Subsubsection::Closed:: *)
-(*Delve Site: Name (Place \[Dash] Cavern)*)
+(* ::Subsubsection:: *)
+(*Delve Site: Name (Place - Cavern)*)
 
 
-oracles["Delve Site: Name (Place \[Dash] Cavern)"] = <|
+oracles["Delve Site: Name (Place - Cavern)"] = <|
 	10 -> "Abyss",
 	20 -> "Cavern",
 	30 -> "Caves",
@@ -3366,11 +3366,11 @@ oracles["Delve Site: Name (Place \[Dash] Cavern)"] = <|
 |>;
 
 
-(* ::Subsubsection::Closed:: *)
-(*Delve Site: Name (Place \[Dash] Frozen Cavern)*)
+(* ::Subsubsection:: *)
+(*Delve Site: Name (Place - Frozen Cavern)*)
 
 
-oracles["Delve Site: Name (Place \[Dash] Frozen Cavern)"] = <|
+oracles["Delve Site: Name (Place - Frozen Cavern)"] = <|
 	10 -> "Break",
 	20 -> "Brumal",
 	30 -> "Cavern",
@@ -3384,11 +3384,11 @@ oracles["Delve Site: Name (Place \[Dash] Frozen Cavern)"] = <|
 |>;
 
 
-(* ::Subsubsection::Closed:: *)
-(*Delve Site: Name (Place \[Dash] Icereach)*)
+(* ::Subsubsection:: *)
+(*Delve Site: Name (Place - Icereach)*)
 
 
-oracles["Delve Site: Name (Place \[Dash] Icereach)"] = <|
+oracles["Delve Site: Name (Place - Icereach)"] = <|
 	10 -> "Drift",
 	20 -> "Expanse",
 	30 -> "Floe",
@@ -3402,11 +3402,11 @@ oracles["Delve Site: Name (Place \[Dash] Icereach)"] = <|
 |>;
 
 
-(* ::Subsubsection::Closed:: *)
-(*Delve Site: Name (Place \[Dash] Mine)*)
+(* ::Subsubsection:: *)
+(*Delve Site: Name (Place - Mine)*)
 
 
-oracles["Delve Site: Name (Place \[Dash] Mine)"] = <|
+oracles["Delve Site: Name (Place - Mine)"] = <|
 	10 -> "Bore",
 	20 -> "Cut",
 	30 -> "Dig",
@@ -3420,11 +3420,11 @@ oracles["Delve Site: Name (Place \[Dash] Mine)"] = <|
 |>;
 
 
-(* ::Subsubsection::Closed:: *)
-(*Delve Site: Name (Place \[Dash] Pass)*)
+(* ::Subsubsection:: *)
+(*Delve Site: Name (Place - Pass)*)
 
 
-oracles["Delve Site: Name (Place \[Dash] Pass)"] = <|
+oracles["Delve Site: Name (Place - Pass)"] = <|
 	10 -> "Cliffs",
 	20 -> "Crag",
 	30 -> "Cut",
@@ -3438,11 +3438,11 @@ oracles["Delve Site: Name (Place \[Dash] Pass)"] = <|
 |>;
 
 
-(* ::Subsubsection::Closed:: *)
-(*Delve Site: Name (Place \[Dash] Ruin)*)
+(* ::Subsubsection:: *)
+(*Delve Site: Name (Place - Ruin)*)
 
 
-oracles["Delve Site: Name (Place \[Dash] Ruin)"] = <|
+oracles["Delve Site: Name (Place - Ruin)"] = <|
 	10 -> "Citadel",
 	20 -> "Enclave",
 	30 -> "Fortress",
@@ -3456,11 +3456,11 @@ oracles["Delve Site: Name (Place \[Dash] Ruin)"] = <|
 |>;
 
 
-(* ::Subsubsection::Closed:: *)
-(*Delve Site: Name (Place \[Dash] Sea Cave)*)
+(* ::Subsubsection:: *)
+(*Delve Site: Name (Place - Sea Cave)*)
 
 
-oracles["Delve Site: Name (Place \[Dash] Sea Cave)"] = <|
+oracles["Delve Site: Name (Place - Sea Cave)"] = <|
 	10 -> "Caves",
 	20 -> "Channel",
 	30 -> "Cove",
@@ -3474,11 +3474,11 @@ oracles["Delve Site: Name (Place \[Dash] Sea Cave)"] = <|
 |>;
 
 
-(* ::Subsubsection::Closed:: *)
-(*Delve Site: Name (Place \[Dash] Shadowfen)*)
+(* ::Subsubsection:: *)
+(*Delve Site: Name (Place - Shadowfen)*)
 
 
-oracles["Delve Site: Name (Place \[Dash] Shadowfen)"] = <|
+oracles["Delve Site: Name (Place - Shadowfen)"] = <|
 	10 -> "Bog",
 	20 -> "Fen",
 	30 -> "Floodlands",
@@ -3492,11 +3492,11 @@ oracles["Delve Site: Name (Place \[Dash] Shadowfen)"] = <|
 |>;
 
 
-(* ::Subsubsection::Closed:: *)
-(*Delve Site: Name (Place \[Dash] Stronghold)*)
+(* ::Subsubsection:: *)
+(*Delve Site: Name (Place - Stronghold)*)
 
 
-oracles["Delve Site: Name (Place \[Dash] Stronghold)"] = <|
+oracles["Delve Site: Name (Place - Stronghold)"] = <|
 	10 -> "Bastion",
 	20 -> "Citadel",
 	30 -> "Fortress",
@@ -3510,11 +3510,11 @@ oracles["Delve Site: Name (Place \[Dash] Stronghold)"] = <|
 |>;
 
 
-(* ::Subsubsection::Closed:: *)
-(*Delve Site: Name (Place \[Dash] Tanglewood)*)
+(* ::Subsubsection:: *)
+(*Delve Site: Name (Place - Tanglewood)*)
 
 
-oracles["Delve Site: Name (Place \[Dash] Tanglewood)"] = <|
+oracles["Delve Site: Name (Place - Tanglewood)"] = <|
 	10 -> "Bramble",
 	20 -> "Briar",
 	30 -> "Forest",
@@ -3528,11 +3528,11 @@ oracles["Delve Site: Name (Place \[Dash] Tanglewood)"] = <|
 |>;
 
 
-(* ::Subsubsection::Closed:: *)
-(*Delve Site: Name (Place \[Dash] Underkeep)*)
+(* ::Subsubsection:: *)
+(*Delve Site: Name (Place - Underkeep)*)
 
 
-oracles["Delve Site: Name (Place \[Dash] Underkeep)"] = <|
+oracles["Delve Site: Name (Place - Underkeep)"] = <|
 	10 -> "Catacomb",
 	20 -> "Chambers",
 	30 -> "Den",
@@ -3740,7 +3740,7 @@ oracles["Monstrosity: Abilities"] = <|
 |>;
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Threat oracles*)
 
 
@@ -4201,7 +4201,7 @@ oracles["Combat: Event Target"] = <|
 |>;
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Magic oracles*)
 
 
@@ -4239,7 +4239,7 @@ oracles["Magic: Ritual Backlash"] = <|
 
 
 (* ::Subsubsection::Closed:: *)
-(*Magic: Mystical Effect*)
+(*Magic: Mystic Effect*)
 
 
 oracles["Magic: Mystic Effect"] = <|
@@ -4253,7 +4253,7 @@ oracles["Magic: Mystic Effect"] = <|
 	16 -> "Give life to inanimate forms",
 	18 -> "Unleash a plague",
 	20 -> "Control elemental forces",
-	22 -> "Erase or suppresses memories",
+	22 -> "Erase or suppress memories",
 	24 -> "Shroud in lasting darkness",
 	26 -> "Alter surrounding environment",
 	28 -> "Bind to a location",

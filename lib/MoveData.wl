@@ -41,7 +41,7 @@ moves::usage = "Association of moves.";
 Begin["`Private`"]; 
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Move insertion helper*)
 
 
@@ -73,11 +73,11 @@ paras[items___] := Column[
 moves = Association[];
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Adventure moves*)
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*Face Danger*)
 
 
@@ -123,13 +123,13 @@ moves["secureAnAdvantage"] = move[
 	],
 	paras[
 		p["Take both."],
-		p["\:2734 Take +2 momentum"],
-		p["\:2734 Add +1 on your next move (not a progress move)"]
+		p["\:2734 Take +2 momentum."],
+		p["\:2734 Add +1 on your next move (not a progress move)."]
 	],
 	paras[
 		p["Choose one."],
-		p["\:2734 Take +2 momentum"],
-		p["\:2734 Add +1 on your next move (not a progress move)"]
+		p["\:2734 Take +2 momentum."],
+		p["\:2734 Add +1 on your next move (not a progress move)."]
 	],
 	paras[
 		p["You fail or your assumptions betray you. ", i["Pay the Price"], "."]
@@ -178,7 +178,7 @@ moves["makeCamp"] = move[
 	paras[
 		p["You and your allies may each choose one."],
 		p["\:2734 Recuperate: Take +1 health for you and any companions."],
-		p["\:2734 Partake: Suffer -1 supply and take +1 health for you and any companions."],
+		p["\:2734 Partake: Suffer \[Dash]1 supply and take +1 health for you and any companions."],
 		p["\:2734 Relax: Take +1 spirit."],
 		p["\:2734 Focus: Take +1 momentum."],
 		p["\:2734 Prepare: When you break camp, add +1 if you ", i["Undertake a Journey"], "."]
@@ -252,11 +252,11 @@ moves["checkYourGear"] = move[
 ];
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Journey moves*)
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*Undertake a Journey*)
 
 
@@ -334,7 +334,7 @@ moves["followAPath"] = move[
 ];
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Scene challenge moves*)
 
 
@@ -349,7 +349,7 @@ moves["beginTheScene", "header"] = paras[
 	p["\:2734 You have a clear advantage: Troublesome."],
 	p["\:2734 You are ready to act: Dangerous."],
 	p["\:2734 You are unprepared or outmatched: Formidable."],
-	p["Then, activate a four-segment countdown track and ", i["Face Danger"], " or ", i["Secure an Advantage"], " to take action."]
+	p["Then, activate a four\[Dash]segment countdown track and ", i["Face Danger"], " or ", i["Secure an Advantage"], " to take action."]
 ];
 
 
@@ -395,13 +395,13 @@ moves["secureAnAdvantageScene"] = move[
 	],
 	paras[
 		p["Take both. ", b["On a match,"], " take both and mark progress."],
-		p["\:2734 Take +2 momentum"],
-		p["\:2734 Add +1 on your next move (not a progress move)"]
+		p["\:2734 Take +2 momentum."],
+		p["\:2734 Add +1 on your next move (not a progress move)."]
 	],
 	paras[
 		p["Choose one."],
-		p["\:2734 Take +2 momentum"],
-		p["\:2734 Add +1 on your next move (not a progress move)"]
+		p["\:2734 Take +2 momentum."],
+		p["\:2734 Add +1 on your next move (not a progress move)."]
 	],
 	paras[
 		p["You fail or your assumptions betray you. Mark a countdown segment and ", i["Pay the Price"], ". ", b["On a match,"], " mark two segments and ", i["Pay the Price"], "."]
@@ -410,7 +410,7 @@ moves["secureAnAdvantageScene"] = move[
 
 
 (* ::Subsubsection:: *)
-(*Finish The Scene*)
+(*Finish the Scene*)
 
 
 moves["finishTheScene"] = move[
@@ -430,11 +430,11 @@ moves["finishTheScene"] = move[
 ];
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Quest moves*)
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*Swear an Iron Vow*)
 
 
@@ -503,7 +503,7 @@ moves["fulfillYourVow"] = move[
 ];
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*Forsake Your Vow*)
 
 
@@ -560,11 +560,8 @@ moves["askTheOracle", "header"] = paras[
 ];
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Relationship moves*)
-
-
-(* NEED TO IMPLEMENT SOJOURN (split into Sojourn and Sojourn Focus or smth) *)
 
 
 (* ::Subsubsection::Closed:: *)
@@ -702,7 +699,7 @@ moves["testYourBond"] = move[
 		p["Your bond is fragile and you must prove your loyalty. Envision what they ask of you (", i["Ask the Oracle"], " if unsure), and do it (or ", i["Swear an Iron Vow"], "). If you refuse or fail, clear the bond and ", i["Pay the Price"], "."]
 	],
 	paras[
-		p["Or if you have no interest in maintaining this relationship, clear the bond and ", i["Pay the Price"], "."]
+		p["Your bond is broken. Clear the bond and ", i["Pay the Price"], "."]
 	]
 ];
 
@@ -761,7 +758,7 @@ moves["writeYourEpilogue"] = move[
 (*Combat moves*)
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Enter the Fray*)
 
 
@@ -793,7 +790,7 @@ moves["enterTheFray"] = move[
 ];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Strike*)
 
 
@@ -814,7 +811,7 @@ moves["strike"] = move[
 ];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Clash*)
 
 
@@ -837,7 +834,7 @@ moves["clash"] = move[
 ];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Turn the Tide*)
 
 
@@ -849,7 +846,7 @@ moves["turnTheTide", "header"] = paras[
 ];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Battle*)
 
 
@@ -875,7 +872,7 @@ moves["battle"] = move[
 ];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*End the Fight*)
 
 
@@ -886,13 +883,13 @@ moves["endTheFight"] = move[
 		p["If you do not have initiative, count a strong hit as a weak hit, and a weak hit as a miss."]
 	],
 	paras[
-		p["This foe is no longer in the fight. They are killed, out of action, flee, or surrender as appropriate to the situation and your intent (", i["Ask the Oracle"], " if unsure)."]
+		p["This foe is no longer in the fight. They are killed, taken out of action, driven off, or forced to surrender as appropriate to the situation and your intent (", i["Ask the Oracle"], " if unsure)."]
 	],
 	paras[
 		p["As above, but you must also choose one."],
 		p["\:2734 It\[CloseCurlyQuote]s worse than you thought: ", i["Endure Harm"], "."],
 		p["\:2734 You are overcome: ", i["Endure Stress"], "."],
-		p["\:2734 Your victory is short-lived: A new danger or foe appears, or an existing danger worsens."],
+		p["\:2734 Your victory is short\[Dash]lived: A new danger or foe appears, or an existing danger worsens."],
 		p["\:2734 You suffer collateral damage: Something of value is lost or broken, or someone important must pay the cost."],
 		p["\:2734 You\[CloseCurlyQuote]ll pay for it: An objective falls out of reach."],
 		p["\:2734 Others won\[CloseCurlyQuote]t forget: You are marked for vengeance."]
@@ -907,7 +904,7 @@ moves["endTheFight"] = move[
 (*Suffer moves*)
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Endure Harm*)
 
 
@@ -1029,7 +1026,7 @@ moves["faceDesolation"] = move[
 moves["outOfSupply"] = Association[];
 moves["outOfSupply", "name"] = "Out of Supply";
 moves["outOfSupply", "header"] = paras[
-	p[b["When your supply is exhausted (reduced to 0),"], " mark unprepared. If you suffer additional \[Dash]supply while unprepared, you must exchange each additional \[Dash]supply for any combination of \[Dash]health, \[Dash]spirit or \[Dash]momentum as appropriate to the circumstances."]
+	p[b["When your supply is exhausted (reduced to 0),"], " mark unprepared. If you suffer additional \[Dash]supply while unprepared, you must exchange each additional \[Dash]supply for any combination of \[Dash]health, \[Dash]spirit, or \[Dash]momentum as appropriate to the circumstances."]
 ];
 
 
@@ -1042,7 +1039,7 @@ moves["faceASetback", "name"] = "Face a Setback";
 moves["faceASetback", "header"] = paras[
 	p[b["When your momentum is at its minimum (\[Dash]6), and you suffer additional \[Dash]momentum,"], " choose one."],
 	p["\:2734 Exchange each additional \[Dash]momentum for any combination of \[Dash]health, \[Dash]spirit, or \[Dash]supply as appropriate to the circumstances."],
-	p["\:2734 Envision an event or discovery (", i["Ask the Oracle"], " if unsure) which undermines your progress in a current quest, journey or fight. Then, for each additional \[Dash]momentum, clear 1 unit of progress on that track per its rank (troublesome=clear 3 progress; dangerous=clear 2 progress; formidable=clear 1 progress; extreme=clear 2 ticks; epic=clear 1 tick)."]
+	p["\:2734 Envision an event or discovery (", i["Ask the Oracle"], " if unsure) which undermines your progress in a current quest, journey, or fight. Then, for each additional \[Dash]momentum, clear 1 unit of progress on that track per its rank (troublesome=clear 3 progress; dangerous=clear 2 progress; formidable=clear 1 progress; extreme=clear 2 ticks; epic=clear 1 tick)."]
 ];
 
 
@@ -1206,7 +1203,7 @@ moves["learnFromYourFailures"] = move[
 		p["You learn from your mistakes. Take 2 experience and clear all progress."]
 	],
 	paras[
-		p["You learned the wrong lessons. Take 1 experience and clear all progress. Then, envision how you set off on an ill-fated path."]
+		p["You learned the wrong lessons. Take 1 experience and clear all progress. Then, envision how you set off on an ill\[Dash]fated path."]
 	]
 ];
 
@@ -1243,7 +1240,7 @@ moves["takeAHiatus", "header"] = paras[
 ];
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Rarity moves*)
 
 
@@ -1259,14 +1256,14 @@ moves["gainARarity", "header"] = paras[
 ];
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*Wield a Rarity*)
 
 
 moves["wieldARarity"] = Association[];
 moves["wieldARarity", "name"] = "Wield a Rarity";
 moves["wieldARarity", "header"] = paras[
-	p[b["When you make a move aided by an augmented asset\[Ellipsis]"]],
+	p[b["When you make a move aided by an augmented asset," "check your action die."]],
 	p[b["On any result with a 6,"], " the power of the rarity manifests in a dramatic and obvious way. You score an automatic strong hit and take +1 momentum."],
 	p[b["On a hit with a 5,"], " the power of the rarity manifests in a subtle way. Take +1 momentum."],
 	p[b["On a miss with a 1,"], " the rarity\[CloseCurlyQuote]s power fails or works against you."]
