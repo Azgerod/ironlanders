@@ -158,6 +158,19 @@ addBond::usage =
 addBond[bond, character] adds bond to character and marks progress on the bonds track.";
 
 
+(* ::Subsection:: *)
+(*Adding/removing progress tracks*)
+
+
+addProgressTrack::usage =
+"addProgressTrack[track, rank] adds a progress track with name track and the given rank to the solo character.
+addProgressTrack[track, rank, character] adds a progress track with name track and the given rank to the given character.";
+
+removeProgressTrack::usage = 
+"removeProgressTrack[track] removes the given progress track from the solo character.
+removeProgressTrack[track, character] removes the given progress track from the given character.";
+
+
 (* ::Subsection::Closed:: *)
 (*Mark/spend experience*)
 
@@ -171,7 +184,7 @@ spendExperience::usage =
 spendExperience[n, character] adds n spent experience to character.";
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Moves*)
 
 
@@ -267,7 +280,7 @@ advance::usage =
 "advance[] displays the Advance move header.";
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Fate moves*)
 
 
@@ -510,7 +523,7 @@ Epic::usage =
 Begin["`Private`"]; 
 
 
-(* ::Section::Closed:: *)
+(* ::Section:: *)
 (*Private helpers*)
 
 
@@ -883,7 +896,7 @@ nextChapterSeed[] := Module[{base}, base = nextNotebookBase[]; If[base === $Fail
 stateForNextChapter[] := Module[{next, seed}, seed = nextChapterSeed[]; If[seed === $Failed, Return[$Failed]]; next = Association[$state]; next["seed"] = seed; next]; 
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*General mechanics helpers*)
 
 
@@ -1330,7 +1343,7 @@ stats = {Edge, Heart, Iron, Shadow, Wits, Health, Spirit, Supply};
 ranks = {Troublesome, Dangerous, Formidable, Extreme, Epic};
 
 
-(* ::Section::Closed:: *)
+(* ::Section:: *)
 (*General interface implementation*)
 
 
@@ -1372,7 +1385,7 @@ endChapter[] := Module[{statePath, notebookPath}, statePath = nextStatePath[]; n
 createCharacter[Name -> name_String, Assets -> assets:{_String, _String, _String}, Edge -> (edge_)?statValueQ, Heart -> (heart_)?statValueQ, Iron -> (iron_)?statValueQ, Shadow -> (shadow_)?statValueQ, 
     Wits -> (wits_)?statValueQ, BackgroundVow -> {vowName_String, (vowRank_)?rankQ}, Bonds -> bonds:{___String} /; Length[bonds] <= 3] := 
    Module[{character}, ensureStateInitialized[]; character = Association["assets" -> assets, "edge" -> edge, "heart" -> heart, "iron" -> iron, "shadow" -> shadow, "wits" -> wits, "health" -> 5, 
-       "spirit" -> 5, "supply" -> 5, "momentum" -> 2, "debilities" -> {}, "progressTracks" -> Association[vowName -> progressTrack[vowRank], "bonds" -> progressTrack[Epic, 0.25*Length[bonds]]], 
+       "spirit" -> 5, "supply" -> 5, "momentum" -> 2, "debilities" -> {}, "progressTracks" -> Association[vowName -> progressTrack[vowRank], "Bonds" -> progressTrack[Epic, 0.25*Length[bonds]], "Failures"->progressTrack[Epic]], 
        "bonds" -> bonds, "earnedExperience" -> 0, "spentExperience" -> 0]; AssociateTo[$state, name -> character]; $soloCharacter = name; $state[name]]; 
        
 setSoloCharacter[character_String] := Module[{},
@@ -1498,6 +1511,14 @@ addBond[bond_String, character_ : $soloCharacter] := Module[{},
 
 
 (* ::Subsection::Closed:: *)
+(*Add/remove a progress track*)
+
+
+addProgressTrack[track_String, rank_?rankQ, character_:$soloCharacter] := character["progressTracks", track] = progressTrack[rank];
+removeProgressTrack[track_String, character_:$soloCharacter] := character["progressTracks"] = KeyDrop[character["progressTracks"], {track}];
+
+
+(* ::Subsection::Closed:: *)
 (*Mark/spend experience*)
 
 
@@ -1508,7 +1529,7 @@ spendExperience[n_Integer, character_ : $soloCharacter] :=
 	$state[character, "spentExperience"] += n;
 
 
-(* ::Section:: *)
+(* ::Section::Closed:: *)
 (*Move interface implementation*)
 
 
@@ -1676,18 +1697,18 @@ forsakeYourVow[] := displayMove["forsakeYourVow"];
 advance[] := displayMove["advance"];
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Fate moves*)
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Pay the Price*)
 
 
 payThePrice[] := displayMove["payThePrice"];
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*Ask the Oracle*)
 
 
@@ -1971,7 +1992,7 @@ wieldARarity[] := displayMove["wieldARarity"];
 End[];
 
 
-(* ::Section::Closed:: *)
+(* ::Section:: *)
 (*Package footer*)
 
 
