@@ -73,7 +73,11 @@ setSoloCharacter::usage =
 "setSoloCharacter[character] sets the solo character to character.";
 
 createCharacter::usage =
-"createCharacter[name, {a1, a2, a3}, edge, heart, iron, shadow, wits, starterVow[...], {b1, b2, b3}] creates a character and sets it as the solo character. Starting assets may be asset name strings when the card has a printed default selected ability, or starterAsset[...] specs.";
+"createCharacter[name, {a1, a2, a3}, edge, heart, iron, shadow, wits, starterVow[...] | {vowName, Extreme | Epic}, {b1, b2, b3}] creates a character and sets it as the solo character. Starting assets may be asset name strings when the card has a printed default selected ability, or starterAsset[...] specs.";
+
+characterSheet::usage =
+"characterSheet[] displays a Lodestar-style character sheet for the solo character.
+characterSheet[character] displays a Lodestar-style character sheet for the named character.";
 
 
 (* ::Subsection::Closed:: *)
@@ -81,8 +85,8 @@ createCharacter::usage =
 
 
 starterVow::usage =
-"starterVow[name, rank] creates a quiet starting vow spec.
-starterVow[name, rank, Threat -> {threatName, threatGoal}] creates a quiet starting vow spec with one attached threat.";
+"starterVow[name, Extreme | Epic] creates a quiet starting vow spec.
+starterVow[name, Extreme | Epic, Threat -> {threatName, threatGoal}] creates a quiet starting vow spec with one attached threat.";
 
 addVow::usage =
 "addVow[name, rank] adds a vow to the solo character.
@@ -96,10 +100,6 @@ vow[name, character] displays the vow named name for character.";
 vows::usage =
 "vows[] displays all vows for the solo character.
 vows[character] displays all vows for character.";
-
-threat::usage =
-"threat[vowName] displays the threat attached to vowName for the solo character and returns a threat progress handle.
-threat[vowName, character] displays the threat attached to vowName for character and returns a threat progress handle.";
 
 removeVow::usage =
 "removeVow[name] removes the named vow from the solo character.
@@ -122,13 +122,61 @@ clearThreatProgress[vowName, character] clears the menace progress for the threa
 (*Debility management*)
 
 
-markDebility::usage =
-"markDebility[debility] marks debility for the solo character.
-markDebility[debility, character] marks debility for character.";
+markWounded::usage =
+"markWounded[] marks Wounded for the solo character.
+markWounded[character] marks Wounded for character.";
 
-clearDebility::usage =
-"clearDebility[debility] clears debility for the solo character.
-clearDebility[debility, character] clears debility for character. Maimed and Corrupted cannot be cleared.";
+clearWounded::usage =
+"clearWounded[] clears Wounded for the solo character.
+clearWounded[character] clears Wounded for character.";
+
+markShaken::usage =
+"markShaken[] marks Shaken for the solo character.
+markShaken[character] marks Shaken for character.";
+
+clearShaken::usage =
+"clearShaken[] clears Shaken for the solo character.
+clearShaken[character] clears Shaken for character.";
+
+markUnprepared::usage =
+"markUnprepared[] marks Unprepared for the solo character.
+markUnprepared[character] marks Unprepared for character.";
+
+clearUnprepared::usage =
+"clearUnprepared[] clears Unprepared for the solo character.
+clearUnprepared[character] clears Unprepared for character.";
+
+markEncumbered::usage =
+"markEncumbered[] marks Encumbered for the solo character.
+markEncumbered[character] marks Encumbered for character.";
+
+clearEncumbered::usage =
+"clearEncumbered[] clears Encumbered for the solo character.
+clearEncumbered[character] clears Encumbered for character.";
+
+markMaimed::usage =
+"markMaimed[] marks Maimed for the solo character.
+markMaimed[character] marks Maimed for character.";
+
+markCorrupted::usage =
+"markCorrupted[] marks Corrupted for the solo character.
+markCorrupted[character] marks Corrupted for character.";
+
+markCursed::usage =
+"markCursed[] marks Cursed for the solo character.
+markCursed[character] marks Cursed for character.";
+
+clearCursed::usage =
+"clearCursed[] clears Cursed for the solo character.
+clearCursed[character] clears Cursed for character.";
+
+markTormented::usage =
+"markTormented[] marks Tormented for the solo character.
+markTormented[character] marks Tormented for character.";
+
+clearTormented::usage =
+"clearTormented[] clears Tormented for the solo character.
+clearTormented[character] clears Tormented for character.";
 
 
 (* ::Subsection::Closed:: *)
@@ -1846,6 +1894,14 @@ ironFramed[x_] := Framed[
 	Background -> None
 ];
 
+characterSheetFramed[x_] := Framed[
+	x,
+	FrameStyle -> rollFrameStyle,
+	FrameMargins -> {{scaled[16], scaled[16]}, {scaled[16], scaled[16]}},
+	RoundingRadius -> scaled[8],
+	Background -> None
+];
+
 
 (* ::Subsubsection::Closed:: *)
 (*Action roll display*)
@@ -2188,6 +2244,1066 @@ displayChoice[subtitle_String, texts_List] :=
 			]
 		]
 	];
+
+
+(* ::Subsection:: *)
+(*Character sheet display*)
+
+
+characterSheetTab[title_String] :=
+	Framed[
+		Style[
+			ToUpperCase[title],
+			White,
+			FontFamily -> "Futura",
+			FontSize -> scaledSize[11],
+			FontWeight -> Bold
+		],
+		Background -> GrayLevel[0.255],
+		FrameStyle -> None,
+		FrameMargins -> {{scaled[7], scaled[7]}, {scaled[2], scaled[2]}},
+		RoundingRadius -> 0
+	];
+
+characterSheetSection[title_String, body_] :=
+	Column[
+		{
+			characterSheetTab[title],
+			body
+		},
+		Spacings -> 0.25,
+		Alignment -> Left
+	];
+
+characterSheetLabel[text_String] :=
+	Style[
+		text,
+		FontFamily -> "Futura",
+		FontSize -> scaledSize[11],
+		FontWeight -> Bold,
+		GrayLevel[0.255]
+	];
+
+characterSheetSmallLabel[text_String] :=
+	Style[
+		text,
+		FontFamily -> "Futura",
+		FontSize -> scaledSize[10],
+		FontWeight -> Bold,
+		GrayLevel[0.4]
+	];
+
+characterSheetValue[value_] :=
+	Style[
+		value,
+		FontFamily -> "Times New Roman",
+		FontSize -> scaledSize[15],
+		GrayLevel[0.255]
+	];
+
+characterSheetMetricValue[value_] :=
+	Style[
+		value,
+		FontFamily -> "Futura",
+		FontSize -> scaledSize[16],
+		FontWeight -> Bold,
+		GrayLevel[0.255]
+	];
+
+characterSheetInlineMetric[label_String, value_] :=
+	Row[
+		{
+			characterSheetSmallLabel[StringJoin[label, ": "]],
+			characterSheetMetricValue[value]
+		}
+	];
+
+characterSheetInlineMetrics[pairs_List] :=
+	Row[characterSheetInlineMetric @@@ pairs, Spacer[scaled[12]]];
+
+characterSheetInfoLine[label_String, value_] :=
+	Row[
+		{
+			characterSheetLabel[StringJoin[label, ": "]],
+			characterSheetValue[value]
+		}
+	];
+
+characterSheetStatsMetrics[characterData_Association] :=
+	{
+		{"Edge", characterData["edge"]},
+		{"Heart", characterData["heart"]},
+		{"Iron", characterData["iron"]},
+		{"Shadow", characterData["shadow"]},
+		{"Wits", characterData["wits"]}
+	};
+
+characterSheetResourcesMetrics[character_String, characterData_Association] :=
+	{
+		{"Health", characterData["health"]},
+		{"Spirit", characterData["spirit"]},
+		{"Supply", characterData["supply"]},
+		{
+			"Momentum",
+			StringJoin[
+				ToString[characterData["momentum"]],
+				"/",
+				ToString[getMomentumMax[character]],
+				" (reset ",
+				ToString[getMomentumReset[character]],
+				")"
+			]
+		}
+	};
+
+characterSheetDebilityText[debilityList_List] :=
+	If[
+		debilityList === {},
+		"None",
+		StringRiffle[debilityLabel /@ debilityList, ", "]
+	];
+
+characterSheetExperienceValue[characterData_Association] := Module[
+	{earned, spent},
+	earned = Lookup[characterData, "earnedExperience", 0];
+	spent = Lookup[characterData, "spentExperience", 0];
+	StringJoin[ToString[spent], "/", ToString[earned]]
+];
+
+characterSheetStatusMetrics[characterData_Association] :=
+	{
+		{"Conditions", characterSheetDebilityText[Lookup[characterData, "debilities", {}]]},
+		{"XP", characterSheetExperienceValue[characterData]}
+	};
+
+characterSheetOverviewSection[character_String, characterData_Association] :=
+	characterSheetSection[
+		"Overview",
+		Grid[
+			{
+				{characterSheetLabel["Stats"], characterSheetInlineMetrics[characterSheetStatsMetrics[characterData]]},
+				{characterSheetLabel["Resources"], characterSheetInlineMetrics[characterSheetResourcesMetrics[character, characterData]]},
+				{characterSheetLabel["Status"], characterSheetInlineMetrics[characterSheetStatusMetrics[characterData]]}
+			},
+			Alignment -> {{Left, Left}, Center},
+			Spacings -> {0.9, 0.25}
+		]
+	];
+
+characterSheetAbilityMarks[record_Association, selectedAbilities_List] := Module[
+	{indices},
+	indices = assetAbilityIndices[record];
+	If[indices === {},
+		"\[LongDash]",
+		Row[
+			(
+				Style[
+					If[MemberQ[selectedAbilities, #], "\[FilledCircle]", "\[EmptyCircle]"],
+					GrayLevel[0.255],
+					FontSize -> scaledSize[13]
+				] &
+			) /@ indices,
+			Spacer[scaled[3]]
+		]
+	]
+];
+
+characterSheetFieldDetails[record_Association, fields_Association] := Module[
+	{fieldDefs, values},
+	fieldDefs = Lookup[record, "Fields", <||>];
+	values = KeyValueMap[
+		Module[{value},
+			value = Lookup[fields, #1, ""];
+			If[StringQ[value] && StringLength[StringTrim[value]] == 0,
+				Nothing,
+				StringJoin[Lookup[#2, "Label", #1], ": ", ToString[value]]
+			]
+		] &,
+		fieldDefs
+	];
+	values
+];
+
+characterSheetTrackDetails[record_Association, tracks_Association] := Module[
+	{trackDefs, values},
+	trackDefs = Lookup[record, "Tracks", <||>];
+	values = Join[initialAssetTracks[record], tracks];
+	KeyValueMap[
+		StringJoin[
+			Lookup[#2, "Label", #1],
+			" ",
+			ToString[Lookup[values, #1, Lookup[#2, "Default", 0]]],
+			"/",
+			ToString[Lookup[#2, "Max", Lookup[#2, "Default", 0]]]
+		] &,
+		trackDefs
+	]
+];
+
+characterSheetAssetCategoryText[record_Association, rarity_] :=
+	Column[
+		DeleteCases[
+			{
+				characterSheetValue[Lookup[record, "Category", "Unknown"]],
+				If[rarity === None,
+					Nothing,
+					characterSheetValue[StringJoin["Rarity: ", ToString[rarity]]]
+				]
+			},
+			Nothing
+		],
+		Spacings -> 0.2,
+		Alignment -> Left
+	];
+
+characterSheetAssetDetails[record_Association, owned_Association] := Module[
+	{details},
+	details = Join[
+		characterSheetFieldDetails[record, Lookup[owned, "Fields", <||>]],
+		characterSheetTrackDetails[record, Lookup[owned, "Tracks", <||>]]
+	];
+	If[
+		details === {},
+		characterSheetValue[""],
+		characterSheetValue[StringRiffle[details, "   "]]
+	]
+];
+
+characterSheetAssetRow[owned_Association] := Module[
+	{record},
+	record = assetRecord[owned["Name"]];
+	If[!AssociationQ[record],
+		Return[
+			{
+				characterSheetValue[owned["Name"]],
+				characterSheetValue["Unknown"],
+				characterSheetValue[""],
+				characterSheetValue[""]
+			}
+		]
+	];
+	{
+		characterSheetValue[owned["Name"]],
+		characterSheetAssetCategoryText[record, Lookup[owned, "Rarity", None]],
+		characterSheetAbilityMarks[record, Lookup[owned, "Abilities", {}]],
+		characterSheetAssetDetails[record, owned]
+	}
+];
+
+characterSheetGrid[headers_List, rows_List] :=
+	Grid[
+		Prepend[
+			rows,
+			characterSheetSmallLabel /@ headers
+		],
+		Alignment -> {{Left}, Top},
+		Spacings -> {0.8, 0.25},
+		Dividers -> {False, {2 -> GrayLevel[0.75]}}
+	];
+
+characterSheetAssetsSection[assets_List] :=
+	characterSheetSection[
+		"Assets",
+		If[
+			assets === {},
+			characterSheetValue["None"],
+			characterSheetGrid[
+				{"Name", "Type", "Abilities", "Details"},
+				characterSheetAssetRow /@ assets
+			]
+		]
+	];
+
+characterSheetProgressText[progress_] :=
+	formatProgressValue[progress];
+
+characterSheetVowRow[vowData_Association] :=
+	Module[
+		{threatData, threatCells},
+		threatData = Lookup[vowData, "Threat", None];
+		threatCells =
+			If[
+				AssociationQ[threatData],
+				{
+					Column[
+						{
+							characterSheetValue[threatData["Name"]],
+							characterSheetValue[threatData["Goal"]]
+						},
+						Spacings -> 0.2,
+						Alignment -> Left
+					],
+					characterSheetValue[ToString[threatData["Menace", "rank"]]],
+					characterSheetValue[characterSheetProgressText[threatData["Menace", "progress"]]]
+				},
+				{characterSheetValue[""], characterSheetValue[""], characterSheetValue[""]}
+			];
+		Join[
+			{
+				characterSheetValue[vowData["Name"]],
+				characterSheetValue[ToString[vowData["Rank"]]],
+				characterSheetValue[characterSheetProgressText[vowData["Progress"]]]
+			},
+			threatCells
+		]
+	];
+
+characterSheetBondText[bonds_List] :=
+	If[
+		bonds === {},
+		"None",
+		StringRiffle[bonds, ", "]
+	];
+
+characterSheetBondsSection[characterData_Association] := Module[
+	{bonds, bondTrack},
+	bonds = Lookup[characterData, "bonds", {}];
+	bondTrack = Lookup[characterData, "bondProgress", makeProgressObject["Bonds", Epic]];
+	characterSheetSection[
+		"Bonds",
+		Column[
+			{
+				characterSheetInfoLine["Progress", characterSheetProgressText[bondTrack["Progress"]]],
+				characterSheetInfoLine["Bonds", characterSheetBondText[bonds]]
+			},
+			Spacings -> 0.35,
+			Alignment -> Left
+		]
+	]
+];
+
+characterSheetVowsSection[characterData_Association] := Module[
+	{vows},
+	vows = Values[Lookup[characterData, "vows", <||>]];
+	characterSheetSection[
+		"Vows",
+		If[
+			vows === {},
+			characterSheetValue["None"],
+			characterSheetGrid[
+				{"Name", "Rank", "Progress", "Threat", "Menace Rank", "Menace"},
+				characterSheetVowRow /@ vows
+			]
+		]
+	]
+];
+
+characterSheetFailuresSection[characterData_Association] := Module[
+	{failures},
+	failures = Lookup[characterData, "failures", makeProgressObject["Failures", Epic]];
+	characterSheetSection[
+		"Failures",
+		characterSheetInfoLine["Progress", characterSheetProgressText[failures["Progress"]]]
+	]
+];
+
+characterSheetOptionalSection[title_String, headers_List, rows_List] :=
+	If[
+		rows === {},
+		Nothing,
+		characterSheetSection[
+			title,
+			characterSheetGrid[headers, rows]
+		]
+	];
+
+characterSheetCurrentSuffix[name_String, current_] :=
+	If[name === current, StringJoin[name, " (current)"], name];
+
+characterSheetRankedProgressRow[object_Association, current_:None] :=
+	{
+		characterSheetValue[characterSheetCurrentSuffix[object["Name"], current]],
+		characterSheetValue[ToString[object["Rank"]]],
+		characterSheetValue[characterSheetProgressText[object["Progress"]]],
+		characterSheetValue[""]
+	};
+
+characterSheetDelveDetails[delveData_Association] := Module[
+	{themeText, domainText, objective},
+	themeText = StringRiffle[Lookup[delveData, "Themes", {delveData["Theme"]}], " / "];
+	domainText = StringRiffle[Lookup[delveData, "Domains", {delveData["Domain"]}], " / "];
+	objective = Lookup[delveData, "Objective", None];
+	StringRiffle[
+		DeleteCases[
+			{
+				StringJoin["Theme: ", themeText],
+				StringJoin["Domain: ", domainText],
+				If[objective === None, Nothing, StringJoin["Objective: ", objective]]
+			},
+			Nothing
+		],
+		"   "
+	]
+];
+
+characterSheetDelveRow[delveData_Association, current_] :=
+	{
+		characterSheetValue[characterSheetCurrentSuffix[delveData["Name"], current]],
+		characterSheetValue[ToString[delveData["Rank"]]],
+		characterSheetValue[characterSheetProgressText[delveData["Progress"]]],
+		characterSheetValue[characterSheetDelveDetails[delveData]]
+	};
+
+characterSheetSceneRow[sceneData_Association] :=
+	{
+		characterSheetValue[sceneData["Name"]],
+		characterSheetValue[ToString[sceneData["Rank"]]],
+		characterSheetValue[characterSheetProgressText[sceneData["Progress"]]],
+		characterSheetValue[StringJoin["Countdown ", ToString[sceneData["Countdown"]], "/4"]]
+	};
+
+characterSheetJourneysSection[characterData_Association] :=
+	characterSheetOptionalSection[
+		"Journeys",
+		{"Name", "Rank", "Progress", "Details"},
+		characterSheetRankedProgressRow[#, Lookup[characterData, "currentJourney", None]] & /@
+			Values[Lookup[characterData, "journeys", <||>]]
+	];
+
+characterSheetFoesSection[characterData_Association] :=
+	characterSheetOptionalSection[
+		"Foes",
+		{"Name", "Rank", "Progress", "Details"},
+		characterSheetRankedProgressRow /@ Values[Lookup[characterData, "foes", <||>]]
+	];
+
+characterSheetDelvesSection[characterData_Association] :=
+	characterSheetOptionalSection[
+		"Delves",
+		{"Name", "Rank", "Progress", "Details"},
+		characterSheetDelveRow[#, Lookup[characterData, "currentDelve", None]] & /@
+			Values[Lookup[characterData, "delves", <||>]]
+	];
+
+characterSheetSceneSection[characterData_Association] := Module[
+	{sceneData},
+	sceneData = Lookup[characterData, "scene", None];
+	If[
+		AssociationQ[sceneData],
+		characterSheetSection[
+			"Scene",
+			characterSheetGrid[
+				{"Name", "Rank", "Progress", "Countdown"},
+				{characterSheetSceneRow[sceneData]}
+			]
+		],
+		Nothing
+	]
+];
+
+displayCharacterSheet[character_String, characterData_Association] :=
+	ironFramed[
+		Column[
+			DeleteCases[
+				{
+					Style[
+						StringJoin["Character Sheet: ", character],
+						FontFamily -> "Futura",
+						FontSize -> scaledSize[22],
+						FontWeight -> Bold,
+						GrayLevel[0.255]
+					],
+					characterSheetOverviewSection[character, characterData],
+					Grid[
+						{{
+							Column[
+								{
+									characterSheetAssetsSection[Lookup[characterData, "assets", {}]],
+									characterSheetBondsSection[characterData],
+									characterSheetFailuresSection[characterData]
+								},
+								Spacings -> 0.7,
+								Alignment -> Left
+							],
+							Column[
+								DeleteCases[
+									{
+										characterSheetVowsSection[characterData],
+										characterSheetJourneysSection[characterData],
+										characterSheetFoesSection[characterData],
+										characterSheetDelvesSection[characterData],
+										characterSheetSceneSection[characterData]
+									},
+									Nothing
+								],
+								Spacings -> 0.7,
+								Alignment -> Left
+							]
+						}},
+						Alignment -> {{Left, Left}, Top},
+						Spacings -> {1.4, 0}
+					]
+				},
+				Nothing
+			],
+			Spacings -> 0.8,
+			Alignment -> Left
+		]
+	];
+
+sheetInk := GrayLevel[0.16];
+sheetDark := GrayLevel[0.18];
+sheetAccentDark := GrayLevel[0.30];
+sheetMid := GrayLevel[0.72];
+sheetLight := GrayLevel[0.9];
+sheetPale := GrayLevel[0.94];
+
+sheetStyle[text_, size_, weight_:Plain, color_:sheetInk] :=
+	Style[
+		text,
+		FontFamily -> "Futura",
+		FontSize -> scaledSize[size],
+		FontWeight -> weight,
+		color
+	];
+
+sheetSerifStyle[text_, size_, weight_:Plain, color_:sheetInk] :=
+	Style[
+		text,
+		FontFamily -> "Times New Roman",
+		FontSize -> scaledSize[size],
+		FontWeight -> weight,
+		color
+	];
+
+sheetRect[{x_, y_}, {width_, height_}, fill_:White, stroke_:sheetInk, thickness_:1.1] :=
+	{
+		FaceForm[fill],
+		EdgeForm[Directive[stroke, AbsoluteThickness[thickness]]],
+		Rectangle[{x, y}, {x + width, y + height}]
+	};
+
+sheetValueIndicator[{x_, y_}, {width_, height_}, side_] := Module[
+	{cy, pointerWidth, pointerHalfHeight},
+	cy = y + height/2;
+	pointerWidth = 15;
+	pointerHalfHeight = 12;
+	{
+		FaceForm[sheetInk],
+		EdgeForm[None],
+		Switch[
+			side,
+			Right,
+				Polygon[
+					{
+						{x + width + 1, cy},
+						{x + width + 1 + pointerWidth, cy + pointerHalfHeight},
+						{x + width + 1 + pointerWidth, cy - pointerHalfHeight}
+					}
+				],
+			Left,
+				Polygon[
+					{
+						{x - 1, cy},
+						{x - 1 - pointerWidth, cy + pointerHalfHeight},
+						{x - 1 - pointerWidth, cy - pointerHalfHeight}
+					}
+				],
+			_,
+				Nothing
+		]
+	}
+];
+
+sheetLabelBand[label_String, {x_, y_}, {width_, height_}] := Module[
+	{size},
+	size = Which[
+		MemberQ[{"Health", "Spirit", "Supply", "Momentum"}, label], 14,
+		width <= 90, 10,
+		MemberQ[{"Stats", "Debilities", "Experience", "Bonds", "Background Vow", "Vows", "Failures"}, label], 14,
+		MemberQ[{"Current Vow"}, label], 16,
+		StringLength[label] > 12, 13,
+		True, 16
+	];
+	{
+		sheetRect[{x, y}, {width, height}, sheetDark, sheetDark],
+		Text[sheetStyle[ToUpperCase[label], size, Bold, White], {x + width/2, y + height/2}]
+	}
+];
+
+sheetLadderLabelBand[label_String, {x_, y_}, {width_, height_}] :=
+	{
+		sheetRect[{x, y}, {width, height}, sheetDark, sheetInk, 1.0],
+		Text[sheetStyle[ToUpperCase[label], 14, Bold, White], {x + width/2, y + height/2}]
+	};
+
+sheetLabelBandLeft[label_String, {x_, y_}, {width_, height_}] := Module[
+	{size, inset},
+	size = Which[
+		width <= 90, 10,
+		MemberQ[{"Bonds", "Background Vow", "Current Vow", "Failure"}, label], 14,
+		StringLength[label] > 22, 10,
+		StringLength[label] > 16, 11,
+		StringLength[label] > 12, 13,
+		True, 16
+	];
+	inset = 14;
+	{
+		sheetRect[{x, y}, {width, height}, sheetAccentDark, sheetAccentDark],
+		Text[sheetStyle[ToUpperCase[label], size, Bold, White], {x + inset, y + height/2}, {-1, 0}]
+	}
+];
+
+sheetSmallLabelBand[label_String, {x_, y_}, {width_, height_}] :=
+	{
+		sheetRect[{x, y}, {width, height}, sheetAccentDark, sheetAccentDark, 1.0],
+		Text[sheetStyle[ToUpperCase[label], 12, Bold, White], {x + width/2, y + height/2}]
+	};
+
+sheetValueBox[label_String, value_, {x_, y_}, {width_, height_}] :=
+	{
+		sheetRect[{x, y}, {width, height}, sheetPale, sheetInk, 1.4],
+		Text[sheetStyle[ToUpperCase[label], 12, Bold], {x + width/2, y + height - 14}],
+		Text[sheetStyle[ToString[value], 26, Bold], {x + width/2, y + height/2 - 8}]
+	};
+
+sheetNameField[character_String] :=
+	{
+		sheetRect[{22, 1098}, {776, 58}, sheetDark, sheetDark],
+		Text[sheetStyle[character, 28, Bold, White], {50, 1127}, {-1, 0}]
+	};
+
+sheetMiddleX = 162;
+sheetMiddleWidth = 496;
+sheetMiddleTop = 1073;
+sheetMiddleBottom = 24;
+
+sheetMiddleBlocks[] := {
+	"Stats" -> 98,
+	"Debilities" -> 119,
+	"Experience" -> 91,
+	"BackgroundVow" -> 80,
+	"Vows" -> 365,
+	"Bonds" -> 62,
+	"Failures" -> 62
+};
+
+sheetMiddleLayout[] := Module[
+	{blocks, totalHeight, gap, y, layout},
+	blocks = sheetMiddleBlocks[];
+	totalHeight = Total[blocks[[All, 2]]];
+	gap = (sheetMiddleTop - sheetMiddleBottom - totalHeight)/(Length[blocks] - 1);
+	y = sheetMiddleTop;
+	layout = <||>;
+	Do[
+		AssociateTo[layout, block[[1]] -> y];
+		y = y - block[[2]] - gap,
+		{block, blocks}
+	];
+	layout
+];
+
+sheetStats[characterData_Association, topY_:sheetMiddleTop] := Module[
+	{statsData, startX, y, width, gap, sectionWidth},
+	statsData = {
+		{"Edge", characterData["edge"]},
+		{"Heart", characterData["heart"]},
+		{"Iron", characterData["iron"]},
+		{"Shadow", characterData["shadow"]},
+		{"Wits", characterData["wits"]}
+	};
+	startX = sheetMiddleX;
+	y = topY - 98;
+	width = 92;
+	gap = 9;
+	sectionWidth = Length[statsData] width + (Length[statsData] - 1) gap;
+	Join[
+		sheetLabelBand["Stats", {startX, topY - 24}, {sectionWidth, 24}],
+		Flatten[
+			MapIndexed[
+				sheetValueBox[#1[[1]], #1[[2]], {startX + (First[#2] - 1) (width + gap), y}, {width, 68}] &,
+				statsData
+			],
+			1
+		]
+	]
+];
+
+sheetVerticalResource[label_String, value_Integer, {x_, y_}, {width_, height_}, max_:5] := Module[
+	{labelHeight, boxHeight, values},
+	labelHeight = 24;
+	boxHeight = (height - labelHeight)/(max + 1);
+	values = Reverse[Range[0, max]];
+	Join[
+		sheetLadderLabelBand[label, {x, y + height - labelHeight}, {width, labelHeight}],
+		Flatten[
+			MapIndexed[
+				Module[{slotY, fill, textColor},
+					slotY = y + (Length[values] - First[#2]) boxHeight;
+					fill = sheetLight;
+					textColor = sheetInk;
+					{
+						sheetRect[{x, slotY}, {width, boxHeight}, fill, sheetInk, 1.0],
+						Text[sheetStyle[ToString[#1], 20, Bold, textColor], {x + width/2, slotY + boxHeight/2}],
+						If[
+							#1 === value,
+							sheetValueIndicator[{x, slotY}, {width, boxHeight}, Right],
+							Nothing
+						]
+					}
+				] &,
+				values
+			],
+			1
+		]
+	]
+];
+
+sheetMomentumColumn[character_String, characterData_Association] := Module[
+	{values, x, y, width, height, labelHeight, boxHeight, current, max, reset},
+	values = Range[10, -6, -1];
+	x = 22;
+	y = 24;
+	width = 124;
+	height = 1049;
+	labelHeight = 24;
+	boxHeight = (height - labelHeight)/Length[values];
+	current = characterData["momentum"];
+	max = getMomentumMax[character];
+	reset = getMomentumReset[character];
+	Join[
+		sheetLadderLabelBand["Momentum", {x, y + height - labelHeight}, {width, labelHeight}],
+		Flatten[
+			MapIndexed[
+				Module[{slotY, fill, textColor, label},
+					slotY = y + (Length[values] - First[#2]) boxHeight;
+					fill = Which[
+						#1 === reset, sheetDark,
+						#1 > max, sheetDark,
+						True, sheetLight
+					];
+					textColor = Which[
+						#1 === reset, White,
+						#1 > max, sheetInk,
+						True, sheetInk
+					];
+					label = If[#1 > 0, StringJoin["+", ToString[#1]], ToString[#1]];
+					{
+						sheetRect[{x, slotY}, {width, boxHeight}, fill, sheetInk, 1.0],
+						Text[sheetStyle[label, 17, Bold, textColor], {x + width/2, slotY + boxHeight/2}],
+						If[
+							#1 === current,
+							sheetValueIndicator[{x, slotY}, {width, boxHeight}, Left],
+							Nothing
+						]
+					}
+				] &,
+				values
+			],
+			1
+		]
+	]
+];
+
+sheetResourceColumns[characterData_Association] :=
+	Module[{x, y, width, height, gap},
+		x = 674;
+		y = 24;
+		width = 124;
+		height = 1039/3;
+		gap = 5;
+		Join[
+			sheetVerticalResource["Health", characterData["health"], {x, y + 2 (height + gap)}, {width, height}],
+			sheetVerticalResource["Spirit", characterData["spirit"], {x, y + height + gap}, {width, height}],
+			sheetVerticalResource["Supply", characterData["supply"], {x, y}, {width, height}]
+		]
+	];
+
+sheetProgressInset[progress_, {x_, y_}, {width_, height_}, menace_:None] :=
+	Inset[
+		Graphics[
+			progressTrackPrimitives[{0, 0}, progress, width, height, MenaceProgress -> menace],
+			PlotRange -> {{0, width}, {0, height}},
+			ImagePadding -> 0,
+			Background -> None
+		],
+		{x, y},
+		{Left, Bottom},
+		{width, height}
+	];
+
+sheetRankDots[rank_, {x_, y_}, spacing_:86] :=
+	Flatten[
+		MapIndexed[
+			Module[{cx},
+				cx = x + (First[#2] - 1) spacing;
+				{
+					FaceForm[If[#1 === rank, sheetInk, White]],
+					EdgeForm[Directive[sheetInk, AbsoluteThickness[1.2]]],
+					Disk[{cx, y}, 5],
+					Text[sheetStyle[ToUpperCase[ToString[#1]], 8, Bold], {cx + 8, y}, {-1, 0}]
+				}
+			] &,
+			ranks
+		],
+		1
+	];
+
+sheetRankDots[rank_, {x_, y_}, offsets_List] :=
+	Flatten[
+		MapIndexed[
+			Module[{cx},
+				cx = x + offsets[[First[#2]]];
+				{
+					FaceForm[If[#1 === rank, sheetInk, White]],
+					EdgeForm[Directive[sheetInk, AbsoluteThickness[1.2]]],
+					Disk[{cx, y}, 5],
+					Text[sheetStyle[ToUpperCase[ToString[#1]], 8, Bold], {cx + 8, y}, {-1, 0}]
+				}
+			] &,
+			ranks
+		],
+		1
+	];
+
+sheetRankLabelWidth[rank_] :=
+	Switch[
+		ToString[rank],
+		"Troublesome", 72,
+		"Dangerous", 68,
+		"Formidable", 72,
+		"Extreme", 55,
+		"Epic", 30,
+		_, 50
+	];
+
+sheetRankDotsCentered[rank_, {x_, y_}, width_, rankOptions_:ranks] := Module[
+	{gap, labelInset, radius, widths, cxs, rowLeft, rowRight, offset},
+	gap = 30;
+	labelInset = 12;
+	radius = 5;
+	widths = sheetRankLabelWidth /@ rankOptions;
+	cxs = FoldList[#1 + labelInset + #2 + gap &, 0, Most[widths]];
+	rowLeft = -radius;
+	rowRight = Last[cxs] + labelInset + Last[widths];
+	offset = x + (width - (rowRight - rowLeft))/2 - rowLeft;
+	Flatten[
+		MapThread[
+			Function[{rankOption, cx},
+				{
+					FaceForm[If[rankOption === rank, sheetInk, White]],
+					EdgeForm[Directive[sheetInk, AbsoluteThickness[1.2]]],
+					Disk[{offset + cx, y}, radius],
+					Text[sheetStyle[ToUpperCase[ToString[rankOption]], 8, Bold], {offset + cx + labelInset, y}, {-1, 0}]
+				}
+			],
+			{rankOptions, cxs}
+		],
+		1
+	]
+];
+
+sheetBondsPanel[characterData_Association, topY_:86] := Module[
+	{bondTrack, x, headerY, trackY, width},
+	bondTrack = Lookup[characterData, "bondProgress", makeProgressObject["Bonds", Epic]];
+	x = sheetMiddleX;
+	headerY = topY - 24;
+	trackY = topY - 62;
+	width = sheetMiddleWidth;
+	{
+		sheetLabelBand["Bonds", {x, headerY}, {width, 24}],
+		sheetProgressInset[bondTrack["Progress"], {x, trackY}, {width, 30}]
+	}
+];
+
+sheetVowRow[vowData_, label_String, {x_, y_}, {width_, height_}] := Module[
+	{hasVow, progress, rank, menace, bannerText, labelWidth, rankOptions, rankY},
+	hasVow = AssociationQ[vowData];
+	progress = If[hasVow, vowData["Progress"], 0];
+	rank = If[hasVow, vowData["Rank"], None];
+	menace = If[hasVow && AssociationQ[Lookup[vowData, "Threat", None]], vowData["Threat", "Menace", "progress"], None];
+	bannerText = If[hasVow, vowData["Name"], ""];
+	labelWidth = 206;
+	rankOptions = If[label === "Background Vow", {Extreme, Epic}, ranks];
+	rankY = y + height - 44;
+	{
+		sheetLabelBandLeft[bannerText, {x, y + height - 30}, {labelWidth, 29}],
+		sheetProgressInset[progress, {x + labelWidth, y + height - 30}, {width - labelWidth, 29}, menace],
+		sheetRankDotsCentered[rank, {x, rankY}, width, rankOptions]
+	}
+];
+
+sheetVowsPanel[characterData_Association, backgroundTopY_:704, vowsTopY_:574] := Module[
+	{vows, backgroundVow, currentVows, x, width, rowHeight, backgroundRowY, currentStartY, currentPitch, overflow},
+	vows = Values[Lookup[characterData, "vows", <||>]];
+	backgroundVow = If[vows === {}, None, First[vows]];
+	currentVows = PadRight[Take[Rest[vows], UpTo[4]], 4, None];
+	x = sheetMiddleX;
+	width = sheetMiddleWidth;
+	rowHeight = 58;
+	backgroundRowY = backgroundTopY - 89;
+	currentStartY = vowsTopY - 89;
+	currentPitch = 95;
+	overflow = Max[0, Length[vows] - 5];
+	Flatten[
+		Join[
+			{
+				sheetLabelBand["Background Vow", {x, backgroundTopY - 24}, {width, 24}],
+				sheetVowRow[backgroundVow, "Background Vow", {x, backgroundRowY}, {width, rowHeight}],
+				sheetLabelBand["Vows", {x, vowsTopY - 24}, {width, 24}]
+			},
+			MapIndexed[
+				sheetVowRow[#1, "Current Vow", {x, currentStartY - (First[#2] - 1) currentPitch}, {width, rowHeight}] &,
+				currentVows
+			],
+			If[
+				overflow > 0,
+				{Text[sheetStyle[StringJoin["+", ToString[overflow], " more vows"], 12, Bold], {x + width - 8, currentStartY - Length[currentVows] currentPitch + 12}, {1, 0}]},
+				{}
+			]
+		],
+		1
+	]
+];
+
+sheetFailurePanel[characterData_Association, topY_:86] := Module[
+	{failures, x, headerY, trackY, width},
+	failures = Lookup[characterData, "failures", makeProgressObject["Failures", Epic]];
+	x = sheetMiddleX;
+	headerY = topY - 24;
+	trackY = topY - 62;
+	width = sheetMiddleWidth;
+	{
+		sheetLabelBand["Failures", {x, headerY}, {width, 24}],
+		sheetProgressInset[failures["Progress"], {x, trackY}, {width, 30}]
+	}
+];
+
+sheetExperiencePanel[characterData_Association, topY_:821] := Module[
+	{earned, spent, total, columns, rows, radius, x, y, width, rowGap, colGap},
+	earned = Clip[Lookup[characterData, "earnedExperience", 0], {0, 60}];
+	spent = Clip[Lookup[characterData, "spentExperience", 0], {0, 60}];
+	total = 60;
+	columns = 20;
+	rows = 3;
+	radius = 5;
+	x = sheetMiddleX;
+	y = topY - 86;
+	width = sheetMiddleWidth;
+	rowGap = 18;
+	colGap = (width - 2 radius)/(columns - 1);
+	Join[
+		sheetLabelBand["Experience", {x, topY - 24}, {width, 24}],
+		Flatten[
+			Table[
+				Module[{index, cx, cy, fill},
+					index = (row - 1) columns + col;
+					If[index > total, Nothing,
+					cx = x + radius + (col - 1) colGap;
+					cy = y + (rows - row) rowGap;
+					fill = Which[
+						index <= spent, sheetInk,
+						index <= earned, sheetMid,
+						True, White
+					];
+					{
+						FaceForm[fill],
+						EdgeForm[Directive[sheetInk, AbsoluteThickness[1.0]]],
+						Disk[{cx, cy}, radius]
+					}]
+				],
+				{row, rows},
+				{col, columns}
+			],
+			2
+		]
+	]
+];
+
+sheetDebilityRows[title_String, debilityList_List, active_List, {x_, y_}] := Module[
+	{rowGap},
+	rowGap = 17;
+	Join[
+		sheetLabelBand[title, {x, y + Length[debilityList] rowGap + 4}, {128, 23}],
+		Flatten[
+			MapIndexed[
+				Module[{cy, marked},
+					cy = y + (Length[debilityList] - First[#2]) rowGap + 11;
+					marked = MemberQ[active, #1];
+					{
+						FaceForm[If[marked, sheetInk, White]],
+						EdgeForm[Directive[sheetInk, AbsoluteThickness[1.0]]],
+						Disk[{x + 12, cy}, 5],
+						Text[sheetStyle[ToUpperCase[debilityLabel[#1]], 10, Bold], {x + 24, cy}, {-1, 0}]
+					}
+				] &,
+				debilityList
+			],
+			1
+		]
+	]
+];
+
+sheetDebilityItem[debility_, active_List, {x_, y_}] := Module[
+	{marked},
+	marked = MemberQ[active, debility];
+	{
+		FaceForm[If[marked, sheetInk, White]],
+		EdgeForm[Directive[sheetInk, AbsoluteThickness[1.0]]],
+		Disk[{x + 12, y}, 5],
+		Text[sheetStyle[ToUpperCase[debilityLabel[debility]], 9, Bold], {x + 24, y}, {-1, 0}]
+	}
+];
+
+sheetDebilityColumn[title_String, debilityList_List, active_List, {x_, y_}, width_] := Module[
+	{rowGap},
+	rowGap = 16;
+	Join[
+		sheetSmallLabelBand[title, {x, y}, {width, 20}],
+		Flatten[
+			MapIndexed[
+				sheetDebilityItem[#1, active, {x + 6, y - 14 - (First[#2] - 1) rowGap}] &,
+				debilityList
+			],
+			1
+		]
+	]
+];
+
+sheetDebilitiesPanel[characterData_Association, topY_:950] := Module[
+	{active, x, width, gap, colWidth},
+	active = Lookup[characterData, "debilities", {}];
+	x = sheetMiddleX;
+	width = sheetMiddleWidth;
+	gap = 16;
+	colWidth = (width - 2 gap)/3;
+	Join[
+		sheetLabelBand["Debilities", {x, topY - 24}, {width, 24}],
+		sheetDebilityColumn["Conditions", {Wounded, Shaken, Unprepared, Encumbered}, active, {x, topY - 52}, colWidth],
+		sheetDebilityColumn["Banes", {Maimed, Corrupted}, active, {x + colWidth + gap, topY - 52}, colWidth],
+		sheetDebilityColumn["Burdens", {Cursed, Tormented}, active, {x + 2 (colWidth + gap), topY - 52}, colWidth]
+	]
+];
+
+lodestarCharacterSheetGraphic[character_String, characterData_Association] := Module[
+	{width, height, middleLayout},
+	width = 820;
+	height = 1192;
+	middleLayout = sheetMiddleLayout[];
+	Graphics[
+		Flatten[
+			{
+				sheetNameField[character],
+				sheetStats[characterData, middleLayout["Stats"]],
+				sheetDebilitiesPanel[characterData, middleLayout["Debilities"]],
+				sheetExperiencePanel[characterData, middleLayout["Experience"]],
+				sheetVowsPanel[characterData, middleLayout["BackgroundVow"], middleLayout["Vows"]],
+				sheetBondsPanel[characterData, middleLayout["Bonds"]],
+				sheetFailurePanel[characterData, middleLayout["Failures"]],
+				sheetMomentumColumn[character, characterData],
+				sheetResourceColumns[characterData]
+			},
+			1
+		],
+		PlotRange -> {{4, width - 4}, {6, height - 18}},
+		ImagePadding -> 0,
+		ImageSize -> scaled[720],
+		Background -> White
+	]
+];
+
+displayCharacterSheet[character_String, characterData_Association] :=
+	characterSheetFramed[lodestarCharacterSheetGraphic[character, characterData]];
 
 
 (* ::Subsection:: *)
@@ -2731,7 +3847,7 @@ legacyProgressTrack[character_, name_String] := Module[
 ];
 
 ensureCharacterCoreProgress[character_] := Module[
-	{legacyFailures, legacyBonds, bondDefault},
+	{legacyFailures, legacyBonds, legacyVows, bondDefault},
 	If[!characterExistsQ[character],
 		Message[state::nochar, character];
 		Return[$Failed]
@@ -2764,6 +3880,10 @@ ensureCharacterCoreProgress[character_] := Module[
 	];
 	If[!KeyExistsQ[$state[character], "foes"] || !AssociationQ[$state[character, "foes"]],
 		$state[character, "foes"] = <||>
+	];
+	If[!KeyExistsQ[$state[character], "vows"] || !AssociationQ[$state[character, "vows"]],
+		legacyVows = legacyProgressTrackVows[character];
+		$state[character, "vows"] = legacyVows
 	];
 	If[KeyExistsQ[$state[character], "progressTracks"],
 		$state[character] = KeyDrop[$state[character], "progressTracks"]
@@ -2875,8 +3995,15 @@ makeVow[name_String, rank_?rankQ, threatSpec_] := Module[
 	]
 ];
 
+backgroundVowRankQ[rank_] :=
+	MemberQ[{Extreme, Epic}, rank];
+
 makeStarterVowSpec[name_String, rank_?rankQ, threatSpec_] := Module[
 	{normalizedVow},
+	If[!backgroundVowRankQ[rank],
+		Message[vow::badbackgroundrank, rank];
+		Return[$Failed]
+	];
 	normalizedVow = makeVow[name, rank, threatSpec];
 	If[normalizedVow === $Failed, Return[$Failed]];
 	StarterVowSpec[normalizedVow]
@@ -2884,6 +4011,14 @@ makeStarterVowSpec[name_String, rank_?rankQ, threatSpec_] := Module[
 
 ownedVowFromSpec[StarterVowSpec[data_Association]] /; ownedVowQ[data] :=
 	data;
+
+ownedVowFromSpec[{name_String, rank_?rankQ}] := Module[{},
+	If[!backgroundVowRankQ[rank],
+		Message[vow::badbackgroundrank, rank];
+		Return[$Failed]
+	];
+	makeVow[name, rank, None]
+];
 
 ownedVowFromSpec[other_] := (
 	Message[vow::badstarter, other];
@@ -2896,17 +4031,78 @@ ownedVowQ[vow_Association] :=
 	KeyExistsQ[vow, "Progress"] &&
 	KeyExistsQ[vow, "Threat"];
 
+progressVowQ[vow_Association] :=
+	AnyTrue[{"Rank", "rank", "Progress", "progress"}, KeyExistsQ[vow, #] &];
+
+normalizeOwnedVow[name_String, vow_Association] /; ownedVowQ[vow] := Module[
+	{vowName, rank, progress, threat},
+	vowName = Lookup[vow, "Name", name];
+	If[!StringQ[vowName], vowName = name];
+	rank = Lookup[vow, "Rank", Dangerous];
+	If[!rankQ[rank], rank = Dangerous];
+	progress = Lookup[vow, "Progress", 0];
+	If[!NumericQ[progress], progress = 0];
+	threat = normalizeThreatSpec[Lookup[vow, "Threat", None]];
+	If[threat === $Failed, Return[$Failed]];
+	Association[
+		"Name" -> vowName,
+		"Rank" -> rank,
+		"Progress" -> clampValue[progress, {0, 10}],
+		"Threat" -> threat
+	]
+];
+
+normalizeOwnedVow[name_String, vow_Association] /; progressVowQ[vow] := Module[
+	{progressTrack},
+	progressTrack = normalizeProgressObject[name, vow];
+	Association[
+		"Name" -> progressTrack["Name"],
+		"Rank" -> progressTrack["Rank"],
+		"Progress" -> progressTrack["Progress"],
+		"Threat" -> None
+	]
+];
+
+normalizeOwnedVow[_, _] :=
+	$Failed;
+
+normalizeVowAssociation[rawVows_Association] := Module[
+	{normalized},
+	normalized = Association @ KeyValueMap[#1 -> normalizeOwnedVow[#1, #2] &, rawVows];
+	If[MemberQ[Values[normalized], $Failed],
+		$Failed,
+		Association @ KeyValueMap[#2["Name"] -> #2 &, normalized]
+	]
+];
+
+legacyProgressTrackVows[character_] := Module[
+	{legacy, legacyVows},
+	legacy = Lookup[$state[character], "progressTracks", <||>];
+	If[!AssociationQ[legacy], Return[<||>]];
+	legacyVows = KeyDrop[legacy, {"Bonds", "Failures"}];
+	If[legacyVows === <||>,
+		<||>,
+		Replace[normalizeVowAssociation[legacyVows], $Failed -> <||>]
+	]
+];
+
 normalizeCharacterVows[character_] := Module[
-	{rawVows},
+	{rawVows, normalized},
 	If[!characterExistsQ[character],
 		Message[vow::nochar, character];
 		Return[$Failed]
 	];
 	rawVows = Lookup[$state[character], "vows", <||>];
-	If[AssociationQ[rawVows] && AllTrue[Values[rawVows], ownedVowQ],
-		Return[rawVows]
+	If[AssociationQ[rawVows],
+		normalized = normalizeVowAssociation[rawVows];
+		If[normalized =!= $Failed,
+			$state[character, "vows"] = normalized;
+			Return[normalized]
+		]
 	];
-	$state[character, "vows"] = <||>
+	normalized = legacyProgressTrackVows[character];
+	$state[character, "vows"] = normalized;
+	normalized
 ];
 
 vowExistsQ[vowName_String, character_] := Module[
@@ -2937,7 +4133,7 @@ threatByVowName[vowName_String, character_] := Module[
 	];
 	ownedThreat = Lookup[ownedVow, "Threat", None];
 	If[ownedThreat === None,
-		Message[threat::none, vowName];
+		Message[vow::nothreat, vowName];
 		Return[$Failed]
 	];
 	ownedThreat
@@ -3300,7 +4496,137 @@ progressTargetData[trackName_String, character_] := Module[
 formatProgressValue[value_] :=
 	ToString[NumberForm[N[value], {3, 2}, NumberPadding -> {"", "0"}]];
 
-progressSummary[label_String, rank_, progress_] :=
+progressTickCount[progress_] :=
+	Clip[Round[4 N[progress]], {0, 40}];
+
+progressBoxTickCount[totalTicks_Integer, box_Integer] :=
+	Clip[totalTicks - 4 (box - 1), {0, 4}];
+
+progressTickPrimitive[x_, y_, width_, height_, tick_Integer, color_] := Module[
+	{anchors, ax, ay, sx, sy},
+	anchors = {
+		{0.16, 0.16},
+		{0.16, 0.56},
+		{0.56, 0.16},
+		{0.56, 0.56}
+	};
+	{ax, ay} = anchors[[tick]];
+	sx = x + ax width;
+	sy = y + ay height;
+	{
+		color,
+		AbsoluteThickness[1.6],
+		Line[
+			{
+				{sx, sy + 0.16 height},
+				{sx + 0.08 width, sy + 0.04 height},
+				{sx + 0.26 width, sy + 0.28 height}
+			}
+		]
+	}
+];
+
+progressBoxPrimitives[x_, y_, width_, height_, tickCount_Integer, color_] :=
+	Join[
+		{
+			FaceForm[White],
+			EdgeForm[Directive[GrayLevel[0.255], AbsoluteThickness[1.2]]],
+			Rectangle[{x, y}, {x + width, y + height}]
+		},
+		Flatten[
+			Table[
+				progressTickPrimitive[x, y, width, height, tick, color],
+				{tick, tickCount}
+			],
+			1
+		]
+	];
+
+menaceCornerPrimitives[x_, y_, width_, height_, tickCount_Integer, color_] := Module[
+	{cornerSize, inset, cx, cy, fill},
+	cornerSize = Min[0.28 width, 0.42 height];
+	inset = 0.6;
+	cx = x + width - cornerSize;
+	cy = y + height - cornerSize;
+	fill = Which[
+		tickCount >= 4, color,
+		tickCount > 0, GrayLevel[0.78],
+		True, White
+	];
+	{
+		FaceForm[fill],
+		EdgeForm[Directive[GrayLevel[0.255], AbsoluteThickness[1.0]]],
+		Rectangle[{cx + inset, cy + inset}, {x + width - inset, y + height - inset}]
+	}
+];
+
+Options[progressTrackPrimitives] = {MenaceProgress -> None};
+
+progressTrackPrimitives[{x_, y_}, progress_, width_, height_, opts : OptionsPattern[]] := Module[
+	{boxWidth, totalTicks, menaceProgress, menaceTicks, color},
+	boxWidth = width/10;
+	totalTicks = progressTickCount[progress];
+	menaceProgress = OptionValue[MenaceProgress];
+	menaceTicks = If[menaceProgress === None, None, progressTickCount[menaceProgress]];
+	color = GrayLevel[0.255];
+	Flatten[
+		Table[
+			Join[
+				progressBoxPrimitives[
+					x + (box - 1) boxWidth,
+					y,
+					boxWidth,
+					height,
+					progressBoxTickCount[totalTicks, box],
+					color
+				],
+				If[
+					menaceTicks === None,
+					{},
+					menaceCornerPrimitives[
+						x + (box - 1) boxWidth,
+						y,
+						boxWidth,
+						height,
+						progressBoxTickCount[menaceTicks, box],
+						color
+					]
+				]
+			],
+			{box, 10}
+		],
+		1
+	]
+];
+
+Options[progressTrackGraphic] = {
+	MenaceProgress -> None,
+	TrackWidth -> 280,
+	TrackHeight -> 24,
+	ImageScale -> 1
+};
+
+progressTrackGraphic[progress_, opts : OptionsPattern[]] := Module[
+	{width, height, scale},
+	width = OptionValue[TrackWidth];
+	height = OptionValue[TrackHeight];
+	scale = OptionValue[ImageScale];
+	Graphics[
+		progressTrackPrimitives[
+			{0, 0},
+			progress,
+			width,
+			height,
+			MenaceProgress -> OptionValue[MenaceProgress]
+		],
+		PlotRange -> {{0, width}, {0, height}},
+		ImagePadding -> 1,
+		ImageSize -> {scaled[width scale], scaled[height scale]},
+		Background -> None
+	]
+];
+
+progressSummaryHeader[label_String, rank_, progress_] :=
 	Row[
 		{
 			Style[
@@ -3310,53 +4636,75 @@ progressSummary[label_String, rank_, progress_] :=
 				FontWeight -> Bold,
 				GrayLevel[0.255]
 			],
-			moveTextStyle[
-				StringJoin[ToString[rank], " - ", formatProgressValue[progress], "/10"]
+			Style[
+				StringJoin[ToString[rank], "  ", formatProgressValue[progress]],
+				FontFamily -> "Futura",
+				FontSize -> scaledSize[14],
+				GrayLevel[0.4]
 			]
 		}
 	];
+
+progressSummary[label_String, rank_, progress_] :=
+	Column[
+		{
+			progressSummaryHeader[label, rank, progress],
+			progressTrackGraphic[progress]
+		},
+		Spacings -> 0.25,
+		Alignment -> Left
+	];
+
+vowProgressSummary[vowData_Association] := Module[
+	{ownedThreat, menaceProgress},
+	ownedThreat = Lookup[vowData, "Threat", None];
+	menaceProgress = If[AssociationQ[ownedThreat], ownedThreat["Menace", "progress"], None];
+	progressTrackGraphic[vowData["Progress"], MenaceProgress -> menaceProgress]
+];
 
 displayVowCard[vowData_Association] := Module[
 	{rows, ownedThreat},
 	ownedThreat = Lookup[vowData, "Threat", None];
 	rows = {
-		header["Vow", vowData["Name"]],
-		progressSummary["Progress", vowData["Rank"], vowData["Progress"]]
+		header[
+			"Vow",
+			StringJoin[
+				vowData["Name"],
+				" (",
+				ToLowerCase[ToString[vowData["Rank"]]],
+				")"
+			]
+		],
+		vowProgressSummary[vowData]
 	};
 	If[AssociationQ[ownedThreat],
 		rows = Join[
 			rows,
 			{
-				subtitleStyle["Threat"],
-				moveTextStyle[StringJoin[ownedThreat["Name"], ": ", ownedThreat["Goal"]]],
-				progressSummary[
-					"Menace",
-					ownedThreat["Menace", "rank"],
-					ownedThreat["Menace", "progress"]
+				Row[
+					{
+						Style[
+							"Threat: ",
+							FontFamily -> "Times New Roman",
+							FontSize -> scaledSize[18],
+							FontWeight -> Bold
+						],
+						moveTextStyle[
+							StringJoin[
+								ownedThreat["Name"],
+								" (",
+								ToLowerCase[ToString[ownedThreat["Menace", "rank"]]],
+								"): ",
+								ownedThreat["Goal"]
+							]
+						]
+					}
 				]
 			}
 		]
 	];
 	ironFramed[Column[rows, Spacings -> 0.8, Alignment -> Left]]
 ];
-
-displayThreatCard[vowName_String, threatData_Association] :=
-	ironFramed[
-		Column[
-			{
-				header["Threat", threatData["Name"]],
-				subtitleStyle[StringJoin["Vow: ", vowName]],
-				moveTextStyle[threatData["Goal"]],
-				progressSummary[
-					"Menace",
-					threatData["Menace", "rank"],
-					threatData["Menace", "progress"]
-				]
-			},
-			Spacings -> 0.8,
-			Alignment -> Left
-		]
-	];
 
 displayThreatFulfilled[vowName_String, threatData_Association] :=
 	Print[
@@ -3560,7 +4908,46 @@ createCharacter[name_String, assetSpecs_List /; Length[assetSpecs] == 3, (edge_)
        "failures" -> makeProgressObject["Failures", Epic], "bondProgress" -> makeProgressObject["Bonds", Epic, 0.25*Length[bonds]],
        "bonds" -> bonds, "journeys" -> <||>, "currentJourney" -> None, "foes" -> <||>, "delves" -> <||>, "currentDelve" -> None, "scene" -> None, "earnedExperience" -> 0, "spentExperience" -> 0]; AssociateTo[$state, name -> character]; $soloCharacter = name; $state[name]];
 createCharacter::badassets = "Could not create the character because one or more starting assets are invalid.";
-createCharacter::badvow = "Could not create the character because the starting vow is invalid. Use starterVow[name, rank].";
+createCharacter::badvow = "Could not create the character because the starting vow is invalid. Use starterVow[name, Extreme | Epic] or {vowName, Extreme | Epic}.";
+
+normalizeCharacterForSheet[character_String] := Module[
+	{assets, vows, bonds, journeys, foes, delves, sceneData},
+	If[!ensureCharacterState[character], Return[$Failed]];
+	If[ensureCharacterCoreProgress[character] === $Failed, Return[$Failed]];
+	assets = normalizeCharacterAssets[character];
+	If[assets === $Failed, Return[$Failed]];
+	vows = normalizeCharacterVows[character];
+	If[vows === $Failed, Return[$Failed]];
+	bonds = normalizeCharacterBonds[character];
+	If[bonds === $Failed, Return[$Failed]];
+	journeys = normalizeCharacterJourneys[character];
+	If[journeys === $Failed, Return[$Failed]];
+	foes = normalizeCharacterFoes[character];
+	If[foes === $Failed, Return[$Failed]];
+	delves = normalizeCharacterDelves[character];
+	If[delves === $Failed, Return[$Failed]];
+	sceneData = normalizeCharacterScene[character];
+	If[sceneData === $Failed, Return[$Failed]];
+	$state[character]
+];
+
+characterSheet[] :=
+	characterSheet[$soloCharacter];
+
+characterSheet[character_String] := Module[
+	{characterData},
+	characterData = normalizeCharacterForSheet[character];
+	If[characterData === $Failed, Return[$Failed]];
+	Print[displayCharacterSheet[character, characterData]];
+	characterData
+];
+
+characterSheet[character_] := (
+	Message[characterSheet::badchar, character];
+	$Failed
+);
+
+characterSheet::badchar = "Character sheet expects a character name string, not `1`.";
        
 setSoloCharacter[character_String] := Module[{},
 	If[!AssociationQ[$state] || !KeyExistsQ[$state, character],
@@ -3577,12 +4964,12 @@ setSoloCharacter::nochar = "No character named `1` exists in the current state."
 (*Debility management*)
 
 
-markDebility[debility_?debilityQ, character_ : $soloCharacter] := Module[
+markDebilityState[debility_?debilityQ, character_ : $soloCharacter] := Module[
 	{current},
 	If[!ensureCharacterState[character], Return[$Failed]];
 	current = getDebilities[character];
 	If[MemberQ[current, debility],
-		Message[markDebility::marked, debilityLabel[debility], character];
+		Message[debility::marked, debilityLabel[debility], character];
 		Return[current]
 	];
 	$state[character, "debilities"] = Append[current, debility];
@@ -3590,21 +4977,21 @@ markDebility[debility_?debilityQ, character_ : $soloCharacter] := Module[
 	$state[character, "debilities"]
 ];
 
-markDebility[debility_, character_ : $soloCharacter] := (
-	Message[markDebility::invalid, debility];
+markDebilityState[debility_, character_ : $soloCharacter] := (
+	Message[debility::invalid, debility];
 	$Failed
 );
 
-clearDebility[debility_?debilityQ, character_ : $soloCharacter] := Module[
+clearDebilityState[debility_?debilityQ, character_ : $soloCharacter] := Module[
 	{current},
 	If[!ensureCharacterState[character], Return[$Failed]];
 	If[MemberQ[permanentDebilities, debility],
-		Message[clearDebility::permanent, debilityLabel[debility]];
+		Message[debility::permanent, debilityLabel[debility]];
 		Return[$Failed]
 	];
 	current = getDebilities[character];
 	If[!MemberQ[current, debility],
-		Message[clearDebility::unmarked, debilityLabel[debility], character];
+		Message[debility::unmarked, debilityLabel[debility], character];
 		Return[current]
 	];
 	$state[character, "debilities"] = DeleteCases[current, debility];
@@ -3612,16 +4999,57 @@ clearDebility[debility_?debilityQ, character_ : $soloCharacter] := Module[
 	$state[character, "debilities"]
 ];
 
-clearDebility[debility_, character_ : $soloCharacter] := (
-	Message[clearDebility::invalid, debility];
+clearDebilityState[debility_, character_ : $soloCharacter] := (
+	Message[debility::invalid, debility];
 	$Failed
 );
 
-markDebility::invalid = "`1` is not an Ironsworn debility.";
-markDebility::marked = "`1` is already marked for character `2`.";
-clearDebility::invalid = "`1` is not an Ironsworn debility.";
-clearDebility::unmarked = "`1` is not marked for character `2`.";
-clearDebility::permanent = "`1` is permanent and cannot be cleared.";
+markWounded[character_ : $soloCharacter] :=
+	markDebilityState[Wounded, character];
+
+clearWounded[character_ : $soloCharacter] :=
+	clearDebilityState[Wounded, character];
+
+markShaken[character_ : $soloCharacter] :=
+	markDebilityState[Shaken, character];
+
+clearShaken[character_ : $soloCharacter] :=
+	clearDebilityState[Shaken, character];
+
+markUnprepared[character_ : $soloCharacter] :=
+	markDebilityState[Unprepared, character];
+
+clearUnprepared[character_ : $soloCharacter] :=
+	clearDebilityState[Unprepared, character];
+
+markEncumbered[character_ : $soloCharacter] :=
+	markDebilityState[Encumbered, character];
+
+clearEncumbered[character_ : $soloCharacter] :=
+	clearDebilityState[Encumbered, character];
+
+markMaimed[character_ : $soloCharacter] :=
+	markDebilityState[Maimed, character];
+
+markCorrupted[character_ : $soloCharacter] :=
+	markDebilityState[Corrupted, character];
+
+markCursed[character_ : $soloCharacter] :=
+	markDebilityState[Cursed, character];
+
+clearCursed[character_ : $soloCharacter] :=
+	clearDebilityState[Cursed, character];
+
+markTormented[character_ : $soloCharacter] :=
+	markDebilityState[Tormented, character];
+
+clearTormented[character_ : $soloCharacter] :=
+	clearDebilityState[Tormented, character];
+
+debility::invalid = "`1` is not an Ironsworn debility.";
+debility::marked = "`1` is already marked for character `2`.";
+debility::unmarked = "`1` is not marked for character `2`.";
+debility::permanent = "`1` is permanent and cannot be cleared.";
 
 
 (* ::Subsection::Closed:: *)
@@ -3653,7 +5081,7 @@ addVow[name_String, rank_?rankQ, character_String, opts : OptionsPattern[]] := M
 	];
 	ownedVow = makeVow[name, rank, OptionValue[Threat]];
 	If[ownedVow === $Failed, Return[$Failed]];
-	$state[character, "vows", name] = ownedVow;
+	$state[character, "vows"] = Association[ownedVows, name -> ownedVow];
 	ownedVow
 ];
 
@@ -3679,19 +5107,6 @@ vows[character_] := Module[
 	cards = displayVowCard /@ Values[ownedVows];
 	Print[Column[cards, Spacings -> 1, Alignment -> Left]];
 	ownedVows
-];
-
-Options[threat] = {Display -> True};
-
-threat[vowName_String, opts : OptionsPattern[]] :=
-	threat[vowName, $soloCharacter, opts];
-
-threat[vowName_String, character_String, opts : OptionsPattern[]] := Module[
-	{ownedThreat},
-	ownedThreat = threatByVowName[vowName, character];
-	If[ownedThreat === $Failed, Return[$Failed]];
-	If[OptionValue[Display], Print[displayThreatCard[vowName, ownedThreat]]];
-	ThreatTrack[vowName, character]
 ];
 
 removeVow[name_String, character_ : $soloCharacter] := Module[
@@ -3736,12 +5151,13 @@ clearThreatProgress[vowName_String, character_ : $soloCharacter] := Module[
 	$state[character, "vows", vowName, "Threat"]
 ];
 
-vow::badstarter = "`1` is not a valid vow spec. Use starterVow[name, rank].";
+vow::badstarter = "`1` is not a valid vow spec. Use starterVow[name, Extreme | Epic] or {vowName, Extreme | Epic}.";
+vow::badbackgroundrank = "Background vow rank must be Extreme or Epic, not `1`.";
 vow::badthreat = "`1` is not a valid threat spec. Use Threat -> {threatName, threatGoal}.";
 vow::nochar = "No character named `1` exists in the current state.";
 vow::unknown = "Character `2` does not have a vow named `1`.";
 vow::duplicate = "Character `2` already has a vow named `1`.";
-threat::none = "Vow `1` does not have an attached threat.";
+vow::nothreat = "Vow `1` does not have an attached threat.";
 
 
 (* ::Subsection::Closed:: *)
