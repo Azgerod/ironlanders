@@ -30,7 +30,7 @@ currentDelveDataQuiet::usage = "currentDelveDataQuiet is part of the internal Me
 riskZoneData::usage = "riskZoneData is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
 setSoloCharacter::usage = "setSoloCharacter is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
 createCharacter::usage = "createCharacter is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
-starterVow::usage = "starterVow is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
+makeVow::usage = "makeVow is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
 addVow::usage = "addVow is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
 vow::usage = "vow is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
 vows::usage = "vows is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
@@ -52,7 +52,7 @@ markCursed::usage = "markCursed is part of the internal MechanicsHelpers API use
 clearCursed::usage = "clearCursed is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
 markTormented::usage = "markTormented is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
 clearTormented::usage = "clearTormented is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
-starterAsset::usage = "starterAsset is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
+makeAsset::usage = "makeAsset is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
 asset::usage = "asset is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
 assets::usage = "assets is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
 drawAssets::usage = "drawAssets is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
@@ -895,7 +895,7 @@ normalizeThreatSpec[other_] := (
 	$Failed
 );
 
-makeVow[name_String, rank_?rankQ, threatSpec_] := Module[
+makeOwnedVow[name_String, rank_?rankQ, threatSpec_] := Module[
 	{normalizedThreat},
 	normalizedThreat = normalizeThreatSpec[threatSpec];
 	If[normalizedThreat === $Failed, Return[$Failed]];
@@ -916,7 +916,7 @@ makeStarterVowSpec[name_String, rank_?rankQ, threatSpec_] := Module[
 		Message[vow::badbackgroundrank, rank];
 		Return[$Failed]
 	];
-	normalizedVow = makeVow[name, rank, threatSpec];
+	normalizedVow = makeOwnedVow[name, rank, threatSpec];
 	If[normalizedVow === $Failed, Return[$Failed]];
 	StarterVowSpec[normalizedVow]
 ];
@@ -929,7 +929,7 @@ ownedVowFromSpec[{name_String, rank_?rankQ}] := Module[{},
 		Message[vow::badbackgroundrank, rank];
 		Return[$Failed]
 	];
-	makeVow[name, rank, None]
+	makeOwnedVow[name, rank, None]
 ];
 
 ownedVowFromSpec[other_] := (
@@ -1632,7 +1632,7 @@ createCharacter[
 	$state[name]
 ];
 createCharacter::badassets = "Could not create the character because one or more starting assets are invalid.";
-createCharacter::badvow = "Could not create the character because the starting vow is invalid. Use starterVow[name, Extreme | Epic] or {vowName, Extreme | Epic}.";
+createCharacter::badvow = "Could not create the character because the starting vow is invalid. Use makeVow[name, Extreme | Epic] or {vowName, Extreme | Epic}.";
 
 normalizeCharacterForSheet[character_String] := Module[
 	{normalizers, normalized},
@@ -1764,13 +1764,13 @@ debility::permanent = "`1` is permanent and cannot be cleared.";
 (*Vow management*)
 
 
-Options[starterVow] = {Threat -> None};
+Options[makeVow] = {Threat -> None};
 
-starterVow[name_String, rank_?rankQ, opts : OptionsPattern[]] :=
+makeVow[name_String, rank_?rankQ, opts : OptionsPattern[]] :=
 	makeStarterVowSpec[name, rank, OptionValue[Threat]];
 
-starterVow[args___] := (
-	Message[vow::badstarter, HoldForm[starterVow[args]]];
+makeVow[args___] := (
+	Message[vow::badstarter, HoldForm[makeVow[args]]];
 	$Failed
 );
 
@@ -1787,7 +1787,7 @@ addVow[name_String, rank_?rankQ, character_String, opts : OptionsPattern[]] := M
 		Message[vow::duplicate, name, character];
 		Return[$Failed]
 	];
-	ownedVow = makeVow[name, rank, OptionValue[Threat]];
+	ownedVow = makeOwnedVow[name, rank, OptionValue[Threat]];
 	If[ownedVow === $Failed, Return[$Failed]];
 	$state[character, "vows"] = Association[ownedVows, name -> ownedVow];
 	ownedVow
@@ -1855,7 +1855,7 @@ clearThreatProgress[vowName_String, character_ : $soloCharacter] := Module[
 	$state[character, "vows", vowName, "Threat"]
 ];
 
-vow::badstarter = "`1` is not a valid vow spec. Use starterVow[name, Extreme | Epic] or {vowName, Extreme | Epic}.";
+vow::badstarter = "`1` is not a valid vow spec. Use makeVow[name, Extreme | Epic] or {vowName, Extreme | Epic}.";
 vow::badbackgroundrank = "Background vow rank must be Extreme or Epic, not `1`.";
 vow::badthreat = "`1` is not a valid threat spec. Use Threat -> {threatName, threatGoal}.";
 vow::nochar = "No character named `1` exists in the current state.";
@@ -1868,20 +1868,20 @@ vow::nothreat = "Vow `1` does not have an attached threat.";
 (*Asset management*)
 
 
-starterAsset[name_String] :=
+makeAsset[name_String] :=
 	makeStarterAssetSpec[name, Automatic, <||>];
 
-starterAsset[name_String, fields_Association] :=
+makeAsset[name_String, fields_Association] :=
 	makeStarterAssetSpec[name, Automatic, fields];
 
-starterAsset[name_String, abilitySpec : (_Integer | {__Integer})] :=
+makeAsset[name_String, abilitySpec : (_Integer | {__Integer})] :=
 	makeStarterAssetSpec[name, abilitySpec, <||>];
 
-starterAsset[name_String, abilitySpec : (_Integer | {__Integer}), fields_Association] :=
+makeAsset[name_String, abilitySpec : (_Integer | {__Integer}), fields_Association] :=
 	makeStarterAssetSpec[name, abilitySpec, fields];
 
-starterAsset[args___] := (
-	Message[asset::badasset, HoldForm[starterAsset[args]]];
+makeAsset[args___] := (
+	Message[asset::badasset, HoldForm[makeAsset[args]]];
 	$Failed
 );
 
@@ -2171,13 +2171,13 @@ removeRarity[assetName_String, character_, opts : OptionsPattern[]] := Module[
 ];
 
 asset::unknown = "Unknown asset `1`. Use the exact canonical asset name.";
-asset::nodefault = "Asset `1` has no printed default selected ability. Use starterAsset[`1`, abilityIndex].";
+asset::nodefault = "Asset `1` has no printed default selected ability. Use makeAsset[`1`, abilityIndex].";
 asset::badability = "Ability `1` is not available for asset `2`. Valid ability indices are 1 through `3`.";
 asset::badabilities = "Asset `1` requires a non-empty integer ability selection.";
 asset::dupeability = "Ability `1` was selected more than once for asset `2`.";
 asset::badfield = "Field `1` is not defined for asset `2`.";
 asset::badfields = "Fields for asset `1` must be an association.";
-asset::badasset = "`1` is not a valid asset spec. Use an asset name string or starterAsset[...].";
+asset::badasset = "`1` is not a valid asset spec. Use an asset name string or makeAsset[...].";
 asset::badstoredassets = "The stored assets for character `1` could not be migrated to structured asset state.";
 asset::nochar = "No character named `1` exists in the current state.";
 asset::notowned = "Character `2` does not own asset `1`.";

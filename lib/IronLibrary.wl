@@ -73,7 +73,7 @@ setSoloCharacter::usage =
 "setSoloCharacter[character] sets the solo character to character.";
 
 createCharacter::usage =
-"createCharacter[name, {a1, a2, a3}, edge, heart, iron, shadow, wits, starterVow[...] | {vowName, Extreme | Epic}, {b1, b2, b3}] creates a character and sets it as the solo character. Starting assets may be asset name strings when the card has a printed default selected ability, or starterAsset[...] specs.";
+"createCharacter[name, {a1, a2, a3}, edge, heart, iron, shadow, wits, makeVow[...] | {vowName, Extreme | Epic}, {b1, b2, b3}] creates a character and sets it as the solo character. Starting assets may be asset name strings when the card has a printed default selected ability, or makeAsset[...] specs.";
 
 characterSheet::usage =
 "characterSheet[] displays a Lodestar-style character sheet for the solo character.
@@ -84,9 +84,9 @@ characterSheet[character] displays a Lodestar-style character sheet for the name
 (*Vow management*)
 
 
-starterVow::usage =
-"starterVow[name, Extreme | Epic] creates a quiet starting vow spec.
-starterVow[name, Extreme | Epic, Threat -> {threatName, threatGoal}] creates a quiet starting vow spec with one attached threat.";
+makeVow::usage =
+"makeVow[name, Extreme | Epic] creates a quiet starting vow spec.
+makeVow[name, Extreme | Epic, Threat -> {threatName, threatGoal}] creates a quiet starting vow spec with one attached threat.";
 
 addVow::usage =
 "addVow[name, rank] adds a vow to the solo character.
@@ -183,11 +183,11 @@ clearTormented[character] clears Tormented for character.";
 (*Asset management*)
 
 
-starterAsset::usage =
-"starterAsset[name] creates a quiet starting asset spec using the asset's printed default selected abilities.
-starterAsset[name, ability] creates a quiet starting asset spec with the selected ability index.
-starterAsset[name, {ability1, ability2, ...}] creates a quiet starting asset spec with multiple selected abilities.
-starterAsset[name, abilityOrAbilities, fields] includes custom field values such as <|\"Name\" -> \"Asha\"|>.";
+makeAsset::usage =
+"makeAsset[name] creates a quiet starting asset spec using the asset's printed default selected abilities.
+makeAsset[name, ability] creates a quiet starting asset spec with the selected ability index.
+makeAsset[name, {ability1, ability2, ...}] creates a quiet starting asset spec with multiple selected abilities.
+makeAsset[name, abilityOrAbilities, fields] includes custom field values such as <|\"Name\" -> \"Asha\"|>.";
 
 asset::usage =
 "asset[name] displays the owned asset named name for the solo character.
@@ -205,7 +205,7 @@ drawAssets[n, category] draws from category, one of \"Path\", \"Companion\", \"C
 addAsset::usage =
 "addAsset[assetSpec] spends 5 experience to add an asset to the solo character and displays the updated card.
 addAsset[assetSpec, character] spends 5 experience to add an asset to character.
-assetSpec may be an asset name string with printed default selected abilities, or a starterAsset[...] spec.
+assetSpec may be an asset name string with printed default selected abilities, or a makeAsset[...] spec.
 addAsset[..., Display -> False] suppresses display.";
 
 upgradeAsset::usage =
@@ -865,7 +865,7 @@ Display::usage =
 "Display is an option that specifies whether a function should display its result.";
 
 Threat::usage =
-"Threat is an option for starterVow and addVow that specifies an attached threat as {threatName, threatGoal}.";
+"Threat is an option for makeVow and addVow that specifies an attached threat as {threatName, threatGoal}.";
 
 Objective::usage =
 "Objective is an option for addDelve that specifies the site objective.";
@@ -1042,7 +1042,7 @@ displayDenizensFromDelve[delveData_] := Module[{denizenList},
 $mechanicsPassThroughAPI = {
 	"setSoloCharacter",
 	"createCharacter",
-	"starterVow",
+	"makeVow",
 	"addVow",
 	"removeVow",
 	"setThreat",
@@ -1062,7 +1062,7 @@ $mechanicsPassThroughAPI = {
 	"clearCursed",
 	"markTormented",
 	"clearTormented",
-	"starterAsset",
+	"makeAsset",
 	"setAssetTrack",
 	"adjustAssetTrack",
 	"markProgress",

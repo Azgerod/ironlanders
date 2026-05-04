@@ -981,11 +981,17 @@ sheetSignedNumberText[value_Integer, {x_, y_}, size_, weight_:Bold, color_:sheet
 	]
 ];
 
-sheetNameField[character_String] :=
+sheetNameField[character_String] := Module[
+	{x, y, width, height},
+	x = 22;
+	y = 1098;
+	width = 776;
+	height = 58;
 	{
-		sheetRect[{22, 1098}, {776, 58}, sheetDark, sheetDark],
-		Text[sheetStyle[character, 28, Bold, White], {50, 1127}, {-1, 0}]
-	};
+		sheetRect[{x, y}, {width, height}, sheetDark, sheetDark],
+		Text[sheetStyle[character, 28, Bold, White], {x + width/2, y + height/2}]
+	}
+];
 
 sheetMiddleX = 162;
 sheetMiddleWidth = 496;
