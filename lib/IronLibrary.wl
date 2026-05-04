@@ -957,6 +957,9 @@ If[!ValueQ[$IronLibraryPath], $IronLibraryPath = If[StringQ[$InputFileName] && $
 $ironLibraryHelperDirectory = DirectoryName[$IronLibraryPath];
 
 Quiet[
+	Get[FileNameJoin[{$ironLibraryHelperDirectory, "MoveData.wl"}]];
+	Get[FileNameJoin[{$ironLibraryHelperDirectory, "AssetData.wl"}]];
+	Get[FileNameJoin[{$ironLibraryHelperDirectory, "OracleData.wl"}]];
 	Get[FileNameJoin[{$ironLibraryHelperDirectory, "FileHelpers.wl"}]];
 	Get[FileNameJoin[{$ironLibraryHelperDirectory, "MechanicsHelpers.wl"}]];
 	Get[FileNameJoin[{$ironLibraryHelperDirectory, "DisplayHelpers.wl"}]],

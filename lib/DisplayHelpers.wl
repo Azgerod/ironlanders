@@ -74,70 +74,67 @@ $ContextPath = DeleteDuplicates[Join[$ContextPath, {"OracleTables`", "IronLibrar
 
 
 (* ::Subsection::Closed:: *)
-(*Local display data helpers*)
+(*Domain data and normalization*)
 
 
-symString[symbol_] := ToLowerCase[SymbolName[symbol]];
+symbolNameLower[symbol_] := ToLowerCase[SymbolName[symbol]];
 
-ranks = {Troublesome, Dangerous, Formidable, Extreme, Epic};
+progressRanks = {Troublesome, Dangerous, Formidable, Extreme, Epic};
 
 debilityLabel[debility_] :=
 	SymbolName[Unevaluated[debility]];
 
-displayMomentumReset[characterData_Association] :=
+momentumResetValue[characterData_Association] :=
 	Max[0, 2 - Length[Lookup[characterData, "debilities", {}]]];
 
-displayMomentumMax[characterData_Association] :=
+momentumMaxValue[characterData_Association] :=
 	10 - Length[Lookup[characterData, "debilities", {}]];
 
-makeProgressObject[name_String, rank_, progress_:0] :=
+fallbackProgressTrack[name_String, rank_, progress_:0] :=
 	Association[
 		"Name" -> name,
 		"Rank" -> rank,
 		"Progress" -> Clip[progress, {0, 10}]
 	];
 
-assetDataAssociation[] := AssetData`assetData;
+assetCatalog[] := AssetData`assetData;
 
-assetRecord[name_String] :=
-	Lookup[assetDataAssociation[], name, Missing["UnknownAsset", name]];
+assetDefinition[name_String] :=
+	Lookup[assetCatalog[], name, Missing["UnknownAsset", name]];
 
-assetFieldKeys[record_Association] :=
+assetFieldNames[record_Association] :=
 	Keys[Lookup[record, "Fields", <||>]];
 
-defaultAssetAbilities[record_Association] :=
+assetDefaultAbilities[record_Association] :=
 	Lookup[record, "DefaultAbilities", {}];
 
-initialAssetTracks[record_Association] :=
+assetDefaultTrackValues[record_Association] :=
 	Association @ KeyValueMap[
 		#1 -> Lookup[#2, "Default", Lookup[#2, "Max", 0]] &,
 		Lookup[record, "Tracks", <||>]
 	];
 
-normalizeAssetFields[fields_Association, record_Association] := Module[
+assetFieldsWithDefaults[fields_Association, record_Association] := Module[
 	{keys, blankFields},
-	keys = assetFieldKeys[record];
+	keys = assetFieldNames[record];
 	blankFields = AssociationThread[keys -> ConstantArray["", Length[keys]]];
 	Join[blankFields, KeyTake[fields, keys]]
 ];
 
-defaultDenizens[] :=
+emptyDenizenSlots[] :=
 	ConstantArray[None, 12];
 
-denizenSlotRanges = {
+$denizenSlotRanges = {
 	"01-27", "28-41", "42-55", "56-69",
 	"70-75", "76-81", "82-87", "88-93",
 	"94-95", "96-97", "98-99", "00"
 };
 
-denizenSlotLabels = {
+$denizenSlotLabels = {
 	"Very Common", "Common", "Common", "Common",
 	"Uncommon", "Uncommon", "Uncommon", "Uncommon",
 	"Rare", "Rare", "Rare", "Unforeseen"
 };
-
-delveThemes = {"Ancient", "Corrupted", "Fortified", "Hallowed", "Haunted", "Infested", "Ravaged", "Wild"};
-delveDomains = {"Barrow", "Cavern", "Frozen Cavern", "Icereach", "Mine", "Pass", "Ruin", "Sea Cave", "Shadowfen", "Stronghold", "Tanglewood", "Underkeep"};
 
 normalizeDelveCards[cards_String, _] := {cards};
 normalizeDelveCards[cards : {__String}, _] := cards;
@@ -145,27 +142,27 @@ normalizeDelveCards[_, _] := $Failed;
 
 rollOracleDice[] := RandomInteger[{1, 10}, 2];
 
-oracleRollValue[{tensDie_Integer, onesDie_Integer}] := Module[{tensValue, onesValue},
+oracleValueFromDice[{tensDie_Integer, onesDie_Integer}] := Module[{tensValue, onesValue},
 	tensValue = If[tensDie == 10, 0, tensDie*10];
 	onesValue = If[onesDie == 10, 0, onesDie];
 	If[tensDie == onesDie == 10, 100, tensValue + onesValue]
 ];
 
-oracleRollOutcome[table_Association, value_Integer] := Module[{key},
+oracleOutcomeForValue[table_Association, value_Integer] := Module[{key},
 	key = First[Select[Sort[Keys[table]], # >= value &]];
 	table[key]
 ];
 
-oracleRollData[table_Association] := Module[{oracleDice, od1, od2, value, outcome, match},
+oracleRollResult[table_Association] := Module[{oracleDice, od1, od2, value, outcome, match},
 	oracleDice = {od1, od2} = rollOracleDice[];
-	value = oracleRollValue[oracleDice];
-	outcome = oracleRollOutcome[table, value];
+	value = oracleValueFromDice[oracleDice];
+	outcome = oracleOutcomeForValue[table, value];
 	match = od1 == od2;
 	<|"oracleDice" -> oracleDice, "value" -> value, "outcome" -> outcome, "match" -> match|>
 ];
 
 oracleRoll[tableName_String, table_Association] := Module[{roll},
-	roll = oracleRollData[table];
+	roll = oracleRollResult[table];
 	displayOracleRoll[tableName, roll["oracleDice"], roll["match"], roll["outcome"]];
 	roll
 ];
@@ -173,7 +170,7 @@ oracleRoll[tableName_String, table_Association] := Module[{roll},
 
 
 (* ::Subsection::Closed:: *)
-(*Presentation helpers*)
+(*Shared display primitives*)
 
 
 (* ::Subsubsection::Closed:: *)
@@ -184,6 +181,16 @@ $ironDisplayScale = 0.8;
 scaled[n_?NumericQ] := $ironDisplayScale n;
 
 scaledSize[n_?NumericQ] := Round[scaled[n]];
+
+baseSize[n_?NumericQ] := n;
+
+baseFontSize[n_?NumericQ] := Round[baseSize[n]];
+
+scaleFinalImage[image_Image] :=
+	ImageResize[image, Scaled[$ironDisplayScale]];
+
+scaleFinalGraphic[graphic_Graphics, background_:None] :=
+	scaleFinalImage[Rasterize[graphic, Background -> background]];
 
 
 (* ::Subsubsection:: *)
@@ -198,48 +205,44 @@ rollBodyResultGap = scaled[3];
 (*Text styles*)
 
 
+$displaySansFont = "Futura";
+$displaySerifFont = "Times New Roman";
+$displayInk = GrayLevel[0.255];
+$displayMutedInk = GrayLevel[0.4];
+
+displayText[text_, family_String, size_?NumericQ, weight_:Plain, color_:$displayInk, opts___] :=
+	Style[
+		text,
+		color,
+		opts,
+		FontFamily -> family,
+		FontSize -> scaledSize[size],
+		FontWeight -> weight
+	];
+
+displayLabelValue[label_String, value_, valueStyle_:moveTextStyle] :=
+	Row[
+		{
+			displayText[StringJoin[label, ": "], $displaySansFont, 16, Bold],
+			valueStyle[value]
+		}
+	];
+
 dieStyle[n_] := Style[
 	n,
-	GrayLevel[0.255],
+	$displayInk,
 	FontSize -> 21,
-	FontFamily -> "Futura",
+	FontFamily -> $displaySansFont,
 	FontWeight -> Bold
 ];
 
-mainStyle[n_] := Style[
-	n,
-	GrayLevel[0.255],
-	FontSize -> scaledSize[42],
-	FontFamily -> "Futura",
-	FontWeight -> Bold
-];
+mainStyle[n_] := displayText[n, $displaySansFont, 42, Bold];
 
-titleStyle[x_] := Style[
-	x,
-	FontFamily -> "Futura",
-	FontSize -> scaledSize[32],
-	FontWeight -> Bold,
-	GrayLevel[0.255]
-];
+titleStyle[x_] := displayText[x, $displaySansFont, 32, Bold];
 
-subtitleStyle[x_] := Style[
-	x,
-	FontFamily -> "Futura",
-	FontSize -> scaledSize[26],
-	GrayLevel[0.4]
-];
+subtitleStyle[x_] := displayText[x, $displaySansFont, 26, Plain, $displayMutedInk];
 
-moveTextStyle[x_String] := Style[
-	x,
-	FontFamily -> "Times New Roman",
-	FontSize -> scaledSize[18]
-];
-
-moveTextStyle[x_] := Style[
-	x,
-	FontFamily -> "Times New Roman",
-	FontSize -> scaledSize[18]
-];
+moveTextStyle[x_] := displayText[x, $displaySerifFont, 18];
 
 
 (* ::Subsubsection::Closed:: *)
@@ -256,26 +259,37 @@ Gu9I4nrXvXgA9u9F4mmjPNuG727vH69va\ndy98LrK9/XpoLV8plTs927TjcXyPWtcady/ULmbxbmu3s
 U4gzakT33zW76zq5v/J84e3ZcxwE4/7nQE/SdLd/jzOZB\nFC3nb991tdAX9C3vO9ZsHux5qWJVpvpd07esb8xmnLkcZzb37GRfBtUzfcv7\nxs9jB4vtuOt5v2SVLg3zTN/p+8ZsDnunEb1n2//alr0VfIYyStB3fN9h58Vi\nNuM9ZRqzOa7v2u158dxmkX7fmMFZmM1x\
 fYOTkxPx/GYN9L3eHMFp0NMlZ7MJ\n3zjrWjq/WeLo6MiMy9DZ7O6OM5tN+AboX9J5zgJwjR6djOfObH4SZzab8h3M\n8lcvtzrutYEe19/DjdGdzUtJOh7HNzHueb/3PUaKvj+JX7sSkp7NUQIzQzoP\neSet2RwlcK9J5yO3pDybowY+mxPPTZ7wZ6TEbB4lMFfE8zTBd\
 Gezsy85m0cN\n3JPc30b17PyZldnMYPTGf7vRtU8=\n"], "Byte", ColorSpace -> "RGB", Interleaving -> True];
+cancelledDieOverlay[die_Image, size_?NumericQ, position_List] :=
+	ImageCompose[
+		die,
+		Rasterize[
+			Style["\[Times]", $displayInk, FontSize -> baseFontSize[size]],
+			Background -> None
+		],
+		Scaled[position]
+	];
+
+numberedDieImage[base_Image, label_, labelPosition_List, cancelled_, cancelSize_?NumericQ, cancelPosition_List] := Module[
+	{die},
+	die = ImageCompose[
+		base,
+		Rasterize[dieStyle[label], Background -> None],
+		Scaled[labelPosition]
+	];
+	If[cancelled, cancelledDieOverlay[die, cancelSize, cancelPosition], die]
+];
+
 Options[d6Image] = {Cancelled -> False};
 d6Image[n_Integer /; 1 <= n <= 6, opts : OptionsPattern[]] := Module[{die},
-	die = ImageCompose[
+	die = numberedDieImage[
 		emptyD6Image,
-		Rasterize[dieStyle[n], Background -> None],
-		Scaled[{0.36 - If[n == 4, 0.01, 0], 0.42}]
-	];
-	die = If[
+		n,
+		{0.36 - If[n == 4, 0.01, 0], 0.42},
 		OptionValue[Cancelled],
-		ImageCompose[
-			die,
-			Rasterize[
-				Style["\[Times]", GrayLevel[0.255], FontSize -> scaledSize[110]],
-				Background -> None
-			],
-			Scaled[{0.5, 0.81}]
-		],
-		die
+		110,
+		{0.5, 0.81}
 	];
-	ImageResize[die, Scaled[$ironDisplayScale]]
+	scaleFinalImage[die]
 ];
 emptyD10Image = Image[CompressedData["\n1:eJztnctuFEcUhq0kiyx5BPIGWWbX7jHGmJuNHTu2FJQxwuGSQBwwCpFQ4mXI\nJkh4DVmSVRBrLFjFSzBbkGDFFt5gMv/YbY3L3VOnLt11qvr80kE2sj1V1V/V\nX13nTM8XF36a+/6TsbGxm5/3/5lb+SW/cWPl1\
 /kj/W8Wrt+8cun66sXp6+ur\nl1ZvfHXh0/5/3uvHH/34bEwkEo3SVDZ1NB/P/8rHO8/68aEfL/rfP5zIJsZD\nt00UVp2s0+3z0BsRz2aymSOh2ylqXnmWb2jYKOKFMNIuEdYNYaSlsmBjn5HQ\nbRfVKwc29iJ/GLoPono0mU1+6caGMJKq9tj44IcPYSQl+WdjN/petR\
@@ -298,29 +312,32 @@ PEOwzeLASNN84PkH\nOjY41nCEUugatCb5iLW+J7RC1qA19VrChptC1Rc1wYew4UchGKmbj1Rqv7io\n
 EZQRnKHi+QOj2ipqX7rmsWDeEjXYLz+jBWjJ81gouJJ8i\nEun1P17oOAA=\n"], "Byte", ColorSpace -> "RGB", Interleaving -> True];
 Options[d10Image] = {Cancelled -> False};
 d10Image[n_Integer /; 1 <= n <= 10, opts : OptionsPattern[]] := Module[{die},
-	die = ImageCompose[
+	die = numberedDieImage[
 		emptyD10Image,
-		Rasterize[dieStyle[If[n == 10, 0, n]], Background -> None],
-		Scaled[{0.5 - If[n == 4, 0.01, 0], 0.66}]
-	];
-	die = If[
+		If[n == 10, 0, n],
+		{0.5 - If[n == 4, 0.01, 0], 0.66},
 		OptionValue[Cancelled],
-		ImageCompose[
-			die,
-			Rasterize[
-				Style["\[Times]", GrayLevel[0.255], FontSize -> scaledSize[150]],
-				Background -> None
-			],
-			Scaled[{0.5, 0.8}]
-		],
-		die
+		150,
+		{0.5, 0.8}
 	];
-	ImageResize[die, Scaled[$ironDisplayScale]]
+	scaleFinalImage[die]
 ];
 $outcomeColors = Association["miss" -> RGBColor[0.72, 0.22, 0.22], "weakHit" -> RGBColor[0.78, 0.55, 0.15], "strongHit" -> RGBColor[0.3, 0.55, 0.3]];
 $outcomeLabels = Association["miss" -> "Miss", "weakHit" -> "Weak Hit", "strongHit" -> "Strong Hit"];
-actionRollResultDisplay[result_String, match_] := Module[{color, label}, color = Lookup[$outcomeColors, result, GrayLevel[0.4]]; label = ToUpperCase[Lookup[$outcomeLabels, result]];
-    Style[StringJoin[label, If[match, " (MATCH)", ""]], FontFamily -> "Futura", FontWeight -> Bold, FontSize -> scaledSize[42], FontTracking -> "Wide", color]]
+
+actionRollResultDisplay[result_String, match_] := Module[
+	{color, label},
+	color = Lookup[$outcomeColors, result, $displayMutedInk];
+	label = ToUpperCase[Lookup[$outcomeLabels, result]];
+	displayText[
+		StringJoin[label, If[match, " (MATCH)", ""]],
+		$displaySansFont,
+		42,
+		Bold,
+		color,
+		FontTracking -> "Wide"
+	]
+];
 
 
 (* ::Subsubsection::Closed:: *)
@@ -344,13 +361,28 @@ scoreCircle[score_Integer /; 1 <= score <= 10] := Module[{circle},
 		],
 		Scaled[{0.5, 0.5}]
 	];
-
-	ImageResize[circle, Scaled[$ironDisplayScale]]
+	scaleFinalImage[circle]
 ];
-rollColumn[actionScore_, challengeDice_List, challengeDiceCancelled_:Automatic] := Module[{cancelled, dice, sortedDice},
-    cancelled = Replace[challengeDiceCancelled, Automatic :> ConstantArray[False, Length[challengeDice]]];
-     dice = Join[{{actionScore, 0, scoreCircle[actionScore]}}, MapThread[{#1, 1, d10Image[#1, Cancelled -> #2]} & , {challengeDice, cancelled}]];
-     sortedDice = Last /@ ReverseSortBy[dice, {#1[[1]], #1[[2]]} & ]; Column[sortedDice]];
+
+rollColumnEntry[value_, sortGroup_, image_] :=
+	{value, sortGroup, image};
+
+rollColumn[actionScore_, challengeDice_List, challengeDiceCancelled_:Automatic] := Module[
+	{cancelled, entries},
+	cancelled = Replace[
+		challengeDiceCancelled,
+		Automatic :> ConstantArray[False, Length[challengeDice]]
+	];
+	entries = Join[
+		{rollColumnEntry[actionScore, 0, scoreCircle[actionScore]]},
+		MapThread[
+			rollColumnEntry[#1, 1, d10Image[#1, Cancelled -> #2]] &,
+			{challengeDice, cancelled}
+		]
+	];
+	Column[Last /@ ReverseSortBy[entries, {#1[[1]], #1[[2]]} &]]
+];
+
 rollFrameStyle := Directive[
 	GrayLevel[0.25],
 	AbsoluteThickness[scaled[4]]
@@ -367,18 +399,65 @@ mathDieXOffset := scaled[34];
 
 mathOperator[x_] := mainStyle[x];
 mathValue[x_] := mainStyle[x];
-mathLabel[x_] := RawBoxes[AdjustmentBox[ToBoxes[Style[StringJoin["(", ToString[x], ")"], FontFamily -> "Futura", FontSize -> scaledSize[32], GrayLevel[0.35]]], BoxBaselineShift -> -mathReasonYOffset]];
-mathCore[op_, value_] := Pane[Row[{Pane[mathOperator[op], {mathOperatorWidth, Automatic}, Alignment -> Center], Pane[mathValue[value], {mathValueWidth, Automatic}, Alignment -> Left]},
-     Spacer[mathOpValueGap]], {mathCoreWidth, Automatic}, Alignment -> Center];
+
+mathLabel[x_] :=
+	RawBoxes[
+		AdjustmentBox[
+			ToBoxes[
+				displayText[StringJoin["(", ToString[x], ")"], $displaySansFont, 32, Plain, GrayLevel[0.35]]
+			],
+			BoxBaselineShift -> -mathReasonYOffset
+		]
+	];
+
+mathCore[op_, value_] :=
+	Pane[
+		Row[
+			{
+				Pane[mathOperator[op], {mathOperatorWidth, Automatic}, Alignment -> Center],
+				Pane[mathValue[value], {mathValueWidth, Automatic}, Alignment -> Left]
+			},
+			Spacer[mathOpValueGap]
+		],
+		{mathCoreWidth, Automatic},
+		Alignment -> Center
+	];
+
 mathTermRow[op_, value_, source_] := {mathCore[op, value], mathLabel[source]};
 mathResultRow[actionScore_] := {mathCore["=", actionScore], Spacer[0]};
 offsetX[expr_, dx_] := Pane[expr, ImageMargins -> {{Max[dx, 0], Max[-dx, 0]}, {0, 0}}];
-mathColumn[actionDie_Integer, statValue_Integer, adds_Association, actionScore_Integer, actionDieCancelled_, momentum_] := Module[{termRows, rows, dividerPosition, blankRow, dieGapRow},
-    blankRow = {Spacer[{0, 4}], Spacer[{0, 4}]}; dieGapRow = {Spacer[{0, mathDieAddGap}], Spacer[{0, mathDieAddGap}]};
-     termRows = Join[{mathTermRow["+", statValue, "Stat"]}, KeyValueMap[mathTermRow["+", #2, #1] & , adds]];
-     rows = Join[{{Pane[offsetX[d6Image[actionDie, Cancelled -> actionDieCancelled], mathDieXOffset], {mathCoreWidth, Automatic}, Alignment -> Center],
-         If[actionDieCancelled, mathLabel[StringJoin["Momentum ", ToString[momentum]]], Spacer[0]]}, dieGapRow}, termRows, {blankRow, blankRow, mathResultRow[actionScore]}];
-     dividerPosition = 2 + Length[termRows] + 2; Grid[rows, Alignment -> {{Center, Left}}, Spacings -> {mathReasonGap, 0.6}, Dividers -> {False, {dividerPosition -> rollFrameStyle}}]];
+
+mathDieRow[actionDie_Integer, actionDieCancelled_, momentum_] :=
+	{
+		Pane[
+			offsetX[d6Image[actionDie, Cancelled -> actionDieCancelled], mathDieXOffset],
+			{mathCoreWidth, Automatic},
+			Alignment -> Center
+		],
+		If[actionDieCancelled, mathLabel[StringJoin["Momentum ", ToString[momentum]]], Spacer[0]]
+	};
+
+mathColumn[actionDie_Integer, statValue_Integer, adds_Association, actionScore_Integer, actionDieCancelled_, momentum_] := Module[
+	{termRows, rows, dividerPosition, blankRow, dieGapRow},
+	blankRow = {Spacer[{0, 4}], Spacer[{0, 4}]};
+	dieGapRow = {Spacer[{0, mathDieAddGap}], Spacer[{0, mathDieAddGap}]};
+	termRows = Join[
+		{mathTermRow["+", statValue, "Stat"]},
+		KeyValueMap[mathTermRow["+", #2, #1] &, adds]
+	];
+	rows = Join[
+		{mathDieRow[actionDie, actionDieCancelled, momentum], dieGapRow},
+		termRows,
+		{blankRow, blankRow, mathResultRow[actionScore]}
+	];
+	dividerPosition = 2 + Length[termRows] + 2;
+	Grid[
+		rows,
+		Alignment -> {{Center, Left}},
+		Spacings -> {mathReasonGap, 0.6},
+		Dividers -> {False, {dividerPosition -> rollFrameStyle}}
+	]
+];
 
 
 (* ::Subsubsection::Closed:: *)
@@ -393,61 +472,162 @@ header[title_String, subtitle_String] := Column[{titleStyle[title], subtitleStyl
 (*Frames*)
 
 
-ironFramed[x_] := Framed[
+displayFrame[x_, margins_:{{scaled[12], scaled[12]}, {scaled[12], scaled[12]}}] := Framed[
 	x,
 	FrameStyle -> rollFrameStyle,
-	FrameMargins -> {{scaled[12], scaled[12]}, {scaled[12], scaled[12]}},
+	FrameMargins -> margins,
 	RoundingRadius -> scaled[8],
 	Background -> None
 ];
 
-characterSheetFramed[x_] := Framed[
-	x,
-	FrameStyle -> rollFrameStyle,
-	FrameMargins -> {{scaled[16], scaled[16]}, {scaled[16], scaled[16]}},
-	RoundingRadius -> scaled[8],
-	Background -> None
-];
+ironFramed[x_] :=
+	displayFrame[x];
+
+displayColumn[rows_List, spacing_:0.8, alignment_:Left] :=
+	ironFramed[
+		Column[
+			rows,
+			Spacings -> spacing,
+			Alignment -> alignment
+		]
+	];
+
+displayGrid[rows_List, opts___] :=
+	ironFramed[Grid[rows, opts]];
+
+printAndReturn[expr_, return_] := (
+	Print[expr];
+	return
+);
+
+characterSheetFramed[x_] :=
+	displayFrame[x, {{scaled[16], scaled[16]}, {scaled[16], scaled[16]}}];
 
 
 (* ::Subsubsection::Closed:: *)
 (*Action roll display*)
 
 
-displayActionRoll[roll_Association] := Print[ironFramed[Grid[{{Item[header["Action Roll", Capitalize[symString[roll["stat"]]]], Alignment -> Left], SpanFromLeft},
-       {mathColumn[roll["actionDie"], roll["statValue"], roll["adds"], roll["actionScore"], roll["actionDieCancelled"], roll["momentum"]], rollColumn[roll["actionScore"], roll["challengeDice"]]},
-       {Item[actionRollResultDisplay[roll["result"], roll["match"]], Alignment -> Center], SpanFromLeft}}, Dividers -> {None, {False, False, False, False}}, Alignment -> {{Left, Center, Center}, {Top, Top, Bottom}},
-      Spacings -> {2, {Automatic, rollHeaderBodyGap, rollBodyResultGap}}, FrameStyle -> None]]];
+actionRollCard[title_String, subtitle_String, roll_Association] :=
+	ironFramed[
+		Grid[
+			{
+				{Item[header[title, subtitle], Alignment -> Left], SpanFromLeft},
+				{
+					mathColumn[
+						roll["actionDie"],
+						roll["statValue"],
+						roll["adds"],
+						roll["actionScore"],
+						roll["actionDieCancelled"],
+						roll["momentum"]
+					],
+					rollColumn[roll["actionScore"], roll["challengeDice"]]
+				},
+				{Item[actionRollResultDisplay[roll["result"], roll["match"]], Alignment -> Center], SpanFromLeft}
+			},
+			Dividers -> {None, {False, False, False, False}},
+			Alignment -> {{Left, Center, Center}, {Top, Top, Bottom}},
+			Spacings -> {2, {Automatic, rollHeaderBodyGap, rollBodyResultGap}},
+			FrameStyle -> None
+		]
+	];
+
+displayActionRoll[roll_Association] :=
+	Print[actionRollCard["Action Roll", Capitalize[symbolNameLower[roll["stat"]]], roll]];
 
 
 (* ::Subsubsection::Closed:: *)
 (*Momentum burn display*)
 
 
-displayMomentumBurn[burn_Association] := Print[ironFramed[Column[{Item[header["Momentum Burn", StringJoin[ToString[burn["momentum"]], " \[Rule] ", ToString[burn["momentumReset"]]]], Alignment -> Left],
-       Item[rollColumn[burn["actionScore"], burn["challengeDice"], burn["challengeDiceCancelled"]], Alignment -> Center],
-       Item[actionRollResultDisplay[burn["result"], If[AllTrue[burn["challengeDiceCancelled"],  !#1 & ], burn["match"], False]], Alignment -> Center]},
-      Spacings -> {2, {Automatic, rollHeaderBodyGap, rollBodyResultGap}}]]];
+momentumBurnMatch[burn_Association] :=
+	If[AllTrue[burn["challengeDiceCancelled"], !# &], burn["match"], False];
+
+displayMomentumBurn[burn_Association] :=
+	Print[
+		ironFramed[
+			Column[
+				{
+					Item[
+						header[
+							"Momentum Burn",
+							StringJoin[ToString[burn["momentum"]], " \[Rule] ", ToString[burn["momentumReset"]]]
+						],
+						Alignment -> Left
+					],
+					Item[
+						rollColumn[
+							burn["actionScore"],
+							burn["challengeDice"],
+							burn["challengeDiceCancelled"]
+						],
+						Alignment -> Center
+					],
+					Item[
+						actionRollResultDisplay[burn["result"], momentumBurnMatch[burn]],
+						Alignment -> Center
+					]
+				},
+				Spacings -> {2, {Automatic, rollHeaderBodyGap, rollBodyResultGap}}
+			]
+		]
+	];
 
 
 (* ::Subsubsection::Closed:: *)
 (*Progress roll display*)
 
 
-displayProgressRoll[roll_Association] := Print[ironFramed[Grid[{{Item[header["Progress Roll", roll["trackName"]], Alignment -> Left]},
-       {rollColumn[roll["progressScore"], roll["challengeDice"], {False, False}]}, {Item[actionRollResultDisplay[roll["result"], roll["match"]], Alignment -> Center]}},
-      Alignment -> {{Center}, {Center, Top, Center}}, Spacings -> {2, {Automatic, rollHeaderBodyGap, rollBodyResultGap}}]]];
+progressRollCard[title_String, subtitle_String, score_, challengeDice_List, result_String, match_] :=
+	ironFramed[
+		Grid[
+			{
+				{Item[header[title, subtitle], Alignment -> Left]},
+				{rollColumn[score, challengeDice, {False, False}]},
+				{Item[actionRollResultDisplay[result, match], Alignment -> Center]}
+			},
+			Alignment -> {{Center}, {Center, Top, Center}},
+			Spacings -> {2, {Automatic, rollHeaderBodyGap, rollBodyResultGap}}
+		]
+	];
+
+displayProgressRoll[roll_Association] :=
+	Print[
+		progressRollCard[
+			"Progress Roll",
+			roll["trackName"],
+			roll["progressScore"],
+			roll["challengeDice"],
+			roll["result"],
+			roll["match"]
+		]
+	];
 
 
 (* ::Subsubsection::Closed:: *)
 (*Oracle roll display*)
 
 
-displayOracleRoll[table_String, {d1_, d2_}, match_, outcome_String] :=
-   Print[ironFramed[Grid[{{Item[header["Oracle Roll", table], Alignment -> Left], SpanFromLeft}, {Item[Grid[{{Item[d10Image[d1], Alignment -> Right], Item[d10Image[d2], Alignment -> Left]}},
-          Alignment -> {{Right, Left}, Center}, Spacings -> {0, 0}], Alignment -> Center], SpanFromLeft}, {Item[Rotate[mainStyle["\[Rule]"], -(Pi/2)], Alignment -> Center], SpanFromLeft},
-       {Item[mainStyle[StringJoin[outcome, If[match, " (MATCH)", ""]]], Alignment -> Center], SpanFromLeft}}, Alignment -> {{Center}, {Center, Top, Center}},
-      Spacings -> {0, {Automatic, rollHeaderBodyGap, 1, 2}}]]];
+oracleOutcomeText[outcome_String, match_] :=
+	mainStyle[StringJoin[outcome, If[match, " (MATCH)", ""]]];
+
+oracleRollCard[table_String, dice_List, match_, outcome_String] :=
+	ironFramed[
+		Grid[
+			{
+				{Item[header["Oracle Roll", table], Alignment -> Left], SpanFromLeft},
+				{Item[oracleDiceDisplay[dice], Alignment -> Center], SpanFromLeft},
+				{Item[Rotate[mainStyle["\[Rule]"], -(Pi/2)], Alignment -> Center], SpanFromLeft},
+				{Item[oracleOutcomeText[outcome, match], Alignment -> Center], SpanFromLeft}
+			},
+			Alignment -> {{Center}, {Center, Top, Center}},
+			Spacings -> {0, {Automatic, rollHeaderBodyGap, 1, 2}}
+		]
+	];
+
+displayOracleRoll[table_String, dice_List, match_, outcome_String] :=
+	Print[oracleRollCard[table, dice, match, outcome]];
 
 oracleDiceDisplay[{d1_, d2_}] :=
 	Grid[
@@ -457,59 +637,55 @@ oracleDiceDisplay[{d1_, d2_}] :=
 	];
 
 oracleComponentRoll[label_String, table_Association] :=
-	Join[<|"label" -> label|>, oracleRollData[table]];
+	Join[<|"label" -> label|>, oracleRollResult[table]];
+
+oracleComponentRow[component_Association] :=
+	{
+		displayText[component["label"], $displaySansFont, 14, Bold],
+		oracleDiceDisplay[component["oracleDice"]],
+		moveTextStyle[StringJoin[component["outcome"], If[component["match"], " (MATCH)", ""]]]
+	};
 
 displayCompositeOracleRoll[title_String, components_List, result_String] :=
 	Print[
-		ironFramed[
-			Column[
-				{
-					header["Oracle Roll", title],
-					Grid[
-						({
-							Style[#["label"], FontFamily -> "Futura", FontSize -> scaledSize[14], FontWeight -> Bold, GrayLevel[0.255]],
-							oracleDiceDisplay[#["oracleDice"]],
-							moveTextStyle[StringJoin[#["outcome"], If[#["match"], " (MATCH)", ""]]]
-						} &) /@ components,
-						Alignment -> {{Left, Center, Left}, Center},
-						Spacings -> {1.2, 0.8}
-					],
-					mainStyle[result]
-				},
-				Spacings -> {1.0, 0.8},
-				Alignment -> Left
-			]
+		displayColumn[
+			{
+				header["Oracle Roll", title],
+				Grid[
+					oracleComponentRow /@ components,
+					Alignment -> {{Left, Center, Left}, Center},
+					Spacings -> {1.2, 0.8}
+				],
+				mainStyle[result]
+			},
+			{1.0, 0.8}
 		]
 	];
 
 displayReturnToSiteRoll[roll_Association] :=
 	Print[
-		ironFramed[
-			Grid[
-				{
-					{Item[header["Return to Site", roll["delveName"]], Alignment -> Left]},
-					{Item[Column[d10Image /@ ReverseSort[roll["challengeDice"]], Spacings -> 0], Alignment -> Center]},
-					{Item[mainStyle[StringJoin["Lower die: ", ToString[roll["lowerDie"]]]], Alignment -> Center]}
-				},
-				Alignment -> {{Center}, {Center, Top, Center}},
-				Spacings -> {2, {Automatic, rollHeaderBodyGap, rollBodyResultGap}}
-			]
+		displayGrid[
+			{
+				{Item[header["Return to Site", roll["delveName"]], Alignment -> Left]},
+				{Item[Column[d10Image /@ ReverseSort[roll["challengeDice"]], Spacings -> 0], Alignment -> Center]},
+				{Item[mainStyle[StringJoin["Lower die: ", ToString[roll["lowerDie"]]]], Alignment -> Center]}
+			},
+			Alignment -> {{Center}, {Center, Top, Center}},
+			Spacings -> {2, {Automatic, rollHeaderBodyGap, rollBodyResultGap}}
 		]
 	];
 
 displayRarityDieSix[roll_Association] :=
 	Print[
-		ironFramed[
-			Column[
-				{
-					header["Rarity Die", "Rolled 6"],
-					Item[d6Image[6], Alignment -> Center],
-					Item[Rotate[mainStyle["\[Rule]"], -(Pi/2)], Alignment -> Center],
-					Item[actionRollResultDisplay["strongHit", False], Alignment -> Center]
-				},
-				Spacings -> {Automatic, rollHeaderBodyGap, 0.8, rollBodyResultGap},
-				Alignment -> Center
-			]
+		displayColumn[
+			{
+				header["Rarity Die", "Rolled 6"],
+				Item[d6Image[6], Alignment -> Center],
+				Item[Rotate[mainStyle["\[Rule]"], -(Pi/2)], Alignment -> Center],
+				Item[actionRollResultDisplay["strongHit", False], Alignment -> Center]
+			},
+			{Automatic, rollHeaderBodyGap, 0.8, rollBodyResultGap},
+			Center
 		]
 	];
 
@@ -534,75 +710,17 @@ rerollSubtitle[selection_List] := Module[{labels},
 ];
 
 displayRerollActionRoll[roll_Association] :=
-	Print[
-		ironFramed[
-			Grid[
-				{
-					{
-						Item[
-							header["Reroll", rerollSubtitle[roll["reroll", "selection"]]],
-							Alignment -> Left
-						],
-						SpanFromLeft
-					},
-					{
-						mathColumn[
-							roll["actionDie"],
-							roll["statValue"],
-							roll["adds"],
-							roll["actionScore"],
-							roll["actionDieCancelled"],
-							roll["momentum"]
-						],
-						rollColumn[
-							roll["actionScore"],
-							roll["challengeDice"]
-						]
-					},
-					{
-						Item[
-							actionRollResultDisplay[roll["result"], roll["match"]],
-							Alignment -> Center
-						],
-						SpanFromLeft
-					}
-				},
-				Dividers -> {None, {False, False, False, False}},
-				Alignment -> {{Left, Center, Center}, {Top, Top, Bottom}},
-				Spacings -> {2, {Automatic, rollHeaderBodyGap, rollBodyResultGap}},
-				FrameStyle -> None
-			]
-		]
-	];
+	Print[actionRollCard["Reroll", rerollSubtitle[roll["reroll", "selection"]], roll]];
 
 displayRerollProgressRoll[roll_Association] :=
 	Print[
-		ironFramed[
-			Grid[
-				{
-					{
-						Item[
-							header["Reroll", rerollSubtitle[roll["reroll", "selection"]]],
-							Alignment -> Left
-						]
-					},
-					{
-						rollColumn[
-							roll["progressScore"],
-							roll["challengeDice"],
-							{False, False}
-						]
-					},
-					{
-						Item[
-							actionRollResultDisplay[roll["result"], roll["match"]],
-							Alignment -> Center
-						]
-					}
-				},
-				Alignment -> {{Center}, {Center, Top, Center}},
-				Spacings -> {2, {Automatic, rollHeaderBodyGap, rollBodyResultGap}}
-			]
+		progressRollCard[
+			"Reroll",
+			rerollSubtitle[roll["reroll", "selection"]],
+			roll["progressScore"],
+			roll["challengeDice"],
+			roll["result"],
+			roll["match"]
 		]
 	];
 
@@ -616,13 +734,6 @@ displayReroll[roll_Association] :=
 
 (* ::Subsection::Closed:: *)
 (*Move presentation helpers*)
-
-
-(* ::Subsubsection::Closed:: *)
-(*Move outcome*)
-
-
-moveOutcome[move_String, result_String] := moves[move, result];
 
 
 (* ::Subsubsection::Closed:: *)
@@ -661,6 +772,12 @@ moveOutput[moveKey_String, sectionKey_String, section_] := Module[
 	]
 ];
 
+moveCard[heading_, body_] :=
+	displayColumn[
+		{heading, moveTextStyle[body]},
+		1
+	];
+
 
 (* ::Subsubsection::Closed:: *)
 (*Move header presentation*)
@@ -669,18 +786,7 @@ moveOutput[moveKey_String, sectionKey_String, section_] := Module[
 displayMoveHeader[moveKey_String] := Module[
 	{section},
 	section = moves[moveKey, "header"];
-	Print[
-		Framed[
-			Column[
-				{titleStyle[moves[moveKey, "name"]], moveTextStyle[moveSectionText[section]]},
-				Spacings -> 1
-			],
-			FrameStyle -> rollFrameStyle,
-			FrameMargins -> {{12, 12}, {12, 12}},
-			RoundingRadius -> 8,
-			Background -> None
-		]
-	];
+	Print[moveCard[titleStyle[moves[moveKey, "name"]], moveSectionText[section]]];
 	moveOutput[moveKey, "header", section]
 ];
 
@@ -692,21 +798,7 @@ displayMoveHeader[moveKey_String] := Module[
 displayMoveOutcome[moveKey_String, result_String] := Module[
 	{section},
 	section = moves[moveKey, result];
-	Print[
-		Framed[
-			Column[
-				{
-					header[moves[moveKey, "name"], Lookup[$outcomeLabels, result]],
-					moveTextStyle[moveSectionText[section]]
-				},
-				Spacings -> 1
-			],
-			FrameStyle -> rollFrameStyle,
-			FrameMargins -> {{12, 12}, {12, 12}},
-			RoundingRadius -> 8,
-			Background -> None
-		]
-	];
+	Print[moveCard[header[moves[moveKey, "name"], Lookup[$outcomeLabels, result]], moveSectionText[section]]];
 	moveOutput[moveKey, result, section]
 ];
 
@@ -715,8 +807,11 @@ displayMoveOutcome[moveKey_String, result_String] := Module[
 (*Combined move display*)
 
 
-displayMove[moveKey_String]:=displayMoveHeader[moveKey];
-displayMove[moveKey_String, roll_Association]:=displayMoveOutcome[moveKey, roll["result"]];
+displayMove[moveKey_String] :=
+	displayMoveHeader[moveKey];
+
+displayMove[moveKey_String, roll_Association] :=
+	displayMoveOutcome[moveKey, roll["result"]];
 
 
 (* ::Subsubsection::Closed:: *)
@@ -741,512 +836,18 @@ choiceDisplayBody[texts_List] :=
 
 displayChoice[subtitle_String, texts_List] :=
 	Print[
-		ironFramed[
-			Column[
-				{
-					header["Choice", subtitle],
-					moveTextStyle[choiceDisplayBody[texts]]
-				},
-				Spacings -> 1
-			]
+		displayColumn[
+			{
+				header["Choice", subtitle],
+				moveTextStyle[choiceDisplayBody[texts]]
+			},
+			1
 		]
 	];
 
 
 (* ::Subsection::Closed:: *)
-(*Character sheet display*)
-
-
-characterSheetTab[title_String] :=
-	Framed[
-		Style[
-			ToUpperCase[title],
-			White,
-			FontFamily -> "Futura",
-			FontSize -> scaledSize[11],
-			FontWeight -> Bold
-		],
-		Background -> GrayLevel[0.255],
-		FrameStyle -> None,
-		FrameMargins -> {{scaled[7], scaled[7]}, {scaled[2], scaled[2]}},
-		RoundingRadius -> 0
-	];
-
-characterSheetSection[title_String, body_] :=
-	Column[
-		{
-			characterSheetTab[title],
-			body
-		},
-		Spacings -> 0.25,
-		Alignment -> Left
-	];
-
-characterSheetLabel[text_String] :=
-	Style[
-		text,
-		FontFamily -> "Futura",
-		FontSize -> scaledSize[11],
-		FontWeight -> Bold,
-		GrayLevel[0.255]
-	];
-
-characterSheetSmallLabel[text_String] :=
-	Style[
-		text,
-		FontFamily -> "Futura",
-		FontSize -> scaledSize[10],
-		FontWeight -> Bold,
-		GrayLevel[0.4]
-	];
-
-characterSheetValue[value_] :=
-	Style[
-		value,
-		FontFamily -> "Times New Roman",
-		FontSize -> scaledSize[15],
-		GrayLevel[0.255]
-	];
-
-characterSheetMetricValue[value_] :=
-	Style[
-		value,
-		FontFamily -> "Futura",
-		FontSize -> scaledSize[16],
-		FontWeight -> Bold,
-		GrayLevel[0.255]
-	];
-
-characterSheetInlineMetric[label_String, value_] :=
-	Row[
-		{
-			characterSheetSmallLabel[StringJoin[label, ": "]],
-			characterSheetMetricValue[value]
-		}
-	];
-
-characterSheetInlineMetrics[pairs_List] :=
-	Row[characterSheetInlineMetric @@@ pairs, Spacer[scaled[12]]];
-
-characterSheetInfoLine[label_String, value_] :=
-	Row[
-		{
-			characterSheetLabel[StringJoin[label, ": "]],
-			characterSheetValue[value]
-		}
-	];
-
-characterSheetStatsMetrics[characterData_Association] :=
-	{
-		{"Edge", characterData["edge"]},
-		{"Heart", characterData["heart"]},
-		{"Iron", characterData["iron"]},
-		{"Shadow", characterData["shadow"]},
-		{"Wits", characterData["wits"]}
-	};
-
-characterSheetResourcesMetrics[character_String, characterData_Association] :=
-	{
-		{"Health", characterData["health"]},
-		{"Spirit", characterData["spirit"]},
-		{"Supply", characterData["supply"]},
-		{
-			"Momentum",
-			StringJoin[
-				ToString[characterData["momentum"]],
-				"/",
-				ToString[displayMomentumMax[characterData]],
-				" (reset ",
-				ToString[displayMomentumReset[characterData]],
-				")"
-			]
-		}
-	};
-
-characterSheetDebilityText[debilityList_List] :=
-	If[
-		debilityList === {},
-		"None",
-		StringRiffle[debilityLabel /@ debilityList, ", "]
-	];
-
-characterSheetExperienceValue[characterData_Association] := Module[
-	{earned, spent},
-	earned = Lookup[characterData, "earnedExperience", 0];
-	spent = Lookup[characterData, "spentExperience", 0];
-	StringJoin[ToString[spent], "/", ToString[earned]]
-];
-
-characterSheetStatusMetrics[characterData_Association] :=
-	{
-		{"Conditions", characterSheetDebilityText[Lookup[characterData, "debilities", {}]]},
-		{"XP", characterSheetExperienceValue[characterData]}
-	};
-
-characterSheetOverviewSection[character_String, characterData_Association] :=
-	characterSheetSection[
-		"Overview",
-		Grid[
-			{
-				{characterSheetLabel["Stats"], characterSheetInlineMetrics[characterSheetStatsMetrics[characterData]]},
-				{characterSheetLabel["Resources"], characterSheetInlineMetrics[characterSheetResourcesMetrics[character, characterData]]},
-				{characterSheetLabel["Status"], characterSheetInlineMetrics[characterSheetStatusMetrics[characterData]]}
-			},
-			Alignment -> {{Left, Left}, Center},
-			Spacings -> {0.9, 0.25}
-		]
-	];
-
-characterSheetAbilityMarks[record_Association, selectedAbilities_List] := Module[
-	{indices},
-	indices = assetAbilityIndices[record];
-	If[indices === {},
-		"\[LongDash]",
-		Row[
-			(
-				Style[
-					If[MemberQ[selectedAbilities, #], "\[FilledCircle]", "\[EmptyCircle]"],
-					GrayLevel[0.255],
-					FontSize -> scaledSize[13]
-				] &
-			) /@ indices,
-			Spacer[scaled[3]]
-		]
-	]
-];
-
-characterSheetFieldDetails[record_Association, fields_Association] := Module[
-	{fieldDefs, values},
-	fieldDefs = Lookup[record, "Fields", <||>];
-	values = KeyValueMap[
-		Module[{value},
-			value = Lookup[fields, #1, ""];
-			If[StringQ[value] && StringLength[StringTrim[value]] == 0,
-				Nothing,
-				StringJoin[Lookup[#2, "Label", #1], ": ", ToString[value]]
-			]
-		] &,
-		fieldDefs
-	];
-	values
-];
-
-characterSheetTrackDetails[record_Association, tracks_Association] := Module[
-	{trackDefs, values},
-	trackDefs = Lookup[record, "Tracks", <||>];
-	values = Join[initialAssetTracks[record], tracks];
-	KeyValueMap[
-		StringJoin[
-			Lookup[#2, "Label", #1],
-			" ",
-			ToString[Lookup[values, #1, Lookup[#2, "Default", 0]]],
-			"/",
-			ToString[Lookup[#2, "Max", Lookup[#2, "Default", 0]]]
-		] &,
-		trackDefs
-	]
-];
-
-characterSheetAssetCategoryText[record_Association, rarity_] :=
-	Column[
-		DeleteCases[
-			{
-				characterSheetValue[Lookup[record, "Category", "Unknown"]],
-				If[rarity === None,
-					Nothing,
-					characterSheetValue[StringJoin["Rarity: ", ToString[rarity]]]
-				]
-			},
-			Nothing
-		],
-		Spacings -> 0.2,
-		Alignment -> Left
-	];
-
-characterSheetAssetDetails[record_Association, owned_Association] := Module[
-	{details},
-	details = Join[
-		characterSheetFieldDetails[record, Lookup[owned, "Fields", <||>]],
-		characterSheetTrackDetails[record, Lookup[owned, "Tracks", <||>]]
-	];
-	If[
-		details === {},
-		characterSheetValue[""],
-		characterSheetValue[StringRiffle[details, "   "]]
-	]
-];
-
-characterSheetAssetRow[owned_Association] := Module[
-	{record},
-	record = assetRecord[owned["Name"]];
-	If[!AssociationQ[record],
-		Return[
-			{
-				characterSheetValue[owned["Name"]],
-				characterSheetValue["Unknown"],
-				characterSheetValue[""],
-				characterSheetValue[""]
-			}
-		]
-	];
-	{
-		characterSheetValue[owned["Name"]],
-		characterSheetAssetCategoryText[record, Lookup[owned, "Rarity", None]],
-		characterSheetAbilityMarks[record, Lookup[owned, "Abilities", {}]],
-		characterSheetAssetDetails[record, owned]
-	}
-];
-
-characterSheetGrid[headers_List, rows_List] :=
-	Grid[
-		Prepend[
-			rows,
-			characterSheetSmallLabel /@ headers
-		],
-		Alignment -> {{Left}, Top},
-		Spacings -> {0.8, 0.25},
-		Dividers -> {False, {2 -> GrayLevel[0.75]}}
-	];
-
-characterSheetAssetsSection[assets_List] :=
-	characterSheetSection[
-		"Assets",
-		If[
-			assets === {},
-			characterSheetValue["None"],
-			characterSheetGrid[
-				{"Name", "Type", "Abilities", "Details"},
-				characterSheetAssetRow /@ assets
-			]
-		]
-	];
-
-characterSheetProgressText[progress_] :=
-	formatProgressValue[progress];
-
-characterSheetVowRow[vowData_Association] :=
-	Module[
-		{threatData, threatCells},
-		threatData = Lookup[vowData, "Threat", None];
-		threatCells =
-			If[
-				AssociationQ[threatData],
-				{
-					Column[
-						{
-							characterSheetValue[threatData["Name"]],
-							characterSheetValue[threatData["Goal"]]
-						},
-						Spacings -> 0.2,
-						Alignment -> Left
-					],
-					characterSheetValue[ToString[threatData["Menace", "rank"]]],
-					characterSheetValue[characterSheetProgressText[threatData["Menace", "progress"]]]
-				},
-				{characterSheetValue[""], characterSheetValue[""], characterSheetValue[""]}
-			];
-		Join[
-			{
-				characterSheetValue[vowData["Name"]],
-				characterSheetValue[ToString[vowData["Rank"]]],
-				characterSheetValue[characterSheetProgressText[vowData["Progress"]]]
-			},
-			threatCells
-		]
-	];
-
-characterSheetBondText[bonds_List] :=
-	If[
-		bonds === {},
-		"None",
-		StringRiffle[bonds, ", "]
-	];
-
-characterSheetBondsSection[characterData_Association] := Module[
-	{bonds, bondTrack},
-	bonds = Lookup[characterData, "bonds", {}];
-	bondTrack = Lookup[characterData, "bondProgress", makeProgressObject["Bonds", Epic]];
-	characterSheetSection[
-		"Bonds",
-		Column[
-			{
-				characterSheetInfoLine["Progress", characterSheetProgressText[bondTrack["Progress"]]],
-				characterSheetInfoLine["Bonds", characterSheetBondText[bonds]]
-			},
-			Spacings -> 0.35,
-			Alignment -> Left
-		]
-	]
-];
-
-characterSheetVowsSection[characterData_Association] := Module[
-	{vows},
-	vows = Values[Lookup[characterData, "vows", <||>]];
-	characterSheetSection[
-		"Vows",
-		If[
-			vows === {},
-			characterSheetValue["None"],
-			characterSheetGrid[
-				{"Name", "Rank", "Progress", "Threat", "Menace Rank", "Menace"},
-				characterSheetVowRow /@ vows
-			]
-		]
-	]
-];
-
-characterSheetFailuresSection[characterData_Association] := Module[
-	{failures},
-	failures = Lookup[characterData, "failures", makeProgressObject["Failures", Epic]];
-	characterSheetSection[
-		"Failures",
-		characterSheetInfoLine["Progress", characterSheetProgressText[failures["Progress"]]]
-	]
-];
-
-characterSheetOptionalSection[title_String, headers_List, rows_List] :=
-	If[
-		rows === {},
-		Nothing,
-		characterSheetSection[
-			title,
-			characterSheetGrid[headers, rows]
-		]
-	];
-
-characterSheetCurrentSuffix[name_String, current_] :=
-	If[name === current, StringJoin[name, " (current)"], name];
-
-characterSheetRankedProgressRow[object_Association, current_:None] :=
-	{
-		characterSheetValue[characterSheetCurrentSuffix[object["Name"], current]],
-		characterSheetValue[ToString[object["Rank"]]],
-		characterSheetValue[characterSheetProgressText[object["Progress"]]],
-		characterSheetValue[""]
-	};
-
-characterSheetDelveDetails[delveData_Association] := Module[
-	{themeText, domainText, objective},
-	themeText = StringRiffle[Lookup[delveData, "Themes", {delveData["Theme"]}], " / "];
-	domainText = StringRiffle[Lookup[delveData, "Domains", {delveData["Domain"]}], " / "];
-	objective = Lookup[delveData, "Objective", None];
-	StringRiffle[
-		DeleteCases[
-			{
-				StringJoin["Theme: ", themeText],
-				StringJoin["Domain: ", domainText],
-				If[objective === None, Nothing, StringJoin["Objective: ", objective]]
-			},
-			Nothing
-		],
-		"   "
-	]
-];
-
-characterSheetDelveRow[delveData_Association, current_] :=
-	{
-		characterSheetValue[characterSheetCurrentSuffix[delveData["Name"], current]],
-		characterSheetValue[ToString[delveData["Rank"]]],
-		characterSheetValue[characterSheetProgressText[delveData["Progress"]]],
-		characterSheetValue[characterSheetDelveDetails[delveData]]
-	};
-
-characterSheetSceneRow[sceneData_Association] :=
-	{
-		characterSheetValue[sceneData["Name"]],
-		characterSheetValue[ToString[sceneData["Rank"]]],
-		characterSheetValue[characterSheetProgressText[sceneData["Progress"]]],
-		characterSheetValue[StringJoin["Countdown ", ToString[sceneData["Countdown"]], "/4"]]
-	};
-
-characterSheetJourneysSection[characterData_Association] :=
-	characterSheetOptionalSection[
-		"Journeys",
-		{"Name", "Rank", "Progress", "Details"},
-		characterSheetRankedProgressRow[#, Lookup[characterData, "currentJourney", None]] & /@
-			Values[Lookup[characterData, "journeys", <||>]]
-	];
-
-characterSheetFoesSection[characterData_Association] :=
-	characterSheetOptionalSection[
-		"Foes",
-		{"Name", "Rank", "Progress", "Details"},
-		characterSheetRankedProgressRow /@ Values[Lookup[characterData, "foes", <||>]]
-	];
-
-characterSheetDelvesSection[characterData_Association] :=
-	characterSheetOptionalSection[
-		"Delves",
-		{"Name", "Rank", "Progress", "Details"},
-		characterSheetDelveRow[#, Lookup[characterData, "currentDelve", None]] & /@
-			Values[Lookup[characterData, "delves", <||>]]
-	];
-
-characterSheetSceneSection[characterData_Association] := Module[
-	{sceneData},
-	sceneData = Lookup[characterData, "scene", None];
-	If[
-		AssociationQ[sceneData],
-		characterSheetSection[
-			"Scene",
-			characterSheetGrid[
-				{"Name", "Rank", "Progress", "Countdown"},
-				{characterSheetSceneRow[sceneData]}
-			]
-		],
-		Nothing
-	]
-];
-
-characterSheetDisplay[character_String, characterData_Association] :=
-	ironFramed[
-		Column[
-			DeleteCases[
-				{
-					Style[
-						StringJoin["Character Sheet: ", character],
-						FontFamily -> "Futura",
-						FontSize -> scaledSize[22],
-						FontWeight -> Bold,
-						GrayLevel[0.255]
-					],
-					characterSheetOverviewSection[character, characterData],
-					Grid[
-						{{
-							Column[
-								{
-									characterSheetAssetsSection[Lookup[characterData, "assets", {}]],
-									characterSheetBondsSection[characterData],
-									characterSheetFailuresSection[characterData]
-								},
-								Spacings -> 0.7,
-								Alignment -> Left
-							],
-							Column[
-								DeleteCases[
-									{
-										characterSheetVowsSection[characterData],
-										characterSheetJourneysSection[characterData],
-										characterSheetFoesSection[characterData],
-										characterSheetDelvesSection[characterData],
-										characterSheetSceneSection[characterData]
-									},
-									Nothing
-								],
-								Spacings -> 0.7,
-								Alignment -> Left
-							]
-						}},
-						Alignment -> {{Left, Left}, Top},
-						Spacings -> {1.4, 0}
-					]
-				},
-				Nothing
-			],
-			Spacings -> 0.8,
-			Alignment -> Left
-		]
-	];
+(*Lodestar character sheet display*)
 
 sheetInk := GrayLevel[0.16];
 sheetDark := GrayLevel[0.18];
@@ -1259,16 +860,7 @@ sheetStyle[text_, size_, weight_:Plain, color_:sheetInk] :=
 	Style[
 		text,
 		FontFamily -> "Futura",
-		FontSize -> scaledSize[size],
-		FontWeight -> weight,
-		color
-	];
-
-sheetSerifStyle[text_, size_, weight_:Plain, color_:sheetInk] :=
-	Style[
-		text,
-		FontFamily -> "Times New Roman",
-		FontSize -> scaledSize[size],
+		FontSize -> baseFontSize[size],
 		FontWeight -> weight,
 		color
 	];
@@ -1466,8 +1058,8 @@ sheetMomentumColumn[character_String, characterData_Association] := Module[
 	labelHeight = 24;
 	boxHeight = (height - labelHeight)/Length[values];
 	current = characterData["momentum"];
-	max = displayMomentumMax[characterData];
-	reset = displayMomentumReset[characterData];
+	max = momentumMaxValue[characterData];
+	reset = momentumResetValue[characterData];
 	Join[
 		sheetLadderLabelBand["Momentum", {x, y + height - labelHeight}, {width, labelHeight}],
 		Flatten[
@@ -1529,40 +1121,6 @@ sheetProgressInset[progress_, {x_, y_}, {width_, height_}, menace_:None] :=
 		{width, height}
 	];
 
-sheetRankDots[rank_, {x_, y_}, spacing_:86] :=
-	Flatten[
-		MapIndexed[
-			Module[{cx},
-				cx = x + (First[#2] - 1) spacing;
-				{
-					FaceForm[If[#1 === rank, sheetInk, White]],
-					EdgeForm[Directive[sheetInk, AbsoluteThickness[1.2]]],
-					Disk[{cx, y}, 5],
-					Text[sheetStyle[ToUpperCase[ToString[#1]], 8, Bold], {cx + 8, y}, {-1, 0}]
-				}
-			] &,
-			ranks
-		],
-		1
-	];
-
-sheetRankDots[rank_, {x_, y_}, offsets_List] :=
-	Flatten[
-		MapIndexed[
-			Module[{cx},
-				cx = x + offsets[[First[#2]]];
-				{
-					FaceForm[If[#1 === rank, sheetInk, White]],
-					EdgeForm[Directive[sheetInk, AbsoluteThickness[1.2]]],
-					Disk[{cx, y}, 5],
-					Text[sheetStyle[ToUpperCase[ToString[#1]], 8, Bold], {cx + 8, y}, {-1, 0}]
-				}
-			] &,
-			ranks
-		],
-		1
-	];
-
 sheetRankLabelWidth[rank_] :=
 	Switch[
 		ToString[rank],
@@ -1574,7 +1132,7 @@ sheetRankLabelWidth[rank_] :=
 		_, 50
 	];
 
-sheetRankDotsCentered[rank_, {x_, y_}, width_, rankOptions_:ranks] := Module[
+sheetRankDotsCentered[rank_, {x_, y_}, width_, rankOptions_:progressRanks] := Module[
 	{gap, labelInset, radius, widths, cxs, rowLeft, rowRight, offset},
 	gap = 30;
 	labelInset = 12;
@@ -1602,7 +1160,7 @@ sheetRankDotsCentered[rank_, {x_, y_}, width_, rankOptions_:ranks] := Module[
 
 sheetBondsPanel[characterData_Association, topY_:86] := Module[
 	{bondTrack, x, headerY, trackY, width},
-	bondTrack = Lookup[characterData, "bondProgress", makeProgressObject["Bonds", Epic]];
+	bondTrack = Lookup[characterData, "bondProgress", fallbackProgressTrack["Bonds", Epic]];
 	x = sheetMiddleX;
 	headerY = topY - 24;
 	trackY = topY - 62;
@@ -1621,7 +1179,7 @@ sheetVowRow[vowData_, label_String, {x_, y_}, {width_, height_}] := Module[
 	menace = If[hasVow && AssociationQ[Lookup[vowData, "Threat", None]], vowData["Threat", "Menace", "progress"], None];
 	bannerText = If[hasVow, vowData["Name"], ""];
 	labelWidth = 206;
-	rankOptions = If[label === "Background Vow", {Extreme, Epic}, ranks];
+	rankOptions = If[label === "Background Vow", {Extreme, Epic}, progressRanks];
 	rankY = y + height - 44;
 	{
 		sheetLabelBandLeft[bannerText, {x, y + height - 30}, {labelWidth, 29}],
@@ -1665,7 +1223,7 @@ sheetVowsPanel[characterData_Association, backgroundTopY_:704, vowsTopY_:574] :=
 
 sheetFailurePanel[characterData_Association, topY_:86] := Module[
 	{failures, x, headerY, trackY, width},
-	failures = Lookup[characterData, "failures", makeProgressObject["Failures", Epic]];
+	failures = Lookup[characterData, "failures", fallbackProgressTrack["Failures", Epic]];
 	x = sheetMiddleX;
 	headerY = topY - 24;
 	trackY = topY - 62;
@@ -1713,30 +1271,6 @@ sheetExperiencePanel[characterData_Association, topY_:821] := Module[
 				{col, columns}
 			],
 			2
-		]
-	]
-];
-
-sheetDebilityRows[title_String, debilityList_List, active_List, {x_, y_}] := Module[
-	{rowGap},
-	rowGap = 17;
-	Join[
-		sheetLabelBand[title, {x, y + Length[debilityList] rowGap + 4}, {128, 23}],
-		Flatten[
-			MapIndexed[
-				Module[{cy, marked},
-					cy = y + (Length[debilityList] - First[#2]) rowGap + 11;
-					marked = MemberQ[active, #1];
-					{
-						FaceForm[If[marked, sheetInk, White]],
-						EdgeForm[Directive[sheetInk, AbsoluteThickness[1.0]]],
-						Disk[{x + 12, cy}, 5],
-						Text[sheetStyle[ToUpperCase[debilityLabel[#1]], 10, Bold], {x + 24, cy}, {-1, 0}]
-					}
-				] &,
-				debilityList
-			],
-			1
 		]
 	]
 ];
@@ -1804,15 +1338,28 @@ lodestarCharacterSheetGraphic[character_String, characterData_Association] := Mo
 		],
 		PlotRange -> {{4, width - 4}, {6, height - 18}},
 		ImagePadding -> 0,
-		ImageSize -> scaled[720],
+		ImageSize -> baseSize[720],
 		Background -> White
 	]
 ];
 
 characterSheetDisplay[character_String, characterData_Association] :=
-	characterSheetFramed[lodestarCharacterSheetGraphic[character, characterData]];
+	characterSheetFramed[scaleFinalGraphic[lodestarCharacterSheetGraphic[character, characterData], White]];
+
+displayCharacterSheet[character_String, characterData_Association] := Module[{},
+	printAndReturn[characterSheetDisplay[character, characterData], characterData]
+];
+
+displayCharacterSheet[args___] := (
+	Message[displayCharacterSheet::badargs, HoldForm[displayCharacterSheet[args]]];
+	$Failed
+);
+
+displayCharacterSheet::badargs = "displayCharacterSheet is a display helper API and expects displayCharacterSheet[character, characterData].";
 
 
+(* ::Subsection::Closed:: *)
+(*Asset card display*)
 
 
 assetFieldValueDisplay[value_] :=
@@ -1827,23 +1374,7 @@ assetFieldValueDisplay[value_] :=
 
 assetFieldRow[label_String, value_] :=
 	assetContentPane[
-		Row[
-			{
-				Style[
-					StringJoin[label, ": "],
-					FontFamily -> "Futura",
-					FontSize -> scaledSize[16],
-					FontWeight -> Bold,
-					GrayLevel[0.255]
-				],
-				Style[
-					assetFieldValueDisplay[value],
-					FontFamily -> "Times New Roman",
-					FontSize -> scaledSize[18],
-					GrayLevel[0.255]
-				]
-			}
-		]
+		displayLabelValue[label, assetFieldValueDisplay[value]]
 	];
 
 assetFieldRows[record_Association, fields_Association] :=
@@ -1874,13 +1405,7 @@ assetContentPane[x_] :=
 assetCategoryBand[category_String] :=
 	Framed[
 		Pane[
-			Style[
-				ToUpperCase[category],
-				White,
-				FontFamily -> "Futura",
-				FontSize -> scaledSize[16],
-				FontWeight -> Bold
-			],
+			displayText[ToUpperCase[category], $displaySansFont, 16, Bold, White],
 			{assetCardWidth - 2 assetCategoryPadding, Automatic},
 			Alignment -> Left
 		],
@@ -1891,13 +1416,7 @@ assetCategoryBand[category_String] :=
 	];
 
 assetAbilityTitle[name_String] /; StringLength[StringTrim[name]] > 0 :=
-	Style[
-		name,
-		FontFamily -> "Futura",
-		FontSize -> scaledSize[17],
-		FontWeight -> Bold,
-		GrayLevel[0.255]
-	];
+	displayText[name, $displaySansFont, 17, Bold];
 
 assetAbilityTitle[_] :=
 	Nothing;
@@ -1907,10 +1426,10 @@ assetAbilityRow[ability_Association, selectedQ_] :=
 		Grid[
 			{{
 				Pane[
-					Style[
+					displayText[
 						If[TrueQ[selectedQ], "\[FilledCircle]", "\[EmptyCircle]"],
-						GrayLevel[0.255],
-						FontSize -> scaledSize[16]
+						$displaySansFont,
+						16
 					],
 					{assetBulletWidth, Automatic},
 					Alignment -> Left,
@@ -1943,12 +1462,12 @@ assetAbilityRows[record_Association, selectedAbilities_List] :=
 
 assetTrackCell[value_Integer, current_Integer] :=
 	Framed[
-		Style[
+		displayText[
 			ToString[value],
-			If[value == current, White, GrayLevel[0.255]],
-			FontFamily -> "Futura",
-			FontSize -> scaledSize[14],
-			FontWeight -> Bold
+			$displaySansFont,
+			14,
+			Bold,
+			If[value == current, White, GrayLevel[0.255]]
 		],
 		Background -> If[value == current, GrayLevel[0.255], None],
 		FrameStyle -> GrayLevel[0.45],
@@ -1963,13 +1482,7 @@ assetTrackRow[trackName_String, trackDef_Association, current_Integer] := Module
 	assetContentPane[
 		Column[
 			{
-				Style[
-					label,
-					FontFamily -> "Futura",
-					FontSize -> scaledSize[16],
-					FontWeight -> Bold,
-					GrayLevel[0.255]
-				],
+				displayText[label, $displaySansFont, 16, Bold],
 				Grid[
 					{assetTrackCell[#, current] & /@ values},
 					Spacings -> {0, 0}
@@ -1984,7 +1497,7 @@ assetTrackRow[trackName_String, trackDef_Association, current_Integer] := Module
 assetTrackRows[record_Association, tracks_Association] := Module[
 	{trackDefs, values},
 	trackDefs = Lookup[record, "Tracks", <||>];
-	values = Join[initialAssetTracks[record], tracks];
+	values = Join[assetDefaultTrackValues[record], tracks];
 	KeyValueMap[
 		assetTrackRow[#1, #2, Lookup[values, #1, Lookup[#2, "Default", 0]]] &,
 		trackDefs
@@ -1997,23 +1510,10 @@ assetRarityRows[None] :=
 assetRarityRows[rarity_String] /; StringLength[StringTrim[rarity]] > 0 :=
 	{
 		assetContentPane[
-			Row[
-				{
-					Style[
-						"Rarity: ",
-						FontFamily -> "Futura",
-						FontSize -> scaledSize[16],
-						FontWeight -> Bold,
-						GrayLevel[0.255]
-					],
-					Style[
-						rarity,
-						FontFamily -> "Times New Roman",
-						FontSize -> scaledSize[18],
-						FontSlant -> Italic,
-						GrayLevel[0.255]
-					]
-				}
+			displayLabelValue[
+				"Rarity",
+				rarity,
+				Function[value, displayText[value, $displaySerifFont, 18, Plain, $displayInk, FontSlant -> Italic]]
 			]
 		]
 	};
@@ -2036,16 +1536,16 @@ assetCardExpression[record_Association, selectedAbilities_List, fields_Associati
 	ironFramed[
 		Column[
 			Join[
-					statusRows,
-						{
-							assetCategoryBand[record["Category"]],
-							assetContentPane[titleStyle[record["Name"]]]
-						},
-					rarityRows,
-					fieldRows,
-					requirementRows,
-					abilityRows,
-					trackRows
+				statusRows,
+				{
+					assetCategoryBand[record["Category"]],
+					assetContentPane[titleStyle[record["Name"]]]
+				},
+				rarityRows,
+				fieldRows,
+				requirementRows,
+				abilityRows,
+				trackRows
 			],
 			Spacings -> 0.8,
 			Alignment -> Left
@@ -2055,44 +1555,43 @@ assetCardExpression[record_Association, selectedAbilities_List, fields_Associati
 
 assetCardExpression[owned_Association, status_:None] := Module[
 	{record},
-	record = assetRecord[owned["Name"]];
+	record = assetDefinition[owned["Name"]];
 	If[!AssociationQ[record],
 		Message[asset::unknown, owned["Name"]];
 		Return[$Failed]
 	];
 	assetCardExpression[
 		record,
-			Lookup[owned, "Abilities", {}],
-			Lookup[owned, "Fields", <||>],
-			Lookup[owned, "Tracks", <||>],
-			Lookup[owned, "Rarity", None],
-			status
-		]
-	];
+		Lookup[owned, "Abilities", {}],
+		Lookup[owned, "Fields", <||>],
+		Lookup[owned, "Tracks", <||>],
+		Lookup[owned, "Rarity", None],
+		status
+	]
+];
 
 assetReferenceCard[name_String] := Module[
 	{record, fields},
-	record = assetRecord[name];
+	record = assetDefinition[name];
 	If[!AssociationQ[record],
 		Message[asset::unknown, name];
 		Return[$Failed]
 	];
-	fields = normalizeAssetFields[<||>, record];
+	fields = assetFieldsWithDefaults[<||>, record];
 	assetCardExpression[
-			record,
-			defaultAssetAbilities[record],
-			fields,
-			initialAssetTracks[record],
-			None
-		]
-	];
+		record,
+		assetDefaultAbilities[record],
+		fields,
+		assetDefaultTrackValues[record],
+		None
+	]
+];
 
 displayAssetCard[owned_Association, status_:None] := Module[
 	{card},
 	card = assetCardExpression[owned, status];
 	If[card === $Failed, Return[$Failed]];
-	Print[card];
-	owned
+	printAndReturn[card, owned]
 ];
 
 displayExpressionList[exprs_List] :=
@@ -2116,6 +1615,10 @@ displayAssetReferences[names_List] := Module[
 	displayAssetCards[cards];
 	names
 ];
+
+
+(* ::Subsection::Closed:: *)
+(*Progress track primitives*)
 
 
 
@@ -2238,38 +1741,28 @@ progressTrackGraphic[progress_, opts : OptionsPattern[]] := Module[
 	width = OptionValue[TrackWidth];
 	height = OptionValue[TrackHeight];
 	scale = OptionValue[ImageScale];
-	Graphics[
-		progressTrackPrimitives[
-			{0, 0},
-			progress,
-			width,
-			height,
-			MenaceProgress -> OptionValue[MenaceProgress]
-		],
-		PlotRange -> {{0, width}, {0, height}},
-		ImagePadding -> 1,
-		ImageSize -> {scaled[width scale], scaled[height scale]},
-		Background -> None
+	scaleFinalGraphic[
+		Graphics[
+			progressTrackPrimitives[
+				{0, 0},
+				progress,
+				width,
+				height,
+				MenaceProgress -> OptionValue[MenaceProgress]
+			],
+			PlotRange -> {{0, width}, {0, height}},
+			ImagePadding -> 1,
+			ImageSize -> {baseSize[width scale], baseSize[height scale]},
+			Background -> None
+		]
 	]
 ];
 
 progressSummaryHeader[label_String, rank_, progress_] :=
-	Row[
-		{
-			Style[
-				StringJoin[label, ": "],
-				FontFamily -> "Futura",
-				FontSize -> scaledSize[16],
-				FontWeight -> Bold,
-				GrayLevel[0.255]
-			],
-			Style[
-				StringJoin[ToString[rank], "  ", formatProgressValue[progress]],
-				FontFamily -> "Futura",
-				FontSize -> scaledSize[14],
-				GrayLevel[0.4]
-			]
-		}
+	displayLabelValue[
+		label,
+		StringJoin[ToString[rank], "  ", formatProgressValue[progress]],
+		Function[value, displayText[value, $displaySansFont, 14, Plain, $displayMutedInk]]
 	];
 
 progressSummary[label_String, rank_, progress_] :=
@@ -2281,6 +1774,11 @@ progressSummary[label_String, rank_, progress_] :=
 		Spacings -> 0.25,
 		Alignment -> Left
 	];
+
+
+(* ::Subsection::Closed:: *)
+(*Vows, progress objects, and bonds*)
+
 
 vowProgressSummary[vowData_Association] := Module[
 	{ownedThreat, menaceProgress},
@@ -2310,11 +1808,11 @@ displayVowCard[vowData_Association] := Module[
 			{
 				Row[
 					{
-						Style[
+						displayText[
 							"Threat: ",
-							FontFamily -> "Times New Roman",
-							FontSize -> scaledSize[18],
-							FontWeight -> Bold
+							$displaySerifFont,
+							18,
+							Bold
 						],
 						moveTextStyle[
 							StringJoin[
@@ -2339,22 +1837,6 @@ displayVowCards[vowData_Association] :=
 displayVowCards[vowData_List] :=
 	displayExpressionList[displayVowCard /@ vowData];
 
-displayThreatFulfilled[vowName_String, threatData_Association] :=
-	Print[
-		ironFramed[
-			Column[
-				{
-					header["Threat Fulfilled", threatData["Name"]],
-					subtitleStyle[StringJoin["Vow: ", vowName]],
-					moveTextStyle[threatData["Goal"]],
-					moveTextStyle["Forsake Your Vow."]
-				},
-				Spacings -> 0.8,
-				Alignment -> Left
-			]
-		]
-	];
-
 
 progressTypeTitle["Vow"] := "Vow";
 progressTypeTitle["Threat"] := "Threat";
@@ -2378,19 +1860,6 @@ displayProgressTargetCard[target_Association] := Module[
 	rows = Append[rows, progressSummary[label, target["Rank"], target["Progress"]]];
 	ironFramed[Column[rows, Spacings -> 0.8, Alignment -> Left]]
 ];
-
-
-displayCharacterSheet[character_String, characterData_Association] := Module[{},
-	Print[characterSheetDisplay[character, characterData]];
-	characterData
-];
-
-displayCharacterSheet[args___] := (
-	Message[displayCharacterSheet::badargs, HoldForm[displayCharacterSheet[args]]];
-	$Failed
-);
-
-displayCharacterSheet::badargs = "displayCharacterSheet is a display helper API and expects displayCharacterSheet[character, characterData].";
 
 
 displayProgressObject[type_String, object_Association] :=
@@ -2427,20 +1896,13 @@ displayBondCards[names_List] :=
 	displayExpressionList[displayBondCard /@ names];
 
 
+(* ::Subsection::Closed:: *)
+(*Scenes and delves*)
+
+
 
 sceneCountdownSummary[countdown_] :=
-	Row[
-		{
-			Style[
-				"Countdown: ",
-				FontFamily -> "Futura",
-				FontSize -> scaledSize[16],
-				FontWeight -> Bold,
-				GrayLevel[0.255]
-			],
-			moveTextStyle[StringJoin[ToString[countdown], "/4"]]
-		}
-	];
+	displayLabelValue["Countdown", StringJoin[ToString[countdown], "/4"]];
 
 displaySceneCard[sceneData_Association] :=
 	ironFramed[
@@ -2455,10 +1917,8 @@ displaySceneCard[sceneData_Association] :=
 		]
 	];
 
-displayScene[sceneData_Association] := (
-	Print[displaySceneCard[sceneData]];
-	sceneData
-);
+displayScene[sceneData_Association] :=
+	printAndReturn[displaySceneCard[sceneData], sceneData];
 
 
 
@@ -2478,19 +1938,19 @@ denizenDisplayName[name_String] :=
 denizenRows[denizenList_List] :=
 	MapThread[
 		{
-			Style[ToString[#1], FontFamily -> "Futura", FontSize -> scaledSize[12], FontWeight -> Bold, GrayLevel[0.255]],
-			Style[#2, FontFamily -> "Futura", FontSize -> scaledSize[12], GrayLevel[0.255]],
-			Style[#3, FontFamily -> "Futura", FontSize -> scaledSize[12], GrayLevel[0.255]],
-			Style[denizenDisplayName[#4], FontFamily -> "Times New Roman", FontSize -> scaledSize[14], GrayLevel[0.255]]
+			displayText[ToString[#1], $displaySansFont, 12, Bold],
+			displayText[#2, $displaySansFont, 12],
+			displayText[#3, $displaySansFont, 12],
+			displayText[denizenDisplayName[#4], $displaySerifFont, 14]
 		} &,
-		{Range[12], denizenSlotLabels, denizenSlotRanges, denizenList}
+		{Range[12], $denizenSlotLabels, $denizenSlotRanges, denizenList}
 	];
 
 denizenMatrixGrid[denizenList_List] :=
 	Grid[
 		Prepend[
 			denizenRows[denizenList],
-			Style[#, FontFamily -> "Futura", FontSize -> scaledSize[12], FontWeight -> Bold, GrayLevel[0.255]] & /@
+			displayText[#, $displaySansFont, 12, Bold] & /@
 				{"Slot", "Frequency", "Roll", "Denizen"}
 		],
 		Alignment -> {{Left, Left, Left, Left}, Center},
@@ -2501,7 +1961,7 @@ denizenMatrixGrid[denizenList_List] :=
 displayDelveCard[delveData_Association] := Module[
 	{rows, objective, denizenList},
 	objective = Lookup[delveData, "Objective", None];
-	denizenList = Lookup[delveData, "Denizens", defaultDenizens[]];
+	denizenList = Lookup[delveData, "Denizens", emptyDenizenSlots[]];
 	rows = {
 		header["Delve", delveData["Name"]],
 		subtitleStyle[delveCardSummary[delveData]]
@@ -2526,10 +1986,8 @@ displayDelveCard[delveData_Association] := Module[
 	]
 ];
 
-displayDelve[delveData_Association] := (
-	Print[displayDelveCard[delveData]];
-	delveData
-);
+displayDelve[delveData_Association] :=
+	printAndReturn[displayDelveCard[delveData], delveData];
 
 displayDelves[delves_Association] :=
 	displayDelves[Values[delves]];
@@ -2598,7 +2056,7 @@ displayDenizenRoll[delveName_String, roll_Association] :=
 
 
 (* ::Subsection::Closed:: *)
-(*Choice display*)
+(*Move choice API*)
 
 
 displayMoveChoice[MoveDisplayOutput[data_Association], selection_] := Module[
@@ -2690,11 +2148,11 @@ dangerCardsForValue[value_Integer, themes_List, domains_List] :=
 delveCompositeOracleRoll[title_String, delveData_Association, tableFunction_, cardFunction_] := Module[
 	{dice, value, match, theme, domain, table, outcome},
 	dice = rollOracleDice[];
-	value = oracleRollValue[dice];
+	value = oracleValueFromDice[dice];
 	match = SameQ @@ dice;
 	{theme, domain} = cardFunction[value, delveData["Themes"], delveData["Domains"]];
 	table = tableFunction[theme, domain];
-	outcome = oracleRollOutcome[table, value];
+	outcome = oracleOutcomeForValue[table, value];
 	displayOracleRoll[StringJoin[title, " (", theme, ", ", domain, ")"], dice, match, outcome];
 	Association[
 		"oracleDice" -> dice,
@@ -2997,6 +2455,41 @@ threatOracle[] := Module[
 	Association["components" -> components, "outcome" -> StringRiffle[results, "\n"]]
 ];
 
+trapOracle[] :=
+	compositeOracleRoll[
+		"Trap",
+		{{"Event", "Delve Site: Trap Event"}, {"Component", "Delve Site: Trap Component"}},
+		(StringRiffle[Lookup[#, "outcome"], " "] &)
+	];
+
+combatEventOracle[] :=
+	compositeOracleRoll[
+		"Combat Event",
+		{{"Method", "Combat: Event Method"}, {"Target", "Combat: Event Target"}},
+		(StringRiffle[Lookup[#, "outcome"], " "] &)
+	];
+
+oracleQueryHandlers[] :=
+	Association[
+		"Settlement: Name" -> settlementNameOracle,
+		"Settlement: Quick Name" -> settlementQuickNameOracle,
+		"Core: Prompt" -> corePromptOracle,
+		"Character" -> characterOracle,
+		"Settlement" -> settlementOracle,
+		"Combat Scene" -> combatSceneOracle,
+		"Journey Waypoint" -> journeyWaypointOracle,
+		"Monstrosity" -> monstrosityOracle,
+		"Trap" -> trapOracle,
+		"Combat Event" -> combatEventOracle,
+		"Threat" -> threatOracle
+	];
+
+displayNamedOracleQuery[tableName_String] := Module[
+	{handler},
+	handler = Lookup[oracleQueryHandlers[], tableName, None];
+	If[handler === None, oracleRollByName[tableName], handler[]]
+];
+
 displayOracleQuery[] := displayMove["askTheOracle"];
 
 displayOracleQuery["Reveal a Danger"] :=
@@ -3018,52 +2511,11 @@ displayOracleQuery["Delve Site Name", ownedDelve_Association] :=
 displayOracleQuery["Delve Site Name", domain_String] :=
 	delveSiteNameOracle[domain];
 
-displayOracleQuery["Settlement: Name"] :=
-	settlementNameOracle[];
-
-displayOracleQuery["Settlement: Quick Name"] :=
-	settlementQuickNameOracle[];
-
-displayOracleQuery["Core: Prompt"] :=
-	corePromptOracle[];
-
-displayOracleQuery["Character"] :=
-	characterOracle[];
-
-displayOracleQuery["Settlement"] :=
-	settlementOracle[];
-
 displayOracleQuery["Settlement", landType_String] :=
 	settlementOracle[landType];
 
-displayOracleQuery["Combat Scene"] :=
-	combatSceneOracle[];
-
-displayOracleQuery["Journey Waypoint"] :=
-	journeyWaypointOracle[];
-
 displayOracleQuery["Journey Waypoint", kind_String] :=
 	journeyWaypointOracle[kind];
-
-displayOracleQuery["Monstrosity"] :=
-	monstrosityOracle[];
-
-displayOracleQuery["Trap"] :=
-	compositeOracleRoll[
-		"Trap",
-		{{"Event", "Delve Site: Trap Event"}, {"Component", "Delve Site: Trap Component"}},
-		(StringRiffle[Lookup[#, "outcome"], " "] &)
-	];
-
-displayOracleQuery["Combat Event"] :=
-	compositeOracleRoll[
-		"Combat Event",
-		{{"Method", "Combat: Event Method"}, {"Target", "Combat: Event Target"}},
-		(StringRiffle[Lookup[#, "outcome"], " "] &)
-	];
-
-displayOracleQuery["Threat"] :=
-	threatOracle[];
 
 displayOracleQuery["Threat", category_String] := Module[
 	{tableName},
@@ -3071,7 +2523,7 @@ displayOracleQuery["Threat", category_String] := Module[
 	oracleRollByName[tableName]
 ];
 
-displayOracleQuery[tableName_String] := oracleRollByName[tableName];
+displayOracleQuery[tableName_String] := displayNamedOracleQuery[tableName];
 displayOracleQuery["Yes/No", odds_String] := oracleRollByName["Yes/No: " <> odds];
 displayOracleQuery["Yes/No", yesOutcome_String, noOutcome_String] := oracleRoll["Yes/No", yesNo[yesOutcome, noOutcome]];
 

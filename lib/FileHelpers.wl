@@ -35,8 +35,6 @@ endChapter::usage = "endChapter is part of the internal FileHelpers API used by 
 
 Begin["`Private`"];
 
-$ContextPath = DeleteDuplicates[Join[$ContextPath, {"IronLibrary`"}]];
-
 
 (* ::Subsection::Closed:: *)
 (*Package bootstrap*)
@@ -46,23 +44,21 @@ $ContextPath = DeleteDuplicates[Join[$ContextPath, {"IronLibrary`"}]];
 (*Library location*)
 
 
-If[
-	!ValueQ[$IronLibraryPath],
-	$IronLibraryPath =
-		If[StringQ[$InputFileName] && $InputFileName =!= "", $InputFileName, $Failed]
-];
+ironLibraryPath[] :=
+	Which[
+		ValueQ[IronLibrary`Private`$IronLibraryPath] &&
+			StringQ[IronLibrary`Private`$IronLibraryPath],
+			IronLibrary`Private`$IronLibraryPath,
+		StringQ[$InputFileName] && $InputFileName =!= "",
+			FileNameJoin[{DirectoryName[$InputFileName], "IronLibrary.wl"}],
+		True,
+			$Failed
+	];
 
-ironLibraryDirectory[] :=
-	DirectoryName[$IronLibraryPath];
-
-
-(* ::Subsubsection::Closed:: *)
-(*Data imports*)
-
-
-Scan[
-	Get[FileNameJoin[{ironLibraryDirectory[], #}]] &,
-	{"MoveData.wl", "AssetData.wl", "OracleData.wl"}
+ironLibraryDirectory[] := Module[{path},
+	path = ironLibraryPath[];
+	If[path === $Failed, Return[$Failed]];
+	DirectoryName[path]
 ];
 
 
@@ -79,6 +75,24 @@ normalizeName[s_String] := Module[{name},
 	name = StringReplace[name, {WhitespaceCharacter.. -> "_", "-" -> "_"}];
 	name = StringReplace[name, "_".. -> "_"];
 	StringTrim[name, "_"]
+];
+
+normalizeStoryName[s_String] := Module[{name},
+	name = normalizeName[s];
+	If[name === "",
+		Message[beginStory::emptyname];
+		Return[$Failed]
+	];
+	name
+];
+
+normalizeArcName[s_String] := Module[{name},
+	name = normalizeName[s];
+	If[name === "",
+		Message[beginChapter::emptyarc];
+		Return[$Failed]
+	];
+	name
 ];
 
 titleCaseName[s_String] :=
@@ -113,20 +127,20 @@ currentNotebookDirectory::unsaved =
 currentNotebookFile[] := Module[{file},
 	file = NotebookFileName[];
 	If[file === $Failed,
-		Message[currentNotebookBase::unsaved];
+		Message[currentNotebookFile::unsaved];
 		Return[$Failed]
 	];
 	file
 ];
+
+currentNotebookFile::unsaved =
+"The current notebook must be saved before its file name can be determined.";
 
 currentNotebookBase[] := Module[{file},
 	file = currentNotebookFile[];
 	If[file === $Failed, Return[$Failed]];
 	FileBaseName[file]
 ];
-
-currentNotebookBase::unsaved =
-"The current notebook must be saved before its file name can be determined.";
 
 parentNotebookDirectory[] := Module[{dir},
 	dir = currentNotebookDirectory[];
@@ -225,16 +239,10 @@ currentStatePath[] := Module[{dir, base},
 	statePathInDirectory[dir, base]
 ];
 
-nextNotebookBase[] := Module[{data, storyDir, nextChapterNumber, override},
-	data = parseNotebookBase[currentNotebookBase[]];
-	If[data === $Failed, Return[$Failed]];
-
-	storyDir = parentNotebookDirectory[];
-	If[storyDir === $Failed, Return[$Failed]];
-
+nextNotebookBaseFrom[data_Association, storyDir_String] := Module[
+	{nextChapterNumber, override},
 	nextChapterNumber = data["ChapterNumber"] + 1;
 	override = chapterOverride[storyDir, nextChapterNumber];
-
 	If[AssociationQ[override],
 		makeNotebookBase[
 			Join[
@@ -258,18 +266,41 @@ nextNotebookBase[] := Module[{data, storyDir, nextChapterNumber, override},
 	]
 ];
 
-nextStatePath[] := Module[{storyDir, nextBase},
+nextChapterPlan[] := Module[{data, storyDir, nextBase, chapterDir},
+	data = parseNotebookBase[currentNotebookBase[]];
+	If[data === $Failed, Return[$Failed]];
+
 	storyDir = parentNotebookDirectory[];
-	nextBase = nextNotebookBase[];
-	If[storyDir === $Failed || nextBase === $Failed, Return[$Failed]];
-	chapterStatePath[storyDir, nextBase]
+	If[storyDir === $Failed, Return[$Failed]];
+
+	nextBase = nextNotebookBaseFrom[data, storyDir];
+	chapterDir = chapterDirectoryPath[storyDir, nextBase];
+	Association[
+		"StoryDirectory" -> storyDir,
+		"ChapterDirectory" -> chapterDir,
+		"Base" -> nextBase,
+		"Seed" -> chapterSeedFromBase[nextBase],
+		"StatePath" -> statePathInDirectory[chapterDir, nextBase],
+		"NotebookPath" -> notebookPathInDirectory[chapterDir, nextBase]
+	]
 ];
 
-nextNotebookPath[] := Module[{storyDir, nextBase},
-	storyDir = parentNotebookDirectory[];
-	nextBase = nextNotebookBase[];
-	If[storyDir === $Failed || nextBase === $Failed, Return[$Failed]];
-	chapterNotebookPath[storyDir, nextBase]
+nextNotebookBase[] := Module[{plan},
+	plan = nextChapterPlan[];
+	If[plan === $Failed, Return[$Failed]];
+	plan["Base"]
+];
+
+nextStatePath[] := Module[{plan},
+	plan = nextChapterPlan[];
+	If[plan === $Failed, Return[$Failed]];
+	plan["StatePath"]
+];
+
+nextNotebookPath[] := Module[{plan},
+	plan = nextChapterPlan[];
+	If[plan === $Failed, Return[$Failed]];
+	plan["NotebookPath"]
 ];
 
 
@@ -277,29 +308,131 @@ nextNotebookPath[] := Module[{storyDir, nextBase},
 (*State files*)
 
 
+checkedCreateDirectory[path_String] := Module[{result},
+	result =
+		Quiet[
+			Check[
+				CreateDirectory[path, CreateIntermediateDirectories -> True],
+				$Failed
+			]
+		];
+	If[result === $Failed,
+		Message[fileOperation::mkdir, path]
+	];
+	result
+];
+
+checkedExport[path_String, expr_, format_String] := Module[{result},
+	result = Quiet[Check[Export[path, expr, format], $Failed]];
+	If[result === $Failed,
+		Message[fileOperation::export, path]
+	];
+	result
+];
+
+checkedImport[path_String, format_String] := Module[{data},
+	data = Quiet[Check[Import[path, format], $Failed]];
+	If[data === $Failed,
+		Message[fileOperation::import, path]
+	];
+	data
+];
+
+checkedNotebookSave[nb_] := Module[{result},
+	result = Quiet[Check[NotebookSave[nb], $Failed]];
+	If[result === $Failed,
+		Message[fileOperation::nbsave]
+	];
+	result
+];
+
+checkedNotebookSave[nb_, path_String] := Module[{result},
+	result = Quiet[Check[NotebookSave[nb, path], $Failed]];
+	If[result === $Failed,
+		Message[fileOperation::nbsaveas, path]
+	];
+	result
+];
+
+checkedDeleteFile[path_String] := Module[{result},
+	result = Quiet[Check[DeleteFile[path], $Failed]];
+	If[result === $Failed,
+		Message[fileOperation::delete, path]
+	];
+	result
+];
+
+checkedRenameFile[source_String, target_String] := Module[{result},
+	result = Quiet[Check[RenameFile[source, target], $Failed]];
+	If[result === $Failed,
+		Message[fileOperation::rename, source, target]
+	];
+	result
+];
+
+checkedRenameDirectory[source_String, target_String] := Module[{result},
+	result = Quiet[Check[RenameDirectory[source, target], $Failed]];
+	If[result === $Failed,
+		Message[fileOperation::rename, source, target]
+	];
+	result
+];
+
+fileOperation::mkdir =
+"Could not create directory `1`.";
+
+fileOperation::export =
+"Could not write file `1`.";
+
+fileOperation::import =
+"Could not read file `1`.";
+
+fileOperation::nbsave =
+"Could not save the current notebook.";
+
+fileOperation::nbsaveas =
+"Could not save the current notebook to `1`.";
+
+fileOperation::delete =
+"Could not delete file `1`.";
+
+fileOperation::rename =
+"Could not rename `1` to `2`.";
+
 ensureDirectoryForPath[path_String] := Module[{dir},
 	dir = DirectoryName[path];
 	If[!DirectoryQ[dir],
-		CreateDirectory[dir, CreateIntermediateDirectories -> True]
+		If[checkedCreateDirectory[dir] === $Failed,
+			Return[$Failed]
+		]
 	];
 	dir
 ];
 
-saveExpressionToPath[path_String, expr_] := (
-	ensureDirectoryForPath[path];
-	Export[path, expr, "WXF"]
-);
+saveExpressionToPath[path_String, expr_] := Module[{},
+	If[ensureDirectoryForPath[path] === $Failed, Return[$Failed]];
+	checkedExport[path, expr, "WXF"]
+];
 
-loadStateFromPath[path_String] := Module[{},
+loadStateFromPath[path_String] := Module[{state},
 	If[!FileExistsQ[path],
 		Message[loadStateFromPath::nofile, path];
 		Return[$Failed]
 	];
-	Import[path, "WXF"]
+	state = checkedImport[path, "WXF"];
+	If[state === $Failed, Return[$Failed]];
+	If[!AssociationQ[state],
+		Message[loadStateFromPath::badstate, path];
+		Return[$Failed]
+	];
+	state
 ];
 
 loadStateFromPath::nofile =
 "No state file exists at `1`.";
+
+loadStateFromPath::badstate =
+"State file `1` did not contain an association.";
 
 
 (* ::Subsubsection::Closed:: *)
@@ -315,9 +448,17 @@ chapterOverridesPath[storyDir_String] :=
 loadChapterOverrides[storyDir_String] := Module[{path, data},
 	path = chapterOverridesPath[storyDir];
 	If[!FileExistsQ[path], Return[Association[]]];
-	data = Import[path, "WXF"];
-	If[AssociationQ[data], data, Association[]]
+	data = checkedImport[path, "WXF"];
+	If[data === $Failed, Return[Association[]]];
+	If[AssociationQ[data],
+		data,
+		Message[loadChapterOverrides::badfile, path];
+		Association[]
+	]
 ];
+
+loadChapterOverrides::badfile =
+"Chapter override file `1` did not contain an association; ignoring it.";
 
 saveChapterOverrides[storyDir_String, overrides_Association] :=
 	saveExpressionToPath[chapterOverridesPath[storyDir], overrides];
@@ -328,14 +469,17 @@ registerChapterOverride[
 	arc_String,
 	arcChapterNumber_Integer,
 	arcTitle_:Automatic
-] := Module[{overrides, key, displayTitle},
+] := Module[{overrides, key, normalizedArc, displayTitle},
+	normalizedArc = normalizeArcName[arc];
+	If[normalizedArc === $Failed, Return[$Failed]];
+
 	overrides = loadChapterOverrides[storyDir];
 	key = ToString[chapterNumber];
-	displayTitle = Replace[arcTitle, Automatic :> titleCaseName[arc]];
+	displayTitle = Replace[arcTitle, Automatic :> titleCaseName[normalizedArc]];
 
 	overrides[key] =
 		Association[
-			"Arc" -> normalizeName[arc],
+			"Arc" -> normalizedArc,
 			"ArcChapterNumber" -> arcChapterNumber,
 			"ArcTitle" -> displayTitle
 		];
@@ -379,18 +523,24 @@ seedStoryState[base_String, state_:Automatic] := Module[{seed, storyState},
 	storyState
 ];
 
-nextChapterSeed[] := Module[{base},
-	base = nextNotebookBase[];
-	If[base === $Failed, Return[$Failed]];
-	chapterSeedFromBase[base]
+nextChapterSeed[] := Module[{plan},
+	plan = nextChapterPlan[];
+	If[plan === $Failed, Return[$Failed]];
+	plan["Seed"]
 ];
 
-stateForNextChapter[state_Association] := Module[{next, seed},
-	seed = nextChapterSeed[];
+stateForNextChapter[state_Association, plan_Association] := Module[{next, seed},
+	seed = Lookup[plan, "Seed", $Failed];
 	If[seed === $Failed, Return[$Failed]];
 	next = Association[state];
 	next["seed"] = seed;
 	next
+];
+
+stateForNextChapter[state_Association] := Module[{plan},
+	plan = nextChapterPlan[];
+	If[plan === $Failed, Return[$Failed]];
+	stateForNextChapter[state, plan]
 ];
 
 
@@ -473,20 +623,22 @@ chapterSectionCells[] :=
 	};
 
 libraryGetCell[] :=
-	If[
-		StringQ[$IronLibraryPath] && $IronLibraryPath =!= $Failed,
-		With[
-			{path = $IronLibraryPath},
+	With[{path = ironLibraryPath[]},
+		If[
+			StringQ[path] && path =!= $Failed,
+			With[
+				{libraryPath = path},
+				Cell[
+					BoxData[ToBoxes[Defer[Get[libraryPath];]]],
+					"Input",
+					CellTags -> $chapterCellTags["Get"]
+				]
+			],
 			Cell[
-				BoxData[ToBoxes[Defer[Get[path];]]],
-				"Input",
+				"Load IronLibrary here.",
+				"Text",
 				CellTags -> $chapterCellTags["Get"]
 			]
-		],
-		Cell[
-			"Load IronLibrary here.",
-			"Text",
-			CellTags -> $chapterCellTags["Get"]
 		]
 	];
 
@@ -535,7 +687,10 @@ createChapterNotebook[path_String] := Module[{cells},
 	If[FileExistsQ[path], Return[path]];
 	cells = chapterNotebookCells[path];
 	If[cells === $Failed, Return[$Failed]];
-	Export[path, Notebook[cells], "NB"];
+	If[ensureDirectoryForPath[path] === $Failed, Return[$Failed]];
+	If[checkedExport[path, Notebook[cells], "NB"] === $Failed,
+		Return[$Failed]
+	];
 	path
 ];
 
@@ -564,7 +719,7 @@ writeChapterHeading[nb_, heading_Association] := (
 updateCurrentChapterHeading[arcTitle_:Automatic] := Module[
 	{nb, path, data, heading},
 	nb = currentNotebookObject[];
-	path = NotebookFileName[];
+	path = currentNotebookFile[];
 	If[path === $Failed, Return[$Failed]];
 
 	data = parseNotebookBase[FileBaseName[path]];
@@ -572,7 +727,7 @@ updateCurrentChapterHeading[arcTitle_:Automatic] := Module[
 
 	heading = chapterHeading[data, arcTitle];
 	writeChapterHeading[nb, heading];
-	NotebookSave[nb];
+	If[checkedNotebookSave[nb] === $Failed, Return[$Failed]];
 	heading
 ];
 
@@ -584,7 +739,10 @@ updateChapterNotebookHeading[path_String] := Module[{nb, heading},
 	nb = NotebookOpen[path, Visible -> False];
 	SetOptions[nb, Visible -> Inherited];
 	writeChapterHeading[nb, heading];
-	NotebookSave[nb];
+	If[checkedNotebookSave[nb] === $Failed,
+		NotebookClose[nb];
+		Return[$Failed]
+	];
 	NotebookClose[nb];
 	heading
 ];
@@ -655,7 +813,7 @@ ensureEndChapterCells[nb_] := Module[
 
 ensureChapterOneBoilerplate[] := Module[{nb, path, heading},
 	nb = currentNotebookObject[];
-	path = NotebookFileName[];
+	path = currentNotebookFile[];
 	If[path === $Failed, Return[$Failed]];
 
 	heading = chapterTitleSubtitleFromPath[path];
@@ -664,7 +822,7 @@ ensureChapterOneBoilerplate[] := Module[{nb, path, heading},
 	writeChapterHeading[nb, heading];
 	ensureChapterSections[nb];
 	ensureEndChapterCells[nb];
-	NotebookSave[nb];
+	If[checkedNotebookSave[nb] === $Failed, Return[$Failed]];
 	heading
 ];
 
@@ -682,32 +840,37 @@ movedPathForOriginal[newDir_String, originalPath_String] :=
 
 deleteFileIfDifferent[source_String, target_String] :=
 	If[FileExistsQ[source] && !samePathQ[source, target],
-		DeleteFile[source]
+		checkedDeleteFile[source],
+		True
 	];
 
 renameFileIfDifferent[source_String, target_String] :=
 	If[FileExistsQ[source] && !samePathQ[source, target],
-		RenameFile[source, target]
+		checkedRenameFile[source, target],
+		target
 	];
 
 retargetFile[source_String, target_String] :=
 	If[FileExistsQ[source],
 		If[
 			FileExistsQ[target],
-			DeleteFile[source],
-			RenameFile[source, target]
-		]
+			checkedDeleteFile[source],
+			checkedRenameFile[source, target]
+		],
+		target
 	];
 
 retargetChapterFiles[chapterDir_String, oldBase_String, newBase_String] := Module[
-	{oldNotebook, newNotebook, oldState, newState},
+	{oldNotebook, newNotebook, oldState, newState, notebookResult, stateResult},
 	oldNotebook = notebookPathInDirectory[chapterDir, oldBase];
 	newNotebook = notebookPathInDirectory[chapterDir, newBase];
 	oldState = statePathInDirectory[chapterDir, oldBase];
 	newState = statePathInDirectory[chapterDir, newBase];
 
-	retargetFile[oldNotebook, newNotebook];
-	retargetFile[oldState, newState];
+	notebookResult = retargetFile[oldNotebook, newNotebook];
+	If[notebookResult === $Failed, Return[$Failed]];
+	stateResult = retargetFile[oldState, newState];
+	If[stateResult === $Failed, Return[$Failed]];
 
 	Association["NotebookPath" -> newNotebook, "StatePath" -> newState]
 ];
@@ -738,10 +901,15 @@ renameChapterDirectoryForStory[
 		Return[$Failed]
 	];
 
-	RenameDirectory[chapterDir, newDir];
+	If[checkedRenameDirectory[chapterDir, newDir] === $Failed,
+		Return[$Failed]
+	];
 	paths = retargetChapterFiles[newDir, oldBase, newBase];
+	If[paths === $Failed, Return[$Failed]];
 	If[FileExistsQ[paths["NotebookPath"]],
-		updateChapterNotebookHeading[paths["NotebookPath"]]
+		If[updateChapterNotebookHeading[paths["NotebookPath"]] === $Failed,
+			Return[$Failed]
+		]
 	];
 	newDir
 ];
@@ -796,17 +964,25 @@ renameChapterDirectoryForArc[
 		Return[$Failed]
 	];
 
-	RenameDirectory[chapterDir, newDir];
+	If[checkedRenameDirectory[chapterDir, newDir] === $Failed,
+		Return[$Failed]
+	];
 	paths = retargetChapterFiles[newDir, oldBase, newBase];
-	registerChapterOverride[
-		storyDir,
-		data["ChapterNumber"],
-		newArc,
-		newArcChapterNumber,
-		arcTitle
+	If[paths === $Failed, Return[$Failed]];
+	If[
+		registerChapterOverride[
+			storyDir,
+			data["ChapterNumber"],
+			newArc,
+			newArcChapterNumber,
+			arcTitle
+		] === $Failed,
+		Return[$Failed]
 	];
 	If[FileExistsQ[paths["NotebookPath"]],
-		updateChapterNotebookHeading[paths["NotebookPath"]]
+		If[updateChapterNotebookHeading[paths["NotebookPath"]] === $Failed,
+			Return[$Failed]
+		]
 	];
 	newDir
 ];
@@ -901,7 +1077,8 @@ renameCurrentChapterArc[newArc_String, state_:Automatic] := Module[
 
 	oldArc = data["Arc"];
 	oldArcStart = data["ArcChapterNumber"];
-	normalizedArc = normalizeName[newArc];
+	normalizedArc = normalizeArcName[newArc];
+	If[normalizedArc === $Failed, Return[$Failed]];
 	newData =
 		Join[
 			data,
@@ -911,16 +1088,21 @@ renameCurrentChapterArc[newArc_String, state_:Automatic] := Module[
 	chapterState = If[AssociationQ[state], Association[state], Automatic];
 
 	If[newBase === oldBase,
-		registerChapterOverride[
-			storyDir,
-			data["ChapterNumber"],
-			normalizedArc,
-			1,
-			newArc
+		If[
+			registerChapterOverride[
+				storyDir,
+				data["ChapterNumber"],
+				normalizedArc,
+				1,
+				newArc
+			] === $Failed,
+			Return[$Failed]
 		];
 		chapterState = seedStoryState[newBase, chapterState];
 		If[chapterState === $Failed, Return[$Failed]];
-		updateCurrentChapterHeading[newArc];
+		If[updateCurrentChapterHeading[newArc] === $Failed,
+			Return[$Failed]
+		];
 		If[
 			propagateArcRename[
 				storyDir,
@@ -948,39 +1130,56 @@ renameCurrentChapterArc[newArc_String, state_:Automatic] := Module[
 		Return[$Failed]
 	];
 
-	oldNotebookFile = NotebookFileName[];
+	oldNotebookFile = currentNotebookFile[];
 	oldStatePath = currentStatePath[];
 	If[oldNotebookFile === $Failed || oldStatePath === $Failed, Return[$Failed]];
 
 	chapterState = stateForChapterRename[chapterState, oldStatePath];
 	If[chapterState === $Failed, Return[$Failed]];
 
-	NotebookSave[currentNotebookObject[]];
-	RenameDirectory[oldDir, newDir];
+	If[checkedNotebookSave[currentNotebookObject[]] === $Failed,
+		Return[$Failed]
+	];
+	If[checkedRenameDirectory[oldDir, newDir] === $Failed,
+		Return[$Failed]
+	];
 
 	newNotebookPath = notebookPathInDirectory[newDir, newBase];
 	newStatePath = statePathInDirectory[newDir, newBase];
 	movedOldNotebookPath = movedPathForOriginal[newDir, oldNotebookFile];
 	movedOldStatePath = movedPathForOriginal[newDir, oldStatePath];
 
-	NotebookSave[currentNotebookObject[], newNotebookPath];
-	deleteFileIfDifferent[movedOldNotebookPath, newNotebookPath];
+	If[checkedNotebookSave[currentNotebookObject[], newNotebookPath] ===
+		$Failed,
+		Return[$Failed]
+	];
+	If[deleteFileIfDifferent[movedOldNotebookPath, newNotebookPath] ===
+		$Failed,
+		Return[$Failed]
+	];
 
 	chapterState = seedStoryState[newBase, chapterState];
 	If[chapterState === $Failed, Return[$Failed]];
 	If[saveExpressionToPath[newStatePath, chapterState] === $Failed,
 		Return[$Failed]
 	];
-	deleteFileIfDifferent[movedOldStatePath, newStatePath];
-
-	registerChapterOverride[
-		storyDir,
-		data["ChapterNumber"],
-		normalizedArc,
-		1,
-		newArc
+	If[deleteFileIfDifferent[movedOldStatePath, newStatePath] === $Failed,
+		Return[$Failed]
 	];
-	updateCurrentChapterHeading[newArc];
+
+	If[
+		registerChapterOverride[
+			storyDir,
+			data["ChapterNumber"],
+			normalizedArc,
+			1,
+			newArc
+		] === $Failed,
+		Return[$Failed]
+	];
+	If[updateCurrentChapterHeading[newArc] === $Failed,
+		Return[$Failed]
+	];
 	If[
 		propagateArcRename[
 			storyDir,
@@ -1017,9 +1216,10 @@ beginStory::storydirexists =
 renameCurrentStory[storyName_String, state_:Automatic] := Module[
 	{
 		oldBase, data, oldStoryDir, oldChapterDir, storyRoot, story, arc,
-		newBase, newStoryDir, newChapterDir, movedOldChapterDir,
-		oldNotebookFile, oldStatePath, movedOldNotebookPath,
-		movedOldStatePath, newNotebookPath, newStatePath, storyState
+		newBase, newStoryDir, newChapterDir, plannedOldChapterDir,
+		movedOldChapterDir, oldNotebookFile, oldStatePath,
+		movedOldNotebookPath, movedOldStatePath, newNotebookPath,
+		newStatePath, storyState
 	},
 	If[!chapterNotebookQ[], Return[$Failed]];
 
@@ -1038,7 +1238,8 @@ renameCurrentStory[storyName_String, state_:Automatic] := Module[
 	];
 
 	storyRoot = DirectoryName[oldStoryDir];
-	story = normalizeName[storyName];
+	story = normalizeStoryName[storyName];
+	If[story === $Failed, Return[$Failed]];
 	arc = data["Arc"];
 	newBase =
 		makeNotebookBase[
@@ -1047,7 +1248,7 @@ renameCurrentStory[storyName_String, state_:Automatic] := Module[
 	newStoryDir = FileNameJoin[{storyRoot, story}];
 	newChapterDir = chapterDirectoryPath[newStoryDir, newBase];
 
-	oldNotebookFile = NotebookFileName[];
+	oldNotebookFile = currentNotebookFile[];
 	If[oldNotebookFile === $Failed, Return[$Failed]];
 	oldStatePath = currentStatePath[];
 	storyState = If[AssociationQ[state], Association[state], Automatic];
@@ -1055,7 +1256,9 @@ renameCurrentStory[storyName_String, state_:Automatic] := Module[
 	If[newBase === oldBase && samePathQ[newStoryDir, oldStoryDir],
 		storyState = seedStoryState[newBase, storyState];
 		If[storyState === $Failed, Return[$Failed]];
-		ensureChapterOneBoilerplate[];
+		If[ensureChapterOneBoilerplate[] === $Failed,
+			Return[$Failed]
+		];
 		If[
 			propagateStoryRename[oldStoryDir, data["Story"], story] ===
 				$Failed,
@@ -1077,37 +1280,61 @@ renameCurrentStory[storyName_String, state_:Automatic] := Module[
 		Return[$Failed]
 	];
 
-	NotebookSave[currentNotebookObject[]];
+	plannedOldChapterDir =
+		If[
+			!samePathQ[newStoryDir, oldStoryDir],
+			FileNameJoin[{newStoryDir, FileNameTake[oldChapterDir]}],
+			oldChapterDir
+		];
+
+	If[!samePathQ[newChapterDir, plannedOldChapterDir] &&
+		DirectoryQ[newChapterDir],
+		Message[beginStory::direxists, newChapterDir];
+		Return[$Failed]
+	];
+
+	If[checkedNotebookSave[currentNotebookObject[]] === $Failed,
+		Return[$Failed]
+	];
 
 	If[!samePathQ[newStoryDir, oldStoryDir],
-		RenameDirectory[oldStoryDir, newStoryDir];
-		movedOldChapterDir =
-			FileNameJoin[{newStoryDir, FileNameTake[oldChapterDir]}],
+		If[checkedRenameDirectory[oldStoryDir, newStoryDir] === $Failed,
+			Return[$Failed]
+		];
+		movedOldChapterDir = plannedOldChapterDir,
 		movedOldChapterDir = oldChapterDir
 	];
 
 	If[!samePathQ[newChapterDir, movedOldChapterDir],
-		If[DirectoryQ[newChapterDir],
-			Message[beginStory::direxists, newChapterDir];
+		If[checkedRenameDirectory[movedOldChapterDir, newChapterDir] ===
+			$Failed,
 			Return[$Failed]
-		];
-		RenameDirectory[movedOldChapterDir, newChapterDir]
+		]
 	];
 
 	newNotebookPath = notebookPathInDirectory[newChapterDir, newBase];
 	movedOldNotebookPath = movedPathForOriginal[newChapterDir, oldNotebookFile];
-	NotebookSave[currentNotebookObject[], newNotebookPath];
-	deleteFileIfDifferent[movedOldNotebookPath, newNotebookPath];
+	If[checkedNotebookSave[currentNotebookObject[], newNotebookPath] ===
+		$Failed,
+		Return[$Failed]
+	];
+	If[deleteFileIfDifferent[movedOldNotebookPath, newNotebookPath] === $Failed,
+		Return[$Failed]
+	];
 
 	If[oldStatePath =!= $Failed,
 		movedOldStatePath = movedPathForOriginal[newChapterDir, oldStatePath];
 		newStatePath = statePathInDirectory[newChapterDir, newBase];
-		renameFileIfDifferent[movedOldStatePath, newStatePath]
+		If[renameFileIfDifferent[movedOldStatePath, newStatePath] === $Failed,
+			Return[$Failed]
+		]
 	];
 
 	storyState = seedStoryState[newBase, storyState];
 	If[storyState === $Failed, Return[$Failed]];
-	ensureChapterOneBoilerplate[];
+	If[ensureChapterOneBoilerplate[] === $Failed,
+		Return[$Failed]
+	];
 
 	If[
 		propagateStoryRename[newStoryDir, data["Story"], story] === $Failed,
@@ -1145,13 +1372,10 @@ beginStory[name_String, state_:Automatic] := Module[
 	root = storyRootDirectory[];
 	If[root === $Failed, Return[$Failed]];
 
-	story = normalizeName[name];
-	arc = normalizeName["Introduction"];
-	storyDir = FileNameJoin[{root, story}];
-	If[!DirectoryQ[storyDir],
-		CreateDirectory[storyDir, CreateIntermediateDirectories -> True]
-	];
-
+	story = normalizeStoryName[name];
+	If[story === $Failed, Return[$Failed]];
+	arc = normalizeArcName["Introduction"];
+	If[arc === $Failed, Return[$Failed]];
 	base =
 		makeNotebookBase[
 			Association[
@@ -1161,29 +1385,33 @@ beginStory[name_String, state_:Automatic] := Module[
 				"ArcChapterNumber" -> 1
 			]
 		];
+	storyDir = FileNameJoin[{root, story}];
 	chapterDir = chapterDirectoryPath[storyDir, base];
+	notebookPath = notebookPathInDirectory[chapterDir, base];
+
+	oldNotebookFile = currentNotebookFile[];
+	If[oldNotebookFile === $Failed, Return[$Failed]];
+
 	If[DirectoryQ[chapterDir],
 		Message[beginStory::direxists, chapterDir];
 		Return[$Failed]
 	];
 
-	CreateDirectory[chapterDir, CreateIntermediateDirectories -> True];
-	notebookPath = notebookPathInDirectory[chapterDir, base];
-
-	oldNotebookFile = NotebookFileName[];
-	If[oldNotebookFile === $Failed,
-		Message[currentNotebookBase::unsaved];
-		Return[$Failed]
-	];
-
-	NotebookSave[currentNotebookObject[], notebookPath];
-	If[FileExistsQ[oldNotebookFile] && !samePathQ[oldNotebookFile, notebookPath],
-		DeleteFile[oldNotebookFile]
-	];
-
 	storyState = seedStoryState[base, state];
 	If[storyState === $Failed, Return[$Failed]];
-	ensureChapterOneBoilerplate[];
+
+	If[checkedCreateDirectory[chapterDir] === $Failed,
+		Return[$Failed]
+	];
+	If[checkedNotebookSave[currentNotebookObject[], notebookPath] === $Failed,
+		Return[$Failed]
+	];
+	If[deleteFileIfDifferent[oldNotebookFile, notebookPath] === $Failed,
+		Return[$Failed]
+	];
+	If[ensureChapterOneBoilerplate[] === $Failed,
+		Return[$Failed]
+	];
 
 	Association[
 		"NotebookPath" -> notebookPath,
@@ -1203,6 +1431,9 @@ beginStory::missing =
 
 beginStory::badname =
 "Story name `1` is not a string.";
+
+beginStory::emptyname =
+"Story name must contain at least one non-separator character.";
 
 beginStory::direxists =
 "Cannot begin story because the target chapter directory already exists: `1`.";
@@ -1235,16 +1466,25 @@ beginChapter[OptionsPattern[]] := Module[{path, loaded, arcName, renamed},
 beginChapter::badarc =
 "ArcName must be Automatic or a string, not `1`.";
 
-endChapter[state_Association] := Module[{statePath, notebookPath},
-	statePath = nextStatePath[];
-	notebookPath = nextNotebookPath[];
-	If[statePath === $Failed || notebookPath === $Failed, Return[$Failed]];
+beginChapter::emptyarc =
+"ArcName must contain at least one non-separator character.";
 
-	If[saveExpressionToPath[statePath, stateForNextChapter[state]] === $Failed,
+endChapter[state_Association] := Module[{plan, nextState, notebookResult},
+	plan = nextChapterPlan[];
+	If[plan === $Failed, Return[$Failed]];
+
+	nextState = stateForNextChapter[state, plan];
+	If[nextState === $Failed, Return[$Failed]];
+
+	If[saveExpressionToPath[plan["StatePath"], nextState] === $Failed,
 		Return[$Failed]
 	];
-	createChapterNotebook[notebookPath];
-	Association["StatePath" -> statePath, "NotebookPath" -> notebookPath]
+	notebookResult = createChapterNotebook[plan["NotebookPath"]];
+	If[notebookResult === $Failed, Return[$Failed]];
+	Association[
+		"StatePath" -> plan["StatePath"],
+		"NotebookPath" -> plan["NotebookPath"]
+	]
 ];
 
 

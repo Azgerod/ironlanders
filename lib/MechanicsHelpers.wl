@@ -135,7 +135,7 @@ $ContextPath = DeleteDuplicates[Join[$ContextPath, {"IronLibrary`"}]];
 
 
 (* ::Subsection::Closed:: *)
-(*Core naming and state model helpers*)
+(*Shared state, constants, and predicates*)
 
 
 (* ::Subsubsection::Closed:: *)
@@ -150,6 +150,11 @@ resetIronSession[] := (Clear[$state, $soloCharacter]; );
 getIronState[] := If[AssociationQ[$state], $state, $Failed];
 setIronState[state_Association] := ($state = state);
 soloCharacter[] := If[ValueQ[$soloCharacter], $soloCharacter, $Failed];
+
+characterExistsQ[character_] :=
+	AssociationQ[$state] &&
+	StringQ[character] &&
+	KeyExistsQ[$state, character];
 
 
 (* ::Subsubsection::Closed:: *)
@@ -372,6 +377,13 @@ actionRollResult[challengeDice_List, actionScore_Integer] :=
 	rollResultFromBeatCount[
 		Count[challengeDice, die_ /; actionScore > die]
 	];
+
+actionDieAfterMomentumCancel[actionDie_Integer, momentum_Integer] :=
+	If[momentum < 0 && Abs[momentum] == actionDie, {0, True}, {actionDie, False}];
+
+actionScoreFromParts[actionValue_Integer, statValue_Integer, adds_Association] :=
+	Min[actionValue + Total[Values[adds]] + statValue, 10];
+
 rollOracleDice = rollChallengeDice;
 
 
@@ -481,7 +493,7 @@ reroll::badchallenge =
 
 
 (* ::Subsection::Closed:: *)
-(*Asset helpers*)
+(*Asset metadata and ownership helpers*)
 
 
 assetDataAssociation[] := AssetData`assetData;
@@ -617,11 +629,6 @@ ownedAssetQ[owned_Association] :=
 	KeyExistsQ[owned, "Fields"] &&
 	KeyExistsQ[owned, "Tracks"];
 
-characterExistsQ[character_] :=
-	AssociationQ[$state] &&
-	StringQ[character] &&
-	KeyExistsQ[$state, character];
-
 normalizeCharacterAssets[character_] := Module[
 	{rawAssets, normalizedAssets},
 	If[!characterExistsQ[character],
@@ -639,17 +646,6 @@ normalizeCharacterAssets[character_] := Module[
 		Return[$Failed]
 	];
 	$state[character, "assets"] = normalizedAssets
-];
-
-ownedAssetIndex[assetName_String, character_] := Module[
-	{ownedAssets, positions},
-	ownedAssets = normalizeCharacterAssets[character];
-	If[ownedAssets === $Failed, Return[$Failed]];
-	positions = Flatten @ Position[Lookup[ownedAssets, "Name", Missing["NoName"]], assetName];
-	If[positions === {},
-		Missing["NotOwned", assetName],
-		First[positions]
-	]
 ];
 
 ownedAssetContext[assetName_String, character_] := Module[
@@ -675,6 +671,27 @@ ownedAssetContext[assetName_String, character_] := Module[
 	]
 ];
 
+replaceOwnedAsset[character_, index_Integer, owned_Association] := Module[
+	{updatedAssets},
+	updatedAssets = $state[character, "assets"];
+	updatedAssets[[index]] = owned;
+	$state[character, "assets"] = updatedAssets;
+	owned
+];
+
+ownedAssetTracks[record_Association, owned_Association] :=
+	Join[initialAssetTracks[record], Lookup[owned, "Tracks", <||>]];
+
+requireExperience[character_, cost_Integer] := Module[
+	{available},
+	available = availableExperience[character];
+	If[available < cost,
+		Message[asset::xp, character, cost, available];
+		Return[False]
+	];
+	True
+];
+
 ownedCompanionContext[assetName_String, character_] := Module[
 	{context},
 	context = ownedAssetContext[assetName, character];
@@ -696,6 +713,9 @@ assetTrackDefinition[record_Association, trackName_String] :=
 clampAssetTrackValue[trackDef_Association, value_Integer] :=
 	Clip[value, {trackDef["Min"], trackDef["Max"]}];
 
+
+(* ::Subsection::Closed:: *)
+(*Progress object and legacy state helpers*)
 
 
 rankMarkValue[Troublesome] := 3;
@@ -852,6 +872,10 @@ bondProgressData[character_] := Module[{},
 	If[ensureCharacterCoreProgress[character] === $Failed, Return[$Failed]];
 	$state[character, "bondProgress"]
 ];
+
+
+(* ::Subsection::Closed:: *)
+(*Vow and threat helpers*)
 
 normalizeThreatSpec[None] :=
 	None;
@@ -1042,6 +1066,10 @@ threatLocationByName[threatName_String, character_] := Module[
 	]
 ];
 
+
+(* ::Subsection::Closed:: *)
+(*Delve and scene normalization helpers*)
+
 normalizeDelveCards[cards_String, kind_String] :=
 	normalizeDelveCards[{cards}, kind];
 
@@ -1207,6 +1235,16 @@ delveByName[name_String, character_] := Module[
 	Lookup[ownedDelves, name, Missing["UnknownDelve", name]]
 ];
 
+requireDelve[delveName_String, character_] := Module[
+	{ownedDelve},
+	ownedDelve = delveByName[delveName, character];
+	If[!AssociationQ[ownedDelve],
+		Message[delve::unknown, delveName, character];
+		Return[$Failed]
+	];
+	ownedDelve
+];
+
 currentDelveName[character_] := Module[
 	{ownedDelves, current},
 	ownedDelves = normalizeCharacterDelves[character];
@@ -1242,6 +1280,13 @@ currentDelveDataQuiet[character_] := Module[
 	current = Lookup[$state[character], "currentDelve", None];
 	If[current === None || !KeyExistsQ[ownedDelves, current], Return[None]];
 	ownedDelves[current]
+];
+
+withCurrentDelve[handler_] := Module[
+	{current},
+	current = currentDelveName[$soloCharacter];
+	If[current === $Failed, Return[$Failed]];
+	handler[current, $soloCharacter]
 ];
 
 normalizeCharacterScene[character_] := Module[
@@ -1285,6 +1330,10 @@ sceneByName[name_String, character_] := Module[
 	];
 	If[ownedScene["Name"] === name, ownedScene, Missing["UnknownScene", name]]
 ];
+
+
+(* ::Subsection::Closed:: *)
+(*Progress target engine*)
 
 progressTargetData[trackName_String, character_] := Module[
 	{ownedVow, threatVowName, ownedThreat, ownedDelve, ownedScene, ownedJourney, ownedFoe, ownedFailures, ownedBondProgress},
@@ -1396,20 +1445,10 @@ markVowProgress[vowName_String, n_Integer, character_] := Module[
 ];
 
 markThreatProgressByVow[vowName_String, n_Integer, character_] := Module[
-	{ownedThreat, target, previous, markValue, updated},
-	ownedThreat = threatByVowName[vowName, character];
-	If[ownedThreat === $Failed, Return[$Failed]];
-	previous = ownedThreat["Menace", "progress"];
-	target = Association[
-		"Type" -> "Threat",
-		"Name" -> ownedThreat["Name"],
-		"Vow" -> vowName,
-		"Rank" -> ownedThreat["Menace", "rank"],
-		"Progress" -> previous
-	];
-	markValue = n rankMarkValue[ownedThreat["Menace", "rank"]];
-	updated = adjustTargetProgress[target, markValue, character];
-	updated
+	{target},
+	target = threatProgressTargetByVow[vowName, character];
+	If[target === $Failed, Return[$Failed]];
+	adjustTargetProgress[target, progressMarkValue[target, n], character]
 ];
 
 markThreatProgressByName[threatName_String, n_Integer, character_] := Module[
@@ -1419,6 +1458,82 @@ markThreatProgressByName[threatName_String, n_Integer, character_] := Module[
 	markThreatProgressByVow[vowName, n, character]
 ];
 
+threatProgressTargetByVow[vowName_String, character_] := Module[
+	{ownedThreat},
+	ownedThreat = threatByVowName[vowName, character];
+	If[ownedThreat === $Failed, Return[$Failed]];
+	Association[
+		"Type" -> "Threat",
+		"Name" -> ownedThreat["Name"],
+		"Vow" -> vowName,
+		"Rank" -> ownedThreat["Menace", "rank"],
+		"Progress" -> ownedThreat["Menace", "progress"]
+	]
+];
+
+resolveProgressTarget[ThreatTrack[vowName_String, handleCharacter_String], character_] :=
+	threatProgressTargetByVow[
+		vowName,
+		Replace[character, Automatic :> handleCharacter]
+	];
+
+resolveProgressTarget[track_String, character_] :=
+	progressTargetData[track, character];
+
+progressTargetCharacter[ThreatTrack[_String, handleCharacter_String], character_] :=
+	Replace[character, Automatic :> handleCharacter];
+
+progressTargetCharacter[_String, character_] :=
+	character;
+
+progressMarkValue[target_Association, n_Integer] :=
+	n rankMarkValue[target["Rank"]];
+
+setTargetField[target_Association, "Progress", value_, character_] :=
+	Switch[
+		target["Type"],
+		"Vow",
+			$state[character, "vows", target["Name"], "Progress"] = value,
+		"Threat",
+			$state[character, "vows", target["Vow"], "Threat", "Menace", "progress"] = value,
+		"Delve",
+			$state[character, "delves", target["Name"], "Progress"] = value,
+		"Scene",
+			$state[character, "scene", "Progress"] = value,
+		"Journey",
+			$state[character, "journeys", target["Name"], "Progress"] = value,
+		"Foe",
+			$state[character, "foes", target["Name"], "Progress"] = value,
+		"Failures",
+			$state[character, "failures", "Progress"] = value,
+		"Bonds",
+			$state[character, "bondProgress", "Progress"] = value,
+		_,
+			$Failed
+	];
+
+setTargetField[target_Association, "Rank", value_, character_] :=
+	Switch[
+		target["Type"],
+		"Vow",
+			$state[character, "vows", target["Name"], "Rank"] = value,
+		"Threat",
+			$state[character, "vows", target["Vow"], "Threat", "Menace", "rank"] = value,
+		"Delve",
+			$state[character, "delves", target["Name"], "Rank"] = value,
+		"Scene",
+			$state[character, "scene", "Rank"] = value,
+		"Journey",
+			$state[character, "journeys", target["Name"], "Rank"] = value,
+		"Foe",
+			$state[character, "foes", target["Name"], "Rank"] = value,
+		"Failures",
+			$state[character, "failures", "Rank"] = value,
+		"Bonds",
+			$state[character, "bondProgress", "Rank"] = value,
+		_,
+			$Failed
+	];
 
 setTargetProgress[target_Association, value_, character_] := Module[
 	{clamped},
@@ -1426,27 +1541,7 @@ setTargetProgress[target_Association, value_, character_] := Module[
 	If[!TrueQ[value == clamped],
 		Message[progress::clamped, target["Name"], character, value, clamped]
 	];
-	Switch[
-		target["Type"],
-		"Vow",
-			$state[character, "vows", target["Name"], "Progress"] = clamped,
-		"Threat",
-			$state[character, "vows", target["Vow"], "Threat", "Menace", "progress"] = clamped,
-		"Delve",
-			$state[character, "delves", target["Name"], "Progress"] = clamped,
-		"Scene",
-			$state[character, "scene", "Progress"] = clamped,
-		"Journey",
-			$state[character, "journeys", target["Name"], "Progress"] = clamped,
-		"Foe",
-			$state[character, "foes", target["Name"], "Progress"] = clamped,
-		"Failures",
-			$state[character, "failures", "Progress"] = clamped,
-		"Bonds",
-			$state[character, "bondProgress", "Progress"] = clamped,
-		_,
-			Return[$Failed]
-	];
+	If[setTargetField[target, "Progress", clamped, character] === $Failed, Return[$Failed]];
 	clamped
 ];
 
@@ -1454,27 +1549,7 @@ adjustTargetProgress[target_Association, delta_, character_] :=
 	setTargetProgress[target, target["Progress"] + delta, character];
 
 setTargetRank[target_Association, rank_?rankQ, character_] := Module[{},
-	Switch[
-		target["Type"],
-		"Vow",
-			$state[character, "vows", target["Name"], "Rank"] = rank,
-		"Threat",
-			$state[character, "vows", target["Vow"], "Threat", "Menace", "rank"] = rank,
-		"Delve",
-			$state[character, "delves", target["Name"], "Rank"] = rank,
-		"Scene",
-			$state[character, "scene", "Rank"] = rank,
-		"Journey",
-			$state[character, "journeys", target["Name"], "Rank"] = rank,
-		"Foe",
-			$state[character, "foes", target["Name"], "Rank"] = rank,
-		"Failures",
-			$state[character, "failures", "Rank"] = rank,
-		"Bonds",
-			$state[character, "bondProgress", "Rank"] = rank,
-		_,
-			Return[$Failed]
-	];
+	If[setTargetField[target, "Rank", rank, character] === $Failed, Return[$Failed]];
 	rank
 ];
 
@@ -1500,41 +1575,83 @@ raiseTargetRank[target_Association, character_] := Module[
 	setTargetRank[target, rank, character]
 ];
 
-
-
-
+(* ::Subsection::Closed:: *)
 (*Character management*)
 
 
-createCharacter[name_String, assetSpecs_List /; Length[assetSpecs] == 3, (edge_)?statValueQ, (heart_)?statValueQ, (iron_)?statValueQ, (shadow_)?statValueQ,
-    (wits_)?statValueQ, vowSpec_, bonds:{___String} /; Length[bonds] <= 3] :=
-   Module[{character, ownedAssets, startingVow}, ensureStateInitialized[]; ownedAssets = ownedAssetFromSpec /@ assetSpecs; If[MemberQ[ownedAssets, $Failed], Message[createCharacter::badassets]; Return[$Failed]];
-     startingVow = ownedVowFromSpec[vowSpec]; If[startingVow === $Failed, Message[createCharacter::badvow]; Return[$Failed]];
-     character = Association["assets" -> ownedAssets, "edge" -> edge, "heart" -> heart, "iron" -> iron, "shadow" -> shadow, "wits" -> wits, "health" -> 5,
-       "spirit" -> 5, "supply" -> 5, "momentum" -> 2, "debilities" -> {}, "vows" -> Association[startingVow["Name"] -> startingVow],
-       "failures" -> makeProgressObject["Failures", Epic], "bondProgress" -> makeProgressObject["Bonds", Epic, 0.25*Length[bonds]],
-       "bonds" -> bonds, "journeys" -> <||>, "currentJourney" -> None, "foes" -> <||>, "delves" -> <||>, "currentDelve" -> None, "scene" -> None, "earnedExperience" -> 0, "spentExperience" -> 0]; AssociateTo[$state, name -> character]; $soloCharacter = name; $state[name]];
+createCharacter[
+	name_String,
+	assetSpecs_List /; Length[assetSpecs] == 3,
+	(edge_)?statValueQ,
+	(heart_)?statValueQ,
+	(iron_)?statValueQ,
+	(shadow_)?statValueQ,
+	(wits_)?statValueQ,
+	vowSpec_,
+	bonds : {___String} /; Length[bonds] <= 3
+] := Module[
+	{character, ownedAssets, startingVow},
+	ensureStateInitialized[];
+	ownedAssets = ownedAssetFromSpec /@ assetSpecs;
+	If[MemberQ[ownedAssets, $Failed],
+		Message[createCharacter::badassets];
+		Return[$Failed]
+	];
+	startingVow = ownedVowFromSpec[vowSpec];
+	If[startingVow === $Failed,
+		Message[createCharacter::badvow];
+		Return[$Failed]
+	];
+	character = Association[
+		"assets" -> ownedAssets,
+		"edge" -> edge,
+		"heart" -> heart,
+		"iron" -> iron,
+		"shadow" -> shadow,
+		"wits" -> wits,
+		"health" -> 5,
+		"spirit" -> 5,
+		"supply" -> 5,
+		"momentum" -> 2,
+		"debilities" -> {},
+		"vows" -> Association[startingVow["Name"] -> startingVow],
+		"failures" -> makeProgressObject["Failures", Epic],
+		"bondProgress" -> makeProgressObject["Bonds", Epic, 0.25 Length[bonds]],
+		"bonds" -> bonds,
+		"journeys" -> <||>,
+		"currentJourney" -> None,
+		"foes" -> <||>,
+		"delves" -> <||>,
+		"currentDelve" -> None,
+		"scene" -> None,
+		"earnedExperience" -> 0,
+		"spentExperience" -> 0
+	];
+	AssociateTo[$state, name -> character];
+	$soloCharacter = name;
+	$state[name]
+];
 createCharacter::badassets = "Could not create the character because one or more starting assets are invalid.";
 createCharacter::badvow = "Could not create the character because the starting vow is invalid. Use starterVow[name, Extreme | Epic] or {vowName, Extreme | Epic}.";
 
 normalizeCharacterForSheet[character_String] := Module[
-	{assets, vows, bonds, journeys, foes, delves, sceneData},
+	{normalizers, normalized},
 	If[!ensureCharacterState[character], Return[$Failed]];
 	If[ensureCharacterCoreProgress[character] === $Failed, Return[$Failed]];
-	assets = normalizeCharacterAssets[character];
-	If[assets === $Failed, Return[$Failed]];
-	vows = normalizeCharacterVows[character];
-	If[vows === $Failed, Return[$Failed]];
-	bonds = normalizeCharacterBonds[character];
-	If[bonds === $Failed, Return[$Failed]];
-	journeys = normalizeCharacterJourneys[character];
-	If[journeys === $Failed, Return[$Failed]];
-	foes = normalizeCharacterFoes[character];
-	If[foes === $Failed, Return[$Failed]];
-	delves = normalizeCharacterDelves[character];
-	If[delves === $Failed, Return[$Failed]];
-	sceneData = normalizeCharacterScene[character];
-	If[sceneData === $Failed, Return[$Failed]];
+	normalizers = {
+		normalizeCharacterAssets,
+		normalizeCharacterVows,
+		normalizeCharacterBonds,
+		normalizeCharacterJourneys,
+		normalizeCharacterFoes,
+		normalizeCharacterDelves,
+		normalizeCharacterScene
+	};
+	Do[
+		normalized = normalizer[character];
+		If[normalized === $Failed, Return[$Failed]],
+		{normalizer, normalizers}
+	];
 	$state[character]
 ];
 
@@ -1769,21 +1886,10 @@ starterAsset[args___] := (
 );
 
 asset[name_String, character_ : $soloCharacter] := Module[
-	{record, ownedAssets, positions, owned},
-	record = assetRecord[name];
-	If[!AssociationQ[record],
-		Message[asset::unknown, name];
-		Return[$Failed]
-	];
-	ownedAssets = normalizeCharacterAssets[character];
-	If[ownedAssets === $Failed, Return[$Failed]];
-	positions = Flatten @ Position[Lookup[ownedAssets, "Name", Missing["NoName"]], name];
-	If[positions === {},
-		Message[asset::notowned, name, character];
-		Return[$Failed]
-	];
-	owned = ownedAssets[[First[positions]]];
-	owned
+	{context},
+	context = ownedAssetContext[name, character];
+	If[context === $Failed, Return[$Failed]];
+	context["Owned"]
 ];
 
 assets[] :=
@@ -1855,10 +1961,7 @@ addAsset[assetSpec_, character_, opts : OptionsPattern[]] := Module[
 		Message[asset::duplicate, name, character];
 		Return[$Failed]
 	];
-	If[availableExperience[character] < 5,
-		Message[asset::xp, character, 5, availableExperience[character]];
-		Return[$Failed]
-	];
+	If[!requireExperience[character, 5], Return[$Failed]];
 	AppendTo[$state[character, "assets"], owned];
 	spendExperience[5, character];
 	owned
@@ -1870,97 +1973,61 @@ upgradeAsset[name_String, ability_Integer, opts : OptionsPattern[]] :=
 	upgradeAsset[name, ability, $soloCharacter, opts];
 
 upgradeAsset[name_String, ability_Integer, character_, opts : OptionsPattern[]] := Module[
-	{record, ownedAssets, positions, index, owned, valid, selected, updated, updatedAssets},
-	record = assetRecord[name];
-	If[!AssociationQ[record],
-		Message[asset::unknown, name];
-		Return[$Failed]
-	];
-	ownedAssets = normalizeCharacterAssets[character];
-	If[ownedAssets === $Failed, Return[$Failed]];
-	positions = Flatten @ Position[Lookup[ownedAssets, "Name", Missing["NoName"]], name];
-	If[positions === {},
-		Message[asset::notowned, name, character];
-		Return[$Failed]
-	];
+	{context, record, owned, valid, selected, updated},
+	context = ownedAssetContext[name, character];
+	If[context === $Failed, Return[$Failed]];
+	record = context["Record"];
+	owned = context["Owned"];
 	valid = assetAbilityIndices[record];
 	If[!MemberQ[valid, ability],
 		Message[asset::badability, ability, name, Length[valid]];
 		Return[$Failed]
 	];
-	index = First[positions];
-	owned = ownedAssets[[index]];
 	selected = Lookup[owned, "Abilities", {}];
 	If[MemberQ[selected, ability],
 		Message[asset::selected, ability, name];
 		Return[$Failed]
 	];
-	If[availableExperience[character] < 3,
-		Message[asset::xp, character, 3, availableExperience[character]];
-		Return[$Failed]
-	];
+	If[!requireExperience[character, 3], Return[$Failed]];
 	updated = Association[owned];
 	updated["Abilities"] = Sort[Append[selected, ability]];
-	updatedAssets = ownedAssets;
-	updatedAssets[[index]] = updated;
-	$state[character, "assets"] = updatedAssets;
+	replaceOwnedAsset[character, context["Index"], updated];
 	spendExperience[3, character];
 	updated
 ];
 
 setAssetTrack[assetName_String, trackName_String, value_Integer, character_ : $soloCharacter] := Module[
-	{record, ownedAssets, positions, index, owned, trackDef, tracks, updated, updatedAssets, clamped},
-	record = assetRecord[assetName];
-	If[!AssociationQ[record],
-		Message[asset::unknown, assetName];
-		Return[$Failed]
-	];
-	ownedAssets = normalizeCharacterAssets[character];
-	If[ownedAssets === $Failed, Return[$Failed]];
-	positions = Flatten @ Position[Lookup[ownedAssets, "Name", Missing["NoName"]], assetName];
-	If[positions === {},
-		Message[asset::notowned, assetName, character];
-		Return[$Failed]
-	];
+	{context, record, owned, trackDef, tracks, updated, clamped},
+	context = ownedAssetContext[assetName, character];
+	If[context === $Failed, Return[$Failed]];
+	record = context["Record"];
+	owned = context["Owned"];
 	trackDef = assetTrackDefinition[record, trackName];
 	If[!AssociationQ[trackDef],
 		Message[asset::track, trackName, assetName];
 		Return[$Failed]
 	];
-	index = First[positions];
-	owned = ownedAssets[[index]];
-	tracks = Join[initialAssetTracks[record], Lookup[owned, "Tracks", <||>]];
+	tracks = ownedAssetTracks[record, owned];
 	clamped = clampAssetTrackValue[trackDef, value];
 	tracks[trackName] = clamped;
 	updated = Association[owned];
 	updated["Tracks"] = tracks;
-	updatedAssets = ownedAssets;
-	updatedAssets[[index]] = updated;
-	$state[character, "assets"] = updatedAssets;
+	replaceOwnedAsset[character, context["Index"], updated];
 	clamped
 ];
 
 adjustAssetTrack[assetName_String, trackName_String, delta_Integer, character_ : $soloCharacter] := Module[
-	{record, ownedAssets, positions, owned, trackDef, tracks, current},
-	record = assetRecord[assetName];
-	If[!AssociationQ[record],
-		Message[asset::unknown, assetName];
-		Return[$Failed]
-	];
-	ownedAssets = normalizeCharacterAssets[character];
-	If[ownedAssets === $Failed, Return[$Failed]];
-	positions = Flatten @ Position[Lookup[ownedAssets, "Name", Missing["NoName"]], assetName];
-	If[positions === {},
-		Message[asset::notowned, assetName, character];
-		Return[$Failed]
-	];
+	{context, record, owned, trackDef, tracks, current},
+	context = ownedAssetContext[assetName, character];
+	If[context === $Failed, Return[$Failed]];
+	record = context["Record"];
+	owned = context["Owned"];
 	trackDef = assetTrackDefinition[record, trackName];
 	If[!AssociationQ[trackDef],
 		Message[asset::track, trackName, assetName];
 		Return[$Failed]
 	];
-	owned = ownedAssets[[First[positions]]];
-	tracks = Join[initialAssetTracks[record], Lookup[owned, "Tracks", <||>]];
+	tracks = ownedAssetTracks[record, owned];
 	current = Lookup[tracks, trackName, Lookup[trackDef, "Default", 0]];
 	setAssetTrack[assetName, trackName, current + delta, character]
 ];
@@ -2007,12 +2074,11 @@ setCompanionHealth[name_String, value_Integer, opts : OptionsPattern[]] :=
 	setCompanionHealth[name, value, $soloCharacter, opts];
 
 setCompanionHealth[name_String, value_Integer, character_, opts : OptionsPattern[]] := Module[
-	{context, clamped, updated},
+	{context, clamped},
 	context = ownedCompanionContext[name, character];
 	If[context === $Failed, Return[$Failed]];
 	clamped = setAssetTrack[name, "health", value, character];
 	If[clamped === $Failed, Return[$Failed]];
-	updated = $state[character, "assets", context["Index"]];
 	clamped
 ];
 
@@ -2025,7 +2091,7 @@ adjustCompanionHealth[name_String, delta_Integer, character_, opts : OptionsPatt
 	{context, tracks, current},
 	context = ownedCompanionContext[name, character];
 	If[context === $Failed, Return[$Failed]];
-	tracks = Join[initialAssetTracks[context["Record"]], Lookup[context["Owned"], "Tracks", <||>]];
+	tracks = ownedAssetTracks[context["Record"], context["Owned"]];
 	current = Lookup[tracks, "health", Lookup[assetTrackDefinition[context["Record"], "health"], "Default", 0]];
 	setCompanionHealth[name, current + delta, character, opts]
 ];
@@ -2048,7 +2114,7 @@ addRarity[assetName_String, rarityName_, opts : OptionsPattern[]] :=
 	addRarity[assetName, rarityName, $soloCharacter, opts];
 
 addRarity[assetName_String, rarityName_, character_, opts : OptionsPattern[]] := Module[
-	{record, rarity, cost, ownedAssets, positions, index, owned, updated, updatedAssets},
+	{record, rarity, cost, context, owned, updated},
 	record = assetRecord[assetName];
 	If[!AssociationQ[record],
 		Message[asset::unknown, assetName];
@@ -2068,28 +2134,17 @@ addRarity[assetName_String, rarityName_, character_, opts : OptionsPattern[]] :=
 		Message[asset::noraritycost, assetName];
 		Return[$Failed]
 	];
-	ownedAssets = normalizeCharacterAssets[character];
-	If[ownedAssets === $Failed, Return[$Failed]];
-	positions = Flatten @ Position[Lookup[ownedAssets, "Name", Missing["NoName"]], assetName];
-	If[positions === {},
-		Message[asset::notowned, assetName, character];
-		Return[$Failed]
-	];
-	index = First[positions];
-	owned = ownedAssets[[index]];
+	context = ownedAssetContext[assetName, character];
+	If[context === $Failed, Return[$Failed]];
+	owned = context["Owned"];
 	If[Lookup[owned, "Rarity", None] =!= None,
 		Message[asset::rarityduplicate, assetName, Lookup[owned, "Rarity", None]];
 		Return[$Failed]
 	];
-	If[availableExperience[character] < cost,
-		Message[asset::xp, character, cost, availableExperience[character]];
-		Return[$Failed]
-	];
+	If[!requireExperience[character, cost], Return[$Failed]];
 	updated = Association[owned];
 	updated["Rarity"] = rarity;
-	updatedAssets = ownedAssets;
-	updatedAssets[[index]] = updated;
-	$state[character, "assets"] = updatedAssets;
+	replaceOwnedAsset[character, context["Index"], updated];
 	spendExperience[cost, character];
 	updated
 ];
@@ -2100,30 +2155,17 @@ removeRarity[assetName_String, opts : OptionsPattern[]] :=
 	removeRarity[assetName, $soloCharacter, opts];
 
 removeRarity[assetName_String, character_, opts : OptionsPattern[]] := Module[
-	{record, ownedAssets, positions, index, owned, updated, updatedAssets},
-	record = assetRecord[assetName];
-	If[!AssociationQ[record],
-		Message[asset::unknown, assetName];
-		Return[$Failed]
-	];
-	ownedAssets = normalizeCharacterAssets[character];
-	If[ownedAssets === $Failed, Return[$Failed]];
-	positions = Flatten @ Position[Lookup[ownedAssets, "Name", Missing["NoName"]], assetName];
-	If[positions === {},
-		Message[asset::notowned, assetName, character];
-		Return[$Failed]
-	];
-	index = First[positions];
-	owned = ownedAssets[[index]];
+	{context, owned, updated},
+	context = ownedAssetContext[assetName, character];
+	If[context === $Failed, Return[$Failed]];
+	owned = context["Owned"];
 	If[Lookup[owned, "Rarity", None] === None,
 		Message[asset::norarity, assetName];
 		Return[$Failed]
 	];
 	updated = Association[owned];
 	updated["Rarity"] = None;
-	updatedAssets = ownedAssets;
-	updatedAssets[[index]] = updated;
-	$state[character, "assets"] = updatedAssets;
+	replaceOwnedAsset[character, context["Index"], updated];
 	markExperience[1, character];
 	updated
 ];
@@ -2159,13 +2201,45 @@ asset::notcompanion = "Asset `1` is not a companion.";
 
 
 Options[actionRoll] = {Adds -> Association[], Display -> False};
-actionRoll[(stat_)?statQ, opts:OptionsPattern[]] := actionRoll[stat, $soloCharacter, opts];
-actionRoll[(stat_)?statQ, character_String, opts:OptionsPattern[]] := Module[{actionDie, momentum, actionValue, actionDieCancelled, statValue, adds, actionScore, challengeDice, cd1, cd2, roll},
-    actionDie = rollActionDie[]; momentum = getMomentum[character]; {actionValue, actionDieCancelled} = If[momentum < 0 && Abs[momentum] == actionDie, {0, True}, {actionDie, False}];
-     statValue = getAttr[stat, character]; adds = OptionValue[Adds]; actionScore = Min[actionValue + Total[Values[adds]] + statValue, 10]; challengeDice = {cd1, cd2} = rollChallengeDice[];
-     roll = Association["character" -> character, "actionDie" -> actionDie, "momentum" -> momentum, "actionValue" -> actionValue, "actionDieCancelled" -> actionDieCancelled, "stat" -> stat,
-       "statValue" -> statValue, "adds" -> adds, "actionScore" -> actionScore, "challengeDice" -> challengeDice, "match" -> cd1 == cd2, "result" -> actionRollResult[challengeDice, actionScore]];
-     roll];
+
+actionRoll[(stat_)?statQ, opts : OptionsPattern[]] :=
+	actionRoll[stat, $soloCharacter, opts];
+
+actionRoll[(stat_)?statQ, character_String, opts : OptionsPattern[]] := Module[
+	{
+		actionDie,
+		momentum,
+		actionValue,
+		actionDieCancelled,
+		statValue,
+		adds,
+		actionScore,
+		challengeDice,
+		cd1,
+		cd2
+	},
+	actionDie = rollActionDie[];
+	momentum = getMomentum[character];
+	{actionValue, actionDieCancelled} = actionDieAfterMomentumCancel[actionDie, momentum];
+	statValue = getAttr[stat, character];
+	adds = OptionValue[Adds];
+	actionScore = actionScoreFromParts[actionValue, statValue, adds];
+	challengeDice = {cd1, cd2} = rollChallengeDice[];
+	Association[
+		"character" -> character,
+		"actionDie" -> actionDie,
+		"momentum" -> momentum,
+		"actionValue" -> actionValue,
+		"actionDieCancelled" -> actionDieCancelled,
+		"stat" -> stat,
+		"statValue" -> statValue,
+		"adds" -> adds,
+		"actionScore" -> actionScore,
+		"challengeDice" -> challengeDice,
+		"match" -> cd1 == cd2,
+		"result" -> actionRollResult[challengeDice, actionScore]
+	]
+];
 
 
 (* ::Subsection::Closed:: *)
@@ -2285,6 +2359,128 @@ progressRoll[track_String, character_String, opts : OptionsPattern[]] := Module[
 
 
 (* ::Subsection::Closed:: *)
+(*Reroll*)
+
+
+Options[reroll] = {Display -> False};
+
+reroll[roll_Association, die : Except[_List], opts : OptionsPattern[]] :=
+	reroll[roll, {die}, opts];
+
+reroll[roll_Association, dice_List, opts : OptionsPattern[]] := Module[
+	{
+		selection,
+		invalid,
+		newRoll,
+		oldActionDie,
+		oldChallengeDice,
+		actionDie,
+		momentum,
+		actionValue,
+		actionDieCancelled,
+		actionScore,
+		challengeDice,
+		challengeIndices,
+		cd1,
+		cd2
+	},
+
+	If[!rollQ[roll],
+		Message[reroll::badroll, roll];
+		Return[$Failed]
+	];
+
+	selection = normalizeRerollSelection[dice];
+
+	If[selection === {},
+		Message[reroll::empty];
+		Return[$Failed]
+	];
+
+	invalid = Select[selection, !rerollSelectionQ[#] &];
+
+	If[invalid =!= {},
+		Message[reroll::baddie, First[invalid]];
+		Return[$Failed]
+	];
+
+	If[progressRollQ[roll] && MemberQ[selection, ActionDie],
+		Message[reroll::actiondie];
+		Return[$Failed]
+	];
+
+	oldChallengeDice = roll["challengeDice"];
+	challengeDice = oldChallengeDice;
+
+	challengeIndices = rerollChallengeDieIndices[selection, oldChallengeDice];
+
+	If[!VectorQ[challengeIndices, MemberQ[{1, 2}, #] &],
+		Message[reroll::badchallenge, selection];
+		Return[$Failed]
+	];
+
+	Do[
+		challengeDice[[i]] = RandomInteger[{1, 10}],
+		{i, challengeIndices}
+	];
+
+	If[actionRollQ[roll],
+		oldActionDie = roll["actionDie"];
+
+		actionDie =
+			If[
+				MemberQ[selection, ActionDie],
+				rollActionDie[],
+				oldActionDie
+			];
+
+		momentum = roll["momentum"];
+
+		{actionValue, actionDieCancelled} =
+			actionDieAfterMomentumCancel[actionDie, momentum];
+
+		actionScore =
+			actionScoreFromParts[actionValue, roll["statValue"], roll["adds"]];
+
+		{cd1, cd2} = challengeDice;
+
+		newRoll = Association[roll];
+
+		newRoll["actionDie"] = actionDie;
+		newRoll["actionValue"] = actionValue;
+		newRoll["actionDieCancelled"] = actionDieCancelled;
+		newRoll["actionScore"] = actionScore;
+		newRoll["challengeDice"] = challengeDice;
+		newRoll["match"] = cd1 == cd2;
+		newRoll["result"] = actionRollResult[challengeDice, actionScore];
+
+		newRoll["reroll"] = Association[
+			"selection" -> selection,
+			"previousActionDie" -> oldActionDie,
+			"previousChallengeDice" -> oldChallengeDice,
+			"previousResult" -> roll["result"]
+		];,
+
+		{cd1, cd2} = challengeDice;
+
+		newRoll = Association[roll];
+
+		newRoll["challengeDice"] = challengeDice;
+		newRoll["match"] = cd1 == cd2;
+		newRoll["result"] = progressRollResult[challengeDice, roll["progressScore"]];
+
+		newRoll["reroll"] = Association[
+			"selection" -> selection,
+			"previousChallengeDice" -> oldChallengeDice,
+			"previousResult" -> roll["result"]
+		];
+	];
+
+	newRoll
+];
+
+
+(* ::Subsection::Closed:: *)
 (*Resource and momentum adjustment*)
 
 
@@ -2334,7 +2530,7 @@ recover[character_] := Module[
 				If[!AssociationQ[trackDef],
 					#,
 					updated = Association[#];
-					tracks = Join[initialAssetTracks[record], Lookup[updated, "Tracks", <||>]];
+					tracks = ownedAssetTracks[record, updated];
 					tracks["health"] = trackDef["Max"];
 					updated["Tracks"] = tracks;
 					updated
@@ -2352,29 +2548,36 @@ recover[character_] := Module[
 (*Progress mutation*)
 
 
+withProgressTarget[targetSpec_, character_, handler_] := Module[
+	{target, useCharacter},
+	useCharacter = progressTargetCharacter[targetSpec, character];
+	target = resolveProgressTarget[targetSpec, character];
+	If[target === $Failed, Return[$Failed]];
+	handler[target, useCharacter]
+];
+
 markProgress[ThreatTrack[vowName_String, handleCharacter_String], n_Integer?NonNegative, character_ : Automatic] :=
-	markThreatProgressByVow[
-		vowName,
-		n,
-		Replace[character, Automatic :> handleCharacter]
+	withProgressTarget[
+		ThreatTrack[vowName, handleCharacter],
+		character,
+		adjustTargetProgress[#1, progressMarkValue[#1, n], #2] &
 	];
 
-markProgress[track_String, n_Integer?NonNegative, character_ : $soloCharacter] := Module[
-	{target, markValue},
-	target = progressTargetData[track, character];
-	If[target === $Failed, Return[$Failed]];
-	Switch[
-		target["Type"],
+markProgress[track_String, n_Integer?NonNegative, character_ : $soloCharacter] :=
+	withProgressTarget[
+		track,
+		character,
+		Switch[
+			#1["Type"],
 			"Vow",
-				markVowProgress[target["Name"], n, character],
+				markVowProgress[#1["Name"], n, #2],
 			"Threat",
-				markThreatProgressByVow[target["Vow"], n, character],
+				markThreatProgressByVow[#1["Vow"], n, #2],
 			"Delve" | "Scene" | "Journey" | "Foe" | "Failures" | "Bonds",
-				markValue = n rankMarkValue[target["Rank"]];
-				adjustTargetProgress[target, markValue, character],
+				adjustTargetProgress[#1, progressMarkValue[#1, n], #2],
 			_,
 				$Failed
-		]
+		] &
 	];
 
 markProgress[track_String, character_String] :=
@@ -2394,100 +2597,66 @@ markProgress[_String | _ThreatTrack, n_Integer?Negative, character_ : $soloChara
 	$Failed
 );
 
-clearProgress[ThreatTrack[vowName_String, handleCharacter_String], n_Integer?NonNegative, character_ : Automatic] := Module[
-	{ownedThreat, target, markValue, useCharacter},
-	useCharacter = Replace[character, Automatic :> handleCharacter];
-	ownedThreat = threatByVowName[vowName, useCharacter];
-	If[ownedThreat === $Failed, Return[$Failed]];
-	target = Association[
-		"Type" -> "Threat",
-		"Name" -> ownedThreat["Name"],
-		"Vow" -> vowName,
-		"Rank" -> ownedThreat["Menace", "rank"],
-		"Progress" -> ownedThreat["Menace", "progress"]
+clearProgress[ThreatTrack[vowName_String, handleCharacter_String], n_Integer?NonNegative, character_ : Automatic] :=
+	withProgressTarget[
+		ThreatTrack[vowName, handleCharacter],
+		character,
+		adjustTargetProgress[#1, -progressMarkValue[#1, n], #2] &
 	];
-	markValue = n rankMarkValue[target["Rank"]];
-	adjustTargetProgress[target, -markValue, useCharacter]
-];
 
-clearProgress[track_String, n_Integer?NonNegative, character_ : $soloCharacter] := Module[
-	{target, markValue},
-	target = progressTargetData[track, character];
-	If[target === $Failed, Return[$Failed]];
-	markValue = n rankMarkValue[target["Rank"]];
-	adjustTargetProgress[target, -markValue, character]
-];
+clearProgress[track_String, n_Integer?NonNegative, character_ : $soloCharacter] :=
+	withProgressTarget[
+		track,
+		character,
+		adjustTargetProgress[#1, -progressMarkValue[#1, n], #2] &
+	];
 
 clearProgress[_String | _ThreatTrack, n_Integer?Negative, character_ : $soloCharacter] := (
 	Message[progress::badunits, n];
 	$Failed
 );
 
-resetProgress[ThreatTrack[vowName_String, handleCharacter_String], character_ : Automatic] := Module[
-	{ownedThreat, target, useCharacter},
-	useCharacter = Replace[character, Automatic :> handleCharacter];
-	ownedThreat = threatByVowName[vowName, useCharacter];
-	If[ownedThreat === $Failed, Return[$Failed]];
-	target = Association[
-		"Type" -> "Threat",
-		"Name" -> ownedThreat["Name"],
-		"Vow" -> vowName,
-		"Rank" -> ownedThreat["Menace", "rank"],
-		"Progress" -> ownedThreat["Menace", "progress"]
+resetProgress[ThreatTrack[vowName_String, handleCharacter_String], character_ : Automatic] :=
+	withProgressTarget[
+		ThreatTrack[vowName, handleCharacter],
+		character,
+		setTargetProgress[#1, 0, #2] &
 	];
-	setTargetProgress[target, 0, useCharacter]
-];
 
-resetProgress[track_String, character_ : $soloCharacter] := Module[
-	{target},
-	target = progressTargetData[track, character];
-	If[target === $Failed, Return[$Failed]];
-	setTargetProgress[target, 0, character]
-];
-
-resetProgressToOne[ThreatTrack[vowName_String, handleCharacter_String], character_ : Automatic] := Module[
-	{ownedThreat, target, useCharacter},
-	useCharacter = Replace[character, Automatic :> handleCharacter];
-	ownedThreat = threatByVowName[vowName, useCharacter];
-	If[ownedThreat === $Failed, Return[$Failed]];
-	target = Association[
-		"Type" -> "Threat",
-		"Name" -> ownedThreat["Name"],
-		"Vow" -> vowName,
-		"Rank" -> ownedThreat["Menace", "rank"],
-		"Progress" -> ownedThreat["Menace", "progress"]
+resetProgress[track_String, character_ : $soloCharacter] :=
+	withProgressTarget[
+		track,
+		character,
+		setTargetProgress[#1, 0, #2] &
 	];
-	setTargetProgress[target, 1, useCharacter]
-];
 
-resetProgressToOne[track_String, character_ : $soloCharacter] := Module[
-	{target},
-	target = progressTargetData[track, character];
-	If[target === $Failed, Return[$Failed]];
-	setTargetProgress[target, 1, character]
-];
-
-raiseProgressRank[ThreatTrack[vowName_String, handleCharacter_String], character_ : Automatic] := Module[
-	{ownedThreat, target, useCharacter},
-	useCharacter = Replace[character, Automatic :> handleCharacter];
-	ownedThreat = threatByVowName[vowName, useCharacter];
-	If[ownedThreat === $Failed, Return[$Failed]];
-	target = Association[
-		"Type" -> "Threat",
-		"Name" -> ownedThreat["Name"],
-		"Vow" -> vowName,
-		"Rank" -> ownedThreat["Menace", "rank"],
-		"Progress" -> ownedThreat["Menace", "progress"]
+resetProgressToOne[ThreatTrack[vowName_String, handleCharacter_String], character_ : Automatic] :=
+	withProgressTarget[
+		ThreatTrack[vowName, handleCharacter],
+		character,
+		setTargetProgress[#1, 1, #2] &
 	];
-	raiseTargetRank[target, useCharacter]
-];
 
-raiseProgressRank[track_String, character_ : $soloCharacter] := Module[
-	{target},
-	target = progressTargetData[track, character];
-	If[target === $Failed, Return[$Failed]];
-	raiseTargetRank[target, character]
-];
+resetProgressToOne[track_String, character_ : $soloCharacter] :=
+	withProgressTarget[
+		track,
+		character,
+		setTargetProgress[#1, 1, #2] &
+	];
+
+raiseProgressRank[ThreatTrack[vowName_String, handleCharacter_String], character_ : Automatic] :=
+	withProgressTarget[
+		ThreatTrack[vowName, handleCharacter],
+		character,
+		raiseTargetRank[#1, #2] &
+	];
+
+raiseProgressRank[track_String, character_ : $soloCharacter] :=
+	withProgressTarget[
+		track,
+		character,
+		raiseTargetRank[#1, #2] &
+	];
 
 markProgress::notrack = "No vow, threat, delve, scene, journey, foe, failures, or bonds track named `1` exists for character `2`.";
 progress::badunits = "Progress units must be a non-negative integer, got `1`.";
@@ -2507,19 +2676,57 @@ normalizeCharacterFoes[character_] :=
 	normalizeProgressObjectAssociation[character, "foes"];
 
 
-
-addJourney[name_String, rank_?rankQ, character_ : $soloCharacter] := Module[
-	{ownedJourneys, ownedJourney},
-	ownedJourneys = normalizeCharacterJourneys[character];
-	If[ownedJourneys === $Failed, Return[$Failed]];
-	If[KeyExistsQ[ownedJourneys, name],
-		Message[journey::duplicate, name, character];
+addProgressObjectToCollection[
+	collectionKey_String,
+	normalizer_,
+	duplicateReporter_,
+	name_String,
+	rank_?rankQ,
+	character_
+] := Module[
+	{collection, object},
+	collection = normalizer[character];
+	If[collection === $Failed, Return[$Failed]];
+	If[KeyExistsQ[collection, name],
+		duplicateReporter[name, character];
 		Return[$Failed]
 	];
-	ownedJourney = makeProgressObject[name, rank];
-	$state[character, "journeys", name] = ownedJourney;
-	ownedJourney
+	object = makeProgressObject[name, rank];
+	$state[character, collectionKey, name] = object;
+	object
 ];
+
+removeProgressObjectFromCollection[
+	collectionKey_String,
+	normalizer_,
+	unknownReporter_,
+	name_String,
+	character_,
+	currentKey_ : None
+] := Module[
+	{collection},
+	collection = normalizer[character];
+	If[collection === $Failed, Return[$Failed]];
+	If[!KeyExistsQ[collection, name],
+		unknownReporter[name, character];
+		Return[$Failed]
+	];
+	$state[character, collectionKey] = KeyDrop[collection, name];
+	If[StringQ[currentKey] && Lookup[$state[character], currentKey, None] === name,
+		$state[character, currentKey] = None
+	];
+	$state[character, collectionKey]
+];
+
+addJourney[name_String, rank_?rankQ, character_ : $soloCharacter] :=
+	addProgressObjectToCollection[
+		"journeys",
+		normalizeCharacterJourneys,
+		Function[{objectName, objectCharacter}, Message[journey::duplicate, objectName, objectCharacter]],
+		name,
+		rank,
+		character
+	];
 
 addJourney[name_String, rank_, character_ : $soloCharacter] /; !rankQ[rank] := (
 	Message[progress::badrank, rank];
@@ -2567,33 +2774,25 @@ journeys[character_] := Module[
 	ownedJourneys
 ];
 
-removeJourney[name_String, character_ : $soloCharacter] := Module[
-	{ownedJourneys},
-	ownedJourneys = normalizeCharacterJourneys[character];
-	If[ownedJourneys === $Failed, Return[$Failed]];
-	If[!KeyExistsQ[ownedJourneys, name],
-		Message[journey::unknown, name, character];
-		Return[$Failed]
+removeJourney[name_String, character_ : $soloCharacter] :=
+	removeProgressObjectFromCollection[
+		"journeys",
+		normalizeCharacterJourneys,
+		Function[{objectName, objectCharacter}, Message[journey::unknown, objectName, objectCharacter]],
+		name,
+		character,
+		"currentJourney"
 	];
-	$state[character, "journeys"] = KeyDrop[ownedJourneys, name];
-	If[Lookup[$state[character], "currentJourney", None] === name,
-		$state[character, "currentJourney"] = None
-	];
-	$state[character, "journeys"]
-];
 
-addFoe[name_String, rank_?rankQ, character_ : $soloCharacter] := Module[
-	{ownedFoes, ownedFoe},
-	ownedFoes = normalizeCharacterFoes[character];
-	If[ownedFoes === $Failed, Return[$Failed]];
-	If[KeyExistsQ[ownedFoes, name],
-		Message[foe::duplicate, name, character];
-		Return[$Failed]
+addFoe[name_String, rank_?rankQ, character_ : $soloCharacter] :=
+	addProgressObjectToCollection[
+		"foes",
+		normalizeCharacterFoes,
+		Function[{objectName, objectCharacter}, Message[foe::duplicate, objectName, objectCharacter]],
+		name,
+		rank,
+		character
 	];
-	ownedFoe = makeProgressObject[name, rank];
-	$state[character, "foes", name] = ownedFoe;
-	ownedFoe
-];
 
 addFoe[name_String, rank_, character_ : $soloCharacter] /; !rankQ[rank] := (
 	Message[progress::badrank, rank];
@@ -2620,16 +2819,14 @@ foes[character_] := Module[
 	ownedFoes
 ];
 
-removeFoe[name_String, character_ : $soloCharacter] := Module[
-	{ownedFoes},
-	ownedFoes = normalizeCharacterFoes[character];
-	If[ownedFoes === $Failed, Return[$Failed]];
-	If[!KeyExistsQ[ownedFoes, name],
-		Message[foe::unknown, name, character];
-		Return[$Failed]
+removeFoe[name_String, character_ : $soloCharacter] :=
+	removeProgressObjectFromCollection[
+		"foes",
+		normalizeCharacterFoes,
+		Function[{objectName, objectCharacter}, Message[foe::unknown, objectName, objectCharacter]],
+		name,
+		character
 	];
-	$state[character, "foes"] = KeyDrop[ownedFoes, name]
-];
 
 failures[] :=
 	failures[$soloCharacter];
@@ -2867,11 +3064,8 @@ addDelve[name_String, rank_, ___] /; !rankQ[rank] := (
 
 setCurrentDelve[name_String, character_ : $soloCharacter] := Module[
 	{ownedDelve},
-	ownedDelve = delveByName[name, character];
-	If[!AssociationQ[ownedDelve],
-		Message[delve::unknown, name, character];
-		Return[$Failed]
-	];
+	ownedDelve = requireDelve[name, character];
+	If[ownedDelve === $Failed, Return[$Failed]];
 	$state[character, "currentDelve"] = name;
 	ownedDelve
 ];
@@ -2888,11 +3082,8 @@ delve[name_String] :=
 
 delve[name_String, character_] := Module[
 	{ownedDelve},
-	ownedDelve = delveByName[name, character];
-	If[!AssociationQ[ownedDelve],
-		Message[delve::unknown, name, character];
-		Return[$Failed]
-	];
+	ownedDelve = requireDelve[name, character];
+	If[ownedDelve === $Failed, Return[$Failed]];
 	ownedDelve
 ];
 
@@ -2918,23 +3109,16 @@ removeDelve[name_String, character_ : $soloCharacter] := Module[
 	$state[character, "delves"]
 ];
 
-setDelveTheme[themeSpec_] := Module[
-	{current},
-	current = currentDelveName[$soloCharacter];
-	If[current === $Failed, Return[$Failed]];
-	setDelveTheme[current, themeSpec, $soloCharacter]
-];
+setDelveTheme[themeSpec_] :=
+	withCurrentDelve[setDelveTheme[#1, themeSpec, #2] &];
 
 setDelveTheme[delveName_String, themeSpec_] :=
 	setDelveTheme[delveName, themeSpec, $soloCharacter];
 
 setDelveTheme[delveName_String, themeSpec_, character_] := Module[
 	{ownedDelve, themes},
-	ownedDelve = delveByName[delveName, character];
-	If[!AssociationQ[ownedDelve],
-		Message[delve::unknown, delveName, character];
-		Return[$Failed]
-	];
+	ownedDelve = requireDelve[delveName, character];
+	If[ownedDelve === $Failed, Return[$Failed]];
 	themes = normalizeDelveCards[themeSpec, "Theme"];
 	If[themes === $Failed, Return[$Failed]];
 	If[validateDelveCardPair[themes, ownedDelve["Domains"]] === $Failed, Return[$Failed]];
@@ -2943,23 +3127,16 @@ setDelveTheme[delveName_String, themeSpec_, character_] := Module[
 	$state[character, "delves", delveName]
 ];
 
-setDelveDomain[domainSpec_] := Module[
-	{current},
-	current = currentDelveName[$soloCharacter];
-	If[current === $Failed, Return[$Failed]];
-	setDelveDomain[current, domainSpec, $soloCharacter]
-];
+setDelveDomain[domainSpec_] :=
+	withCurrentDelve[setDelveDomain[#1, domainSpec, #2] &];
 
 setDelveDomain[delveName_String, domainSpec_] :=
 	setDelveDomain[delveName, domainSpec, $soloCharacter];
 
 setDelveDomain[delveName_String, domainSpec_, character_] := Module[
 	{ownedDelve, domains},
-	ownedDelve = delveByName[delveName, character];
-	If[!AssociationQ[ownedDelve],
-		Message[delve::unknown, delveName, character];
-		Return[$Failed]
-	];
+	ownedDelve = requireDelve[delveName, character];
+	If[ownedDelve === $Failed, Return[$Failed]];
 	domains = normalizeDelveCards[domainSpec, "Domain"];
 	If[domains === $Failed, Return[$Failed]];
 	If[validateDelveCardPair[ownedDelve["Themes"], domains] === $Failed, Return[$Failed]];
@@ -2968,23 +3145,16 @@ setDelveDomain[delveName_String, domainSpec_, character_] := Module[
 	$state[character, "delves", delveName]
 ];
 
-returnToSite[] := Module[
-	{current},
-	current = currentDelveName[$soloCharacter];
-	If[current === $Failed, Return[$Failed]];
-	returnToSite[current, $soloCharacter]
-];
+returnToSite[] :=
+	withCurrentDelve[returnToSite[#1, #2] &];
 
 returnToSite[delveName_String] :=
 	returnToSite[delveName, $soloCharacter];
 
 returnToSite[delveName_String, character_] := Module[
 	{ownedDelve, dice, roll},
-	ownedDelve = delveByName[delveName, character];
-	If[!AssociationQ[ownedDelve],
-		Message[delve::unknown, delveName, character];
-		Return[$Failed]
-	];
+	ownedDelve = requireDelve[delveName, character];
+	If[ownedDelve === $Failed, Return[$Failed]];
 	dice = rollChallengeDice[];
 	roll = Association[
 		"character" -> character,
@@ -3011,67 +3181,46 @@ riskZoneData[delveData_Association] := Module[
 	Association["Name" -> name, "Ranks" -> ranks, "Rank" -> rank]
 ];
 
-riskZone[] := Module[
-	{current},
-	current = currentDelveName[$soloCharacter];
-	If[current === $Failed, Return[$Failed]];
-	riskZone[current, $soloCharacter]
-];
+riskZone[] :=
+	withCurrentDelve[riskZone[#1, #2] &];
 
 riskZone[delveName_String] :=
 	riskZone[delveName, $soloCharacter];
 
 riskZone[delveName_String, character_] := Module[
 	{ownedDelve, zone},
-	ownedDelve = delveByName[delveName, character];
-	If[!AssociationQ[ownedDelve],
-		Message[delve::unknown, delveName, character];
-		Return[$Failed]
-	];
+	ownedDelve = requireDelve[delveName, character];
+	If[ownedDelve === $Failed, Return[$Failed]];
 	zone = riskZoneData[ownedDelve];
 	zone
 ];
 
-denizens[] := Module[
-	{current},
-	current = currentDelveName[$soloCharacter];
-	If[current === $Failed, Return[$Failed]];
-	denizens[current, $soloCharacter]
-];
+denizens[] :=
+	withCurrentDelve[denizens[#1, #2] &];
 
 denizens[delveName_String] :=
 	denizens[delveName, $soloCharacter];
 
 denizens[delveName_String, character_] := Module[
 	{ownedDelve},
-	ownedDelve = delveByName[delveName, character];
-	If[!AssociationQ[ownedDelve],
-		Message[delve::unknown, delveName, character];
-		Return[$Failed]
-	];
+	ownedDelve = requireDelve[delveName, character];
+	If[ownedDelve === $Failed, Return[$Failed]];
 	ownedDelve["Denizens"]
 ];
 
 denizenSlotFromValue[value_Integer] :=
 	First @ FirstPosition[denizenSlotThresholds, threshold_ /; value <= threshold];
 
-rollDenizen[] := Module[
-	{current},
-	current = currentDelveName[$soloCharacter];
-	If[current === $Failed, Return[$Failed]];
-	rollDenizen[current, $soloCharacter]
-];
+rollDenizen[] :=
+	withCurrentDelve[rollDenizen[#1, #2] &];
 
 rollDenizen[delveName_String] :=
 	rollDenizen[delveName, $soloCharacter];
 
 rollDenizen[delveName_String, character_] := Module[
 	{ownedDelve, dice, value, slot, roll},
-	ownedDelve = delveByName[delveName, character];
-	If[!AssociationQ[ownedDelve],
-		Message[delve::unknown, delveName, character];
-		Return[$Failed]
-	];
+	ownedDelve = requireDelve[delveName, character];
+	If[ownedDelve === $Failed, Return[$Failed]];
 	dice = rollOracleDice[];
 	value = oracleRollValue[dice];
 	slot = denizenSlotFromValue[value];
@@ -3088,12 +3237,8 @@ rollDenizen[delveName_String, character_] := Module[
 	roll
 ];
 
-setDenizen[slot_Integer, name_] := Module[
-	{current},
-	current = currentDelveName[$soloCharacter];
-	If[current === $Failed, Return[$Failed]];
-	setDenizen[current, slot, name, $soloCharacter]
-];
+setDenizen[slot_Integer, name_] :=
+	withCurrentDelve[setDenizen[#1, slot, name, #2] &];
 
 setDenizen[delveName_String, slot_Integer, name_] :=
 	setDenizen[delveName, slot, name, $soloCharacter];
@@ -3104,11 +3249,8 @@ setDenizen[delveName_String, slot_Integer, name_, character_] := Module[
 		Message[delve::badslot, slot];
 		Return[$Failed]
 	];
-	ownedDelve = delveByName[delveName, character];
-	If[!AssociationQ[ownedDelve],
-		Message[delve::unknown, delveName, character];
-		Return[$Failed]
-	];
+	ownedDelve = requireDelve[delveName, character];
+	If[ownedDelve === $Failed, Return[$Failed]];
 	normalized = normalizeDenizenSlot[name];
 	If[normalized === $Failed,
 		Message[delve::baddenizen, name];
@@ -3123,12 +3265,8 @@ setDenizen[delveName_String, slot_Integer, name_, character_] := Module[
 	denizenList
 ];
 
-clearDenizen[slot_Integer] := Module[
-	{current},
-	current = currentDelveName[$soloCharacter];
-	If[current === $Failed, Return[$Failed]];
-	clearDenizen[current, slot, $soloCharacter]
-];
+clearDenizen[slot_Integer] :=
+	withCurrentDelve[clearDenizen[#1, slot, #2] &];
 
 clearDenizen[delveName_String, slot_Integer] :=
 	clearDenizen[delveName, slot, $soloCharacter];
@@ -3159,136 +3297,6 @@ markExperience[n_Integer, character_ : $soloCharacter] :=
 
 spendExperience[n_Integer, character_ : $soloCharacter] :=
 	$state[character, "spentExperience"] += n;
-
-
-(* ::Subsection::Closed:: *)
-(*Reroll*)
-
-
-Options[reroll] = {Display -> False};
-
-reroll[roll_Association, die : Except[_List], opts : OptionsPattern[]] :=
-	reroll[roll, {die}, opts];
-
-reroll[roll_Association, dice_List, opts : OptionsPattern[]] := Module[
-	{
-		selection,
-		invalid,
-		newRoll,
-		oldActionDie,
-		oldChallengeDice,
-		actionDie,
-		momentum,
-		actionValue,
-		actionDieCancelled,
-		actionScore,
-		challengeDice,
-		challengeIndices,
-		cd1,
-		cd2
-	},
-
-	If[!rollQ[roll],
-		Message[reroll::badroll, roll];
-		Return[$Failed]
-	];
-
-	selection = normalizeRerollSelection[dice];
-
-	If[selection === {},
-		Message[reroll::empty];
-		Return[$Failed]
-	];
-
-	invalid = Select[selection, !rerollSelectionQ[#] &];
-
-	If[invalid =!= {},
-		Message[reroll::baddie, First[invalid]];
-		Return[$Failed]
-	];
-
-	If[progressRollQ[roll] && MemberQ[selection, ActionDie],
-		Message[reroll::actiondie];
-		Return[$Failed]
-	];
-
-	oldChallengeDice = roll["challengeDice"];
-	challengeDice = oldChallengeDice;
-
-	challengeIndices = rerollChallengeDieIndices[selection, oldChallengeDice];
-
-	If[!VectorQ[challengeIndices, MemberQ[{1, 2}, #] &],
-		Message[reroll::badchallenge, selection];
-		Return[$Failed]
-	];
-
-	Do[
-		challengeDice[[i]] = RandomInteger[{1, 10}],
-		{i, challengeIndices}
-	];
-
-	If[actionRollQ[roll],
-		oldActionDie = roll["actionDie"];
-
-		actionDie =
-			If[
-				MemberQ[selection, ActionDie],
-				rollActionDie[],
-				oldActionDie
-			];
-
-		momentum = roll["momentum"];
-
-		{actionValue, actionDieCancelled} =
-			If[
-				momentum < 0 && Abs[momentum] == actionDie,
-				{0, True},
-				{actionDie, False}
-			];
-
-		actionScore =
-			Min[
-				actionValue + Total[Values[roll["adds"]]] + roll["statValue"],
-				10
-			];
-
-		{cd1, cd2} = challengeDice;
-
-		newRoll = Association[roll];
-
-		newRoll["actionDie"] = actionDie;
-		newRoll["actionValue"] = actionValue;
-		newRoll["actionDieCancelled"] = actionDieCancelled;
-		newRoll["actionScore"] = actionScore;
-		newRoll["challengeDice"] = challengeDice;
-		newRoll["match"] = cd1 == cd2;
-		newRoll["result"] = actionRollResult[challengeDice, actionScore];
-
-		newRoll["reroll"] = Association[
-			"selection" -> selection,
-			"previousActionDie" -> oldActionDie,
-			"previousChallengeDice" -> oldChallengeDice,
-			"previousResult" -> roll["result"]
-		];,
-
-		{cd1, cd2} = challengeDice;
-
-		newRoll = Association[roll];
-
-		newRoll["challengeDice"] = challengeDice;
-		newRoll["match"] = cd1 == cd2;
-		newRoll["result"] = progressRollResult[challengeDice, roll["progressScore"]];
-
-		newRoll["reroll"] = Association[
-			"selection" -> selection,
-			"previousChallengeDice" -> oldChallengeDice,
-			"previousResult" -> roll["result"]
-		];
-	];
-
-
-	newRoll
-];
 
 
 (* ::Subsection::Closed:: *)
