@@ -514,7 +514,7 @@ moves["finishTheScene"] = move[
 ];
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Quest moves*)
 
 
@@ -609,14 +609,14 @@ moves["forsakeYourVow", "header"] = paras[
 ];
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*Advance*)
 
 
 moves["advance"] = Association[];
 moves["advance", "name"] = "Advance";
 moves["advance", "header"] = paras[
-	p[b["When you focus on your skills, receive training, find inspiration, earn a reward, gain a companion, or take possession of an object of power,"], " you may spend experience to add a new asset, upgrade an asset, or augment an eligible asset with a rarity. Rarity costs vary by asset."]
+	p[b["When you focus on your skills, receive training, find inspiration, earn a reward, gain a companion, or take possession of an object of power,"], " you may spend 5 experience to add a new asset, 3 to upgrade an asset, or a varying amount to augment an eligible asset with a rarity."]
 ];
 
 
