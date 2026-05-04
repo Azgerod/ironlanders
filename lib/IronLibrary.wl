@@ -55,8 +55,7 @@ resetIronSession::usage =
 "resetIronSession[] clears the current in-memory IronLibrary state and solo character.";
 
 beginStory::usage = 
-"beginStory[] starts a new story using the solo character as the story name.
-beginStory[name] starts a new story using name as the story name.";
+"beginStory[name] starts a new story using name as the story name. Call beginStory[name] before createCharacter to establish the reproducible seed for character creation draws.";
 
 beginChapter::usage =
 "beginChapter[] loads the state for the current chapter and seeds the random number generator.
@@ -74,7 +73,46 @@ setSoloCharacter::usage =
 "setSoloCharacter[character] sets the solo character to character.";
 
 createCharacter::usage =
-"createCharacter[name, {a1, a2, a3}, edge, heart, iron, shadow, wits, {vowName, vowRank}, {b1, b2, b3}] creates a character and sets it as the solo character. Starting assets may be asset name strings when the card has a printed default selected ability, or starterAsset[...] specs.";
+"createCharacter[name, {a1, a2, a3}, edge, heart, iron, shadow, wits, starterVow[...], {b1, b2, b3}] creates a character and sets it as the solo character. Starting assets may be asset name strings when the card has a printed default selected ability, or starterAsset[...] specs.";
+
+
+(* ::Subsection::Closed:: *)
+(*Vow management*)
+
+
+starterVow::usage =
+"starterVow[name, rank] creates a quiet starting vow spec.
+starterVow[name, rank, Threat -> {threatName, threatGoal}] creates a quiet starting vow spec with one attached threat.";
+
+addVow::usage =
+"addVow[name, rank] adds a vow to the solo character.
+addVow[name, rank, character] adds a vow to character.
+addVow[..., Threat -> {threatName, threatGoal}] adds a vow with one attached threat.";
+
+vow::usage =
+"vow[name] displays the vow named name for the solo character.
+vow[name, character] displays the vow named name for character.";
+
+vows::usage =
+"vows[] displays all vows for the solo character.
+vows[character] displays all vows for character.";
+
+threat::usage =
+"threat[vowName] displays the threat attached to vowName for the solo character and returns a threat progress handle.
+threat[vowName, character] displays the threat attached to vowName for character and returns a threat progress handle.";
+
+
+(* ::Subsection::Closed:: *)
+(*Debility management*)
+
+
+markDebility::usage =
+"markDebility[debility] marks debility for the solo character.
+markDebility[debility, character] marks debility for character.";
+
+clearDebility::usage =
+"clearDebility[debility] clears debility for the solo character.
+clearDebility[debility, character] clears debility for character. Maimed and Corrupted cannot be cleared.";
 
 
 (* ::Subsection::Closed:: *)
@@ -180,6 +218,30 @@ markProgress::usage =
 "markProgress[track, n] marks n progress units on track for the solo character.
 markProgress[track, n, character] marks n progress units on track for character.";
 
+clearProgress::usage =
+"clearProgress[track, n] clears n progress units from track for the solo character.
+clearProgress[track, n, character] clears n progress units from track for character.";
+
+resetProgress::usage =
+"resetProgress[track] resets track progress to 0 for the solo character.
+resetProgress[track, character] resets track progress to 0 for character.";
+
+resetProgressToOne::usage =
+"resetProgressToOne[track] resets track progress to 1 for the solo character.
+resetProgressToOne[track, character] resets track progress to 1 for character.";
+
+raiseProgressRank::usage =
+"raiseProgressRank[track] raises track rank by one step for the solo character.
+raiseProgressRank[track, character] raises track rank by one step for character.";
+
+progressTrack::usage =
+"progressTrack[track] displays the vow, threat, delve, or generic progress track named track for the solo character.
+progressTrack[track, character] displays the vow, threat, delve, or generic progress track named track for character.";
+
+progressTracks::usage =
+"progressTracks[] displays all generic progress tracks for the solo character.
+progressTracks[character] displays all generic progress tracks for character.";
+
 
 (* ::Subsection::Closed:: *)
 (*Suffering and taking*)
@@ -225,6 +287,18 @@ takeSupply[n, character] adjusts character's supply by n.";
 addBond::usage =
 "addBond[bond] adds bond to the solo character and marks progress on the bonds track.
 addBond[bond, character] adds bond to character and marks progress on the bonds track.";
+
+bond::usage =
+"bond[name] displays the named bond for the solo character.
+bond[name, character] displays the named bond for character.";
+
+bonds::usage =
+"bonds[] displays all bonds for the solo character.
+bonds[character] displays all bonds for character.";
+
+removeBond::usage =
+"removeBond[name] removes the named bond from the solo character and clears one tick on the bonds track.
+removeBond[name, character] removes the named bond from character and clears one tick on the bonds track.";
 
 
 (* ::Subsection::Closed:: *)
@@ -361,8 +435,9 @@ askTheOracle::usage =
 askTheOracle[table] rolls on the oracle table table.
 askTheOracle[\"Yes/No\", odds] rolls on the Yes/No oracle using odds.
 askTheOracle[\"Yes/No\", yesOutcome, noOutcome] rolls on the Yes/No oracle with the specified yes and no outcomes and \"Likely\" yes-odds.
-askTheOracle[\"Reveal a Danger\"] rolls on the alternate Reveal a Danger oracle.
+askTheOracle[\"Reveal a Danger\"] rolls on the current delve's Reveal a Danger oracle when a current delve is set; otherwise it rolls on the alternate Reveal a Danger oracle.
 askTheOracle[\"Reveal a Danger\", theme, domain] rolls on the Reveal a Danger oracle for theme and domain.
+askTheOracle[\"Delve Site Feature\"] rolls on the current delve's Delve Site Feature oracle.
 askTheOracle[\"Delve Site Feature\", theme, domain] rolls on the Delve Site Feature oracle for theme and domain.";
 
 
@@ -468,6 +543,27 @@ faceASetback::usage =
 
 discoverASite::usage =
 "discoverASite[] displays the Discover a Site move header.";
+
+addDelve::usage =
+"addDelve[name, rank, theme, domain] adds a delve site for the solo character.
+addDelve[name, rank, theme, domain, character] adds a delve site for character.";
+
+setCurrentDelve::usage =
+"setCurrentDelve[name] sets the current delve for the solo character.
+setCurrentDelve[name, character] sets the current delve for character.";
+
+delve::usage =
+"delve[] displays the current delve for the solo character.
+delve[name] displays the named delve for the solo character.
+delve[name, character] displays the named delve for character.";
+
+delves::usage =
+"delves[] displays all delves for the solo character.
+delves[character] displays all delves for character.";
+
+removeDelve::usage =
+"removeDelve[name] removes the named delve for the solo character.
+removeDelve[name, character] removes the named delve for character.";
 
 delveTheDepths::usage =
 "delveTheDepths[] displays the Delve the Depths move header.
@@ -578,6 +674,38 @@ Initiative::usage =
 
 Display::usage =
 "Display is an option that specifies whether a function should display its result.";
+
+Threat::usage =
+"Threat is an option for starterVow and addVow that specifies an attached threat as {threatName, threatGoal}.";
+
+
+(* ::Subsection::Closed:: *)
+(*Debility symbols*)
+
+
+Wounded::usage =
+"Wounded is a debility.";
+
+Shaken::usage =
+"Shaken is a debility.";
+
+Unprepared::usage =
+"Unprepared is a debility.";
+
+Encumbered::usage =
+"Encumbered is a debility.";
+
+Maimed::usage =
+"Maimed is a permanent debility.";
+
+Corrupted::usage =
+"Corrupted is a permanent debility.";
+
+Cursed::usage =
+"Cursed is a debility.";
+
+Tormented::usage =
+"Tormented is a debility.";
 
 
 (* ::Subsection::Closed:: *)
@@ -702,6 +830,10 @@ symString[symbol_] := ToLowerCase[SymbolName[symbol]];
 
 stats = {Edge, Heart, Iron, Shadow, Wits, Health, Spirit, Supply}; 
 ranks = {Troublesome, Dangerous, Formidable, Extreme, Epic};
+debilities = {Wounded, Shaken, Unprepared, Encumbered, Maimed, Corrupted, Cursed, Tormented};
+permanentDebilities = {Maimed, Corrupted};
+delveThemes = {"Ancient", "Corrupted", "Fortified", "Hallowed", "Haunted", "Infested", "Ravaged", "Wild"};
+delveDomains = {"Barrow", "Cavern", "Frozen Cavern", "Icereach", "Mine", "Pass", "Ruin", "Sea Cave", "Shadowfen", "Stronghold", "Tanglewood", "Underkeep"};
 
 
 (* ::Subsubsection::Closed:: *)
@@ -711,13 +843,16 @@ ranks = {Troublesome, Dangerous, Formidable, Extreme, Epic};
 statQ[input_] := MemberQ[stats, input]; 
 rankQ[input_] := MemberQ[ranks, input]; 
 statValueQ[input_Integer] := 1 <= input <= 5; 
+debilityQ[input_] := MemberQ[debilities, input];
+delveThemeQ[input_String] := MemberQ[delveThemes, input];
+delveDomainQ[input_String] := MemberQ[delveDomains, input];
 
 
 (* ::Subsubsection::Closed:: *)
 (*Progress tracks*)
 
 
-progressTrack[(rank_)?rankQ, progress_:0] := 
+makeProgressTrack[(rank_)?rankQ, progress_:0] := 
    Association["rank" -> rank, "progress" -> progress];
 progressRollResult = actionRollResult;
 
@@ -747,6 +882,88 @@ getSupply[character_:$soloCharacter] := getAttr["supply", character];
 
 
 (* ::Subsubsection::Closed:: *)
+(*State bounds and debility helpers*)
+
+
+resourceLabel["health"] := "Health";
+resourceLabel["spirit"] := "Spirit";
+resourceLabel["supply"] := "Supply";
+resourceLabel["momentum"] := "Momentum";
+
+resourceBounds["health", _] := {0, 5};
+resourceBounds["spirit", _] := {0, 5};
+resourceBounds["supply", _] := {0, 5};
+resourceBounds["momentum", character_] := {-6, getMomentumMax[character]};
+
+recoveryBlockingDebility["health"] := Wounded;
+recoveryBlockingDebility["spirit"] := Shaken;
+recoveryBlockingDebility["supply"] := Unprepared;
+recoveryBlockingDebility[_] := None;
+
+debilityLabel[debility_] :=
+	SymbolName[Unevaluated[debility]];
+
+ensureCharacterState[character_] :=
+	If[characterExistsQ[character],
+		True,
+		Message[state::nochar, character];
+		False
+	];
+
+clampValue[value_, {min_, max_}] :=
+	Min[Max[value, min], max];
+
+setBoundedAttr[attr_String, value_Integer, character_] := Module[
+	{bounds, clamped},
+	If[!ensureCharacterState[character], Return[$Failed]];
+	bounds = resourceBounds[attr, character];
+	clamped = clampValue[value, bounds];
+	If[value =!= clamped,
+		Message[state::clamped, resourceLabel[attr], character, value, clamped]
+	];
+	$state[character, attr] = clamped
+];
+
+enforceMomentumBounds[character_] := Module[
+	{current},
+	If[!ensureCharacterState[character], Return[$Failed]];
+	current = getMomentum[character];
+	setBoundedAttr["momentum", current, character]
+];
+
+adjustBoundedAttr[attr_String, n_Integer, character_] := Module[
+	{current, requested, clamped, block, bounds},
+	If[!ensureCharacterState[character], Return[$Failed]];
+	current = getAttr[attr, character];
+	block = recoveryBlockingDebility[attr];
+	If[n > 0 && block =!= None && MemberQ[getDebilities[character], block],
+		Message[state::blocked, resourceLabel[attr], debilityLabel[block], character];
+		Return[current]
+	];
+	requested = current + n;
+	bounds = resourceBounds[attr, character];
+	clamped = clampValue[requested, bounds];
+	If[requested =!= clamped,
+		Message[state::clamped, resourceLabel[attr], character, requested, clamped]
+	];
+	$state[character, attr] = clamped;
+	If[attr === "supply" && current > 0 && clamped === 0,
+		Message[state::supplyzero, character]
+	];
+	If[attr === "momentum" && clamped === -6 && (current > -6 || requested < -6),
+		Message[state::momentummin, character]
+	];
+	clamped
+];
+
+state::nochar = "No character named `1` exists in the current state.";
+state::blocked = "Cannot increase `1` while `2` is marked for character `3`.";
+state::clamped = "`1` for character `2` was clamped from `3` to `4`.";
+state::supplyzero = "Supply has reached zero for character `1`.";
+state::momentummin = "Momentum has reached its minimum for character `1`.";
+
+
+(* ::Subsubsection::Closed:: *)
 (*Attribute adjusters and setters*)
 
 
@@ -754,24 +971,34 @@ resetMomentum[character_:$soloCharacter] :=
 	$state[character, "momentum"] = getMomentumReset[character];
 
 adjustMomentum[n_Integer, character_ : $soloCharacter] :=
-	$state[character, "momentum"] += n;
+	adjustBoundedAttr["momentum", n, character];
 
 adjustHealth[n_Integer, character_ : $soloCharacter] :=
-	$state[character, "health"] += n;
+	adjustBoundedAttr["health", n, character];
 
 adjustSpirit[n_Integer, character_ : $soloCharacter] :=
-	$state[character, "spirit"] += n;
+	adjustBoundedAttr["spirit", n, character];
 
 adjustSupply[n_Integer, character_ : $soloCharacter] :=
-	$state[character, "supply"] += n;
+	adjustBoundedAttr["supply", n, character];
 
 
 (* ::Subsubsection::Closed:: *)
 (*Progress track getters*)
 
 
-getProgress[trackName_String, character_:$soloCharacter] := $state[character, "progressTracks", trackName, "progress"];
-getRank[trackName_String, character_:$soloCharacter] := $state[character, "progressTracks", trackName, "rank"];
+getProgress[trackName_String, character_:$soloCharacter] := Module[
+	{target},
+	target = progressTargetData[trackName, character];
+	If[target === $Failed, Return[$Failed]];
+	target["Progress"]
+];
+getRank[trackName_String, character_:$soloCharacter] := Module[
+	{target},
+	target = progressTargetData[trackName, character];
+	If[target === $Failed, Return[$Failed]];
+	target["Rank"]
+];
 
 
 (* ::Subsection::Closed:: *)
@@ -808,8 +1035,6 @@ makeNotebookBase[data_Association] := StringRiffle[{data["Story"], ToString[data
 
 storyRootDirectory[] := Module[{dir}, dir = currentNotebookDirectory[]; If[dir === $Failed, Return[$Failed]]; dir]; 
 storyNameFromRoot[] := Module[{root}, root = storyRootDirectory[]; If[root === $Failed, Return[$Failed]]; Last[FileNameSplit[root]]]; 
-storyNameFromSoloCharacter[] := Module[{}, If[ValueQ[$soloCharacter] && StringQ[$soloCharacter], $soloCharacter, Message[beginStory::noname]; $Failed]]; 
-beginStory::noname = "No story name was supplied, and $soloCharacter has not been set. Either call beginStory[name] or create a character first."; 
 
 
 (* ::Subsubsection::Closed:: *)
@@ -873,6 +1098,16 @@ chapterOverride[storyDir_String, chapterNumber_Integer] :=
 chapterSeedFromBase[base_String] := Abs[Hash[{"IronLibrary", "chapter-seed", base}]]; 
 seedChapter[] := Module[{seed}, If[ !AssociationQ[$state] ||  !KeyExistsQ[$state, "seed"], Message[seedChapter::noseed]; Return[$Failed]]; seed = $state["seed"]; SeedRandom[seed]; seed]; 
 seedChapter::noseed = "The current state does not contain a seed."; 
+seedStoryState[base_String] := Module[
+	{seed},
+	seed = chapterSeedFromBase[base];
+	If[
+		AssociationQ[$state],
+		$state["seed"] = seed,
+		newState[seed]
+	];
+	seedChapter[]
+];
 nextChapterSeed[] := Module[{base}, base = nextNotebookBase[]; If[base === $Failed, Return[$Failed]]; chapterSeedFromBase[base]]; 
 stateForNextChapter[] := Module[{next, seed}, seed = nextChapterSeed[]; If[seed === $Failed, Return[$Failed]]; next = Association[$state]; next["seed"] = seed; next]; 
 
@@ -1056,7 +1291,7 @@ renameCurrentStory[storyName_String] := Module[{oldBase, data, oldStoryDir, stor
      oldChapterDir = currentNotebookDirectory[]; If[oldStoryDir === $Failed || oldChapterDir === $Failed, Return[$Failed]]; storyRoot = DirectoryName[oldStoryDir]; story = normalizeName[storyName]; 
      arc = data["Arc"]; newBase = makeNotebookBase[Join[data, Association["Story" -> story, "Arc" -> arc]]]; newStoryDir = FileNameJoin[{storyRoot, story}]; 
      newChapterDir = FileNameJoin[{newStoryDir, newBase}]; oldNotebookFile = NotebookFileName[]; If[oldNotebookFile === $Failed, Return[$Failed]]; oldStatePath = currentStatePath[]; 
-     If[newBase === oldBase && samePathQ[newStoryDir, oldStoryDir], If[AssociationQ[$state] && KeyExistsQ[$state, "seed"], $state["seed"] = chapterSeedFromBase[newBase]; seedChapter[]; ]; 
+     If[newBase === oldBase && samePathQ[newStoryDir, oldStoryDir], seedStoryState[newBase]; 
        ensureChapterOneBoilerplate[]; If[propagateStoryRename[oldStoryDir, data["Story"], story] === $Failed, Return[$Failed]]; 
        Return[Association["NotebookPath" -> oldNotebookFile, "StoryDirectory" -> oldStoryDir, "AlreadyBegun" -> True, "Renamed" -> False]]]; 
      If[DirectoryQ[newStoryDir] &&  !samePathQ[newStoryDir, oldStoryDir], Message[beginStory::storydirexists, newStoryDir]; Return[$Failed]]; NotebookSave[currentNotebookObject[]]; 
@@ -1066,8 +1301,8 @@ renameCurrentStory[storyName_String] := Module[{oldBase, data, oldStoryDir, stor
      movedOldNotebookPath = FileNameJoin[{newChapterDir, FileNameTake[oldNotebookFile]}]; NotebookSave[currentNotebookObject[], newNotebookPath]; 
      If[FileExistsQ[movedOldNotebookPath] &&  !samePathQ[movedOldNotebookPath, newNotebookPath], DeleteFile[movedOldNotebookPath]]; 
      If[oldStatePath =!= $Failed, movedOldStatePath = FileNameJoin[{newChapterDir, FileNameTake[oldStatePath]}]; newStatePath = FileNameJoin[{newChapterDir, StringJoin[newBase, "-state.wxf"]}]; 
-       If[FileExistsQ[movedOldStatePath] &&  !samePathQ[movedOldStatePath, newStatePath], RenameFile[movedOldStatePath, newStatePath]]; ]; 
-     If[AssociationQ[$state] && KeyExistsQ[$state, "seed"], $state["seed"] = chapterSeedFromBase[newBase]; seedChapter[]; ]; ensureChapterOneBoilerplate[]; 
+     If[FileExistsQ[movedOldStatePath] &&  !samePathQ[movedOldStatePath, newStatePath], RenameFile[movedOldStatePath, newStatePath]]; ]; 
+     seedStoryState[newBase]; ensureChapterOneBoilerplate[]; 
      If[propagateStoryRename[newStoryDir, data["Story"], story] === $Failed, Return[$Failed]]; Association["NotebookPath" -> newNotebookPath, "StoryDirectory" -> newStoryDir, 
       "OldNotebookBase" -> oldBase, "NewNotebookBase" -> newBase, "AlreadyBegun" -> True, "Renamed" -> True]]; 
 renameChapterDirectoryForStory[chapterDir_String, oldStory_String, newStory_String] := Module[{oldBase, data, newBase, parent, newDir, movedOldNotebookPath, newNotebookPath, movedOldStatePath, 
@@ -1107,8 +1342,11 @@ propagateArcRename[storyDir_String, oldArc_String, oldArcStart_Integer, newArc_S
 
 rollChallengeDice[] := RandomInteger[{1, 10}, 2]; 
 rollActionDie[] := RandomInteger[{1, 6}]; 
+rollResultFromBeatCount[count_Integer] :=
+	<|0 -> "miss", 1 -> "weakHit", 2 -> "strongHit"|>[count];
+
 actionRollResult[challengeDice_List, actionScore_Integer] :=
-	<|0 -> "miss", 1 -> "weakHit", 2 -> "strongHit"|>[
+	rollResultFromBeatCount[
 		Count[challengeDice, die_ /; actionScore > die]
 	];
 rollOracleDice = rollChallengeDice;
@@ -1213,7 +1451,7 @@ reroll::badchallenge =
 "Could not determine which challenge die to reroll from selection `1`.";
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Presentation helpers*)
 
 
@@ -1227,7 +1465,7 @@ scaled[n_?NumericQ] := $ironDisplayScale n;
 scaledSize[n_?NumericQ] := Round[scaled[n]];
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*Shared layout constants*)
 
 
@@ -1722,7 +1960,7 @@ displayChoice[subtitle_String, texts_List] :=
 	];
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Asset helpers*)
 
 
@@ -1913,22 +2151,24 @@ assetFieldValueDisplay[value_] :=
 	];
 
 assetFieldRow[label_String, value_] :=
-	Row[
-		{
-			Style[
-				StringJoin[label, ": "],
-				FontFamily -> "Futura",
-				FontSize -> scaledSize[16],
-				FontWeight -> Bold,
-				GrayLevel[0.255]
-			],
-			Style[
-				assetFieldValueDisplay[value],
-				FontFamily -> "Times New Roman",
-				FontSize -> scaledSize[18],
-				GrayLevel[0.255]
-			]
-		}
+	assetContentPane[
+		Row[
+			{
+				Style[
+					StringJoin[label, ": "],
+					FontFamily -> "Futura",
+					FontSize -> scaledSize[16],
+					FontWeight -> Bold,
+					GrayLevel[0.255]
+				],
+				Style[
+					assetFieldValueDisplay[value],
+					FontFamily -> "Times New Roman",
+					FontSize -> scaledSize[18],
+					GrayLevel[0.255]
+				]
+			}
+		]
 	];
 
 assetFieldRows[record_Association, fields_Association] :=
@@ -1940,8 +2180,21 @@ assetFieldRows[record_Association, fields_Association] :=
 assetCardWidth :=
 	scaled[520];
 
+assetCategoryPadding :=
+	scaled[8];
+
+assetBulletWidth :=
+	scaled[26];
+
 assetBodyWidth :=
-	scaled[470];
+	assetCardWidth - assetBulletWidth;
+
+assetContentPane[x_] :=
+	Pane[
+		x,
+		{assetCardWidth, Automatic},
+		Alignment -> Left
+	];
 
 assetCategoryBand[category_String] :=
 	Framed[
@@ -1953,12 +2206,12 @@ assetCategoryBand[category_String] :=
 				FontSize -> scaledSize[16],
 				FontWeight -> Bold
 			],
-			{assetCardWidth, Automatic},
+			{assetCardWidth - 2 assetCategoryPadding, Automatic},
 			Alignment -> Left
 		],
 		Background -> GrayLevel[0.255],
 		FrameStyle -> None,
-		FrameMargins -> {{scaled[8], scaled[8]}, {scaled[4], scaled[4]}},
+		FrameMargins -> {{assetCategoryPadding, assetCategoryPadding}, {scaled[4], scaled[4]}},
 		RoundingRadius -> 0
 	];
 
@@ -1975,28 +2228,39 @@ assetAbilityTitle[_] :=
 	Nothing;
 
 assetAbilityRow[ability_Association, selectedQ_] :=
-	Grid[
-		{{
-			Style[
-				If[TrueQ[selectedQ], "\[FilledCircle]", "\[EmptyCircle]"],
-				GrayLevel[0.255],
-				FontSize -> scaledSize[16]
-			],
-			Column[
-				{
-					assetAbilityTitle[Lookup[ability, "Name", ""]],
-					Pane[
-						moveTextStyle[Lookup[ability, "Text", ""]],
-						{assetBodyWidth, Automatic},
+	assetContentPane[
+		Grid[
+			{{
+				Pane[
+					Style[
+						If[TrueQ[selectedQ], "\[FilledCircle]", "\[EmptyCircle]"],
+						GrayLevel[0.255],
+						FontSize -> scaledSize[16]
+					],
+					{assetBulletWidth, Automatic},
+					Alignment -> Left,
+					ImageMargins -> {{0, 0}, {0, scaled[-1]}}
+				],
+				Pane[
+					Column[
+						{
+							assetAbilityTitle[Lookup[ability, "Name", ""]],
+							Pane[
+								moveTextStyle[Lookup[ability, "Text", ""]],
+								{assetBodyWidth, Automatic},
+								Alignment -> Left
+							]
+						},
+						Spacings -> 0.2,
 						Alignment -> Left
-					]
-				},
-				Spacings -> 0.2,
-				Alignment -> Left
-			]
-		}},
-		Alignment -> {Left, Top},
-		Spacings -> {0.7, 0}
+					],
+					{assetBodyWidth, Automatic},
+					Alignment -> Left
+				]
+			}},
+			Alignment -> {Left, Top},
+			Spacings -> {0, 0}
+		]
 	];
 
 assetAbilityRows[record_Association, selectedAbilities_List] :=
@@ -2021,22 +2285,24 @@ assetTrackRow[trackName_String, trackDef_Association, current_Integer] := Module
 	{label, values},
 	label = Lookup[trackDef, "Label", trackName];
 	values = Range[trackDef["Min"], trackDef["Max"]];
-	Column[
-		{
-			Style[
-				label,
-				FontFamily -> "Futura",
-				FontSize -> scaledSize[16],
-				FontWeight -> Bold,
-				GrayLevel[0.255]
-			],
-			Grid[
-				{assetTrackCell[#, current] & /@ values},
-				Spacings -> {0, 0}
-			]
-		},
-		Spacings -> 0.2,
-		Alignment -> Left
+	assetContentPane[
+		Column[
+			{
+				Style[
+					label,
+					FontFamily -> "Futura",
+					FontSize -> scaledSize[16],
+					FontWeight -> Bold,
+					GrayLevel[0.255]
+				],
+				Grid[
+					{assetTrackCell[#, current] & /@ values},
+					Spacings -> {0, 0}
+				]
+			},
+			Spacings -> 0.2,
+			Alignment -> Left
+		]
 	]
 ];
 
@@ -2052,23 +2318,23 @@ assetTrackRows[record_Association, tracks_Association] := Module[
 
 assetCardExpression[record_Association, selectedAbilities_List, fields_Association, tracks_Association, status_:None] := Module[
 	{statusRows, fieldRows, requirementRows, abilityRows, trackRows},
-	statusRows = If[status === None, {}, {subtitleStyle[status]}];
+	statusRows = If[status === None, {}, {assetContentPane[subtitleStyle[status]]}];
 	fieldRows = assetFieldRows[record, fields];
 	requirementRows = If[
 		StringLength[StringTrim[Lookup[record, "Requirement", ""]]] == 0,
 		{},
-		{moveTextStyle[record["Requirement"]]}
+		{assetContentPane[moveTextStyle[record["Requirement"]]]}
 	];
 	abilityRows = assetAbilityRows[record, selectedAbilities];
 	trackRows = assetTrackRows[record, tracks];
 	ironFramed[
 		Column[
 			Join[
-				statusRows,
-				{
-					assetCategoryBand[record["Category"]],
-					titleStyle[record["Name"]]
-				},
+					statusRows,
+					{
+						assetCategoryBand[record["Category"]],
+						assetContentPane[titleStyle[record["Name"]]]
+					},
 				fieldRows,
 				requirementRows,
 				abilityRows,
@@ -2124,6 +2390,461 @@ displayAssetCards[cards_List] :=
 	Print[Column[cards, Spacings -> 1, Alignment -> Left]];
 
 
+(* ::Subsection::Closed:: *)
+(*Vow helpers*)
+
+
+rankMarkValue[Troublesome] := 3;
+rankMarkValue[Dangerous] := 2;
+rankMarkValue[Formidable] := 1;
+rankMarkValue[Extreme] := 0.5;
+rankMarkValue[Epic] := 0.25;
+
+progressTrackExistsQ[trackName_String, character_] :=
+	characterExistsQ[character] &&
+	KeyExistsQ[Lookup[$state[character], "progressTracks", <||>], trackName];
+
+normalizeThreatSpec[None] :=
+	None;
+
+normalizeThreatSpec[{name_String, goal_String}] :=
+	Association[
+		"Name" -> name,
+		"Goal" -> goal,
+		"Menace" -> makeProgressTrack[Formidable]
+	];
+
+normalizeThreatSpec[threatData_Association] /; threatAssociationQ[threatData] :=
+	threatData;
+
+normalizeThreatSpec[other_] := (
+	Message[vow::badthreat, other];
+	$Failed
+);
+
+makeVow[name_String, rank_?rankQ, threatSpec_] := Module[
+	{normalizedThreat},
+	normalizedThreat = normalizeThreatSpec[threatSpec];
+	If[normalizedThreat === $Failed, Return[$Failed]];
+	Association[
+		"Name" -> name,
+		"Rank" -> rank,
+		"Progress" -> 0,
+		"Threat" -> normalizedThreat
+	]
+];
+
+makeStarterVowSpec[name_String, rank_?rankQ, threatSpec_] := Module[
+	{normalizedVow},
+	normalizedVow = makeVow[name, rank, threatSpec];
+	If[normalizedVow === $Failed, Return[$Failed]];
+	StarterVowSpec[normalizedVow]
+];
+
+ownedVowFromSpec[StarterVowSpec[data_Association]] /; ownedVowQ[data] :=
+	data;
+
+ownedVowFromSpec[other_] := (
+	Message[vow::badstarter, other];
+	$Failed
+);
+
+ownedVowQ[vow_Association] :=
+	KeyExistsQ[vow, "Name"] &&
+	KeyExistsQ[vow, "Rank"] &&
+	KeyExistsQ[vow, "Progress"] &&
+	KeyExistsQ[vow, "Threat"];
+
+normalizeCharacterVows[character_] := Module[
+	{rawVows},
+	If[!characterExistsQ[character],
+		Message[vow::nochar, character];
+		Return[$Failed]
+	];
+	rawVows = Lookup[$state[character], "vows", <||>];
+	If[AssociationQ[rawVows] && AllTrue[Values[rawVows], ownedVowQ],
+		Return[rawVows]
+	];
+	$state[character, "vows"] = <||>
+];
+
+vowExistsQ[vowName_String, character_] := Module[
+	{ownedVows},
+	ownedVows = normalizeCharacterVows[character];
+	If[ownedVows === $Failed, Return[False]];
+	KeyExistsQ[ownedVows, vowName]
+];
+
+vowByName[vowName_String, character_] := Module[
+	{ownedVows},
+	ownedVows = normalizeCharacterVows[character];
+	If[ownedVows === $Failed, Return[$Failed]];
+	Lookup[ownedVows, vowName, Missing["UnknownVow", vowName]]
+];
+
+threatAssociationQ[threat_Association] :=
+	KeyExistsQ[threat, "Name"] &&
+	KeyExistsQ[threat, "Goal"] &&
+	KeyExistsQ[threat, "Menace"];
+
+threatByVowName[vowName_String, character_] := Module[
+	{ownedVow, ownedThreat},
+	ownedVow = vowByName[vowName, character];
+	If[!AssociationQ[ownedVow],
+		Message[vow::unknown, vowName, character];
+		Return[$Failed]
+	];
+	ownedThreat = Lookup[ownedVow, "Threat", None];
+	If[ownedThreat === None,
+		Message[threat::none, vowName];
+		Return[$Failed]
+	];
+	ownedThreat
+];
+
+threatLocationByName[threatName_String, character_] := Module[
+	{ownedVows, matches},
+	ownedVows = normalizeCharacterVows[character];
+	If[ownedVows === $Failed, Return[$Failed]];
+	matches = Select[
+		Keys[ownedVows],
+		AssociationQ[ownedVows[#]["Threat"]] &&
+			ownedVows[#]["Threat", "Name"] === threatName &
+	];
+	If[matches === {},
+		Missing["UnknownThreat", threatName],
+		First[matches]
+	]
+];
+
+makeDelve[name_String, rank_?rankQ, theme_String, domain_String] :=
+	Association[
+		"Name" -> name,
+		"Rank" -> rank,
+		"Theme" -> theme,
+		"Domain" -> domain,
+		"Progress" -> 0
+	];
+
+ownedDelveQ[delve_Association] :=
+	KeyExistsQ[delve, "Name"] &&
+	KeyExistsQ[delve, "Rank"] &&
+	KeyExistsQ[delve, "Theme"] &&
+	KeyExistsQ[delve, "Domain"] &&
+	KeyExistsQ[delve, "Progress"];
+
+normalizeCharacterDelves[character_] := Module[
+	{rawDelves},
+	If[!characterExistsQ[character],
+		Message[delve::nochar, character];
+		Return[$Failed]
+	];
+	rawDelves = Lookup[$state[character], "delves", <||>];
+	If[AssociationQ[rawDelves] && AllTrue[Values[rawDelves], ownedDelveQ],
+		If[!KeyExistsQ[$state[character], "currentDelve"],
+			$state[character, "currentDelve"] = None
+		];
+		Return[rawDelves]
+	];
+	$state[character, "delves"] = <||>;
+	$state[character, "currentDelve"] = None;
+	<||>
+];
+
+delveExistsQ[name_String, character_] := Module[
+	{ownedDelves},
+	ownedDelves = normalizeCharacterDelves[character];
+	If[ownedDelves === $Failed, Return[False]];
+	KeyExistsQ[ownedDelves, name]
+];
+
+delveByName[name_String, character_] := Module[
+	{ownedDelves},
+	ownedDelves = normalizeCharacterDelves[character];
+	If[ownedDelves === $Failed, Return[$Failed]];
+	Lookup[ownedDelves, name, Missing["UnknownDelve", name]]
+];
+
+currentDelveName[character_] := Module[
+	{ownedDelves, current},
+	ownedDelves = normalizeCharacterDelves[character];
+	If[ownedDelves === $Failed, Return[$Failed]];
+	current = Lookup[$state[character], "currentDelve", None];
+	If[current === None,
+		Message[delve::nocurrent, character];
+		Return[$Failed]
+	];
+	If[!KeyExistsQ[ownedDelves, current],
+		Message[delve::unknown, current, character];
+		Return[$Failed]
+	];
+	current
+];
+
+currentDelveData[character_] := Module[
+	{current},
+	current = currentDelveName[character];
+	If[current === $Failed, Return[$Failed]];
+	delveByName[current, character]
+];
+
+currentDelveDataQuiet[character_] := Module[
+	{ownedDelves, current},
+	If[!characterExistsQ[character], Return[None]];
+	ownedDelves = normalizeCharacterDelves[character];
+	If[ownedDelves === $Failed, Return[None]];
+	current = Lookup[$state[character], "currentDelve", None];
+	If[current === None || !KeyExistsQ[ownedDelves, current], Return[None]];
+	ownedDelves[current]
+];
+
+progressTargetData[trackName_String, character_] := Module[
+	{ownedVow, threatVowName, ownedThreat, ownedDelve},
+	If[vowExistsQ[trackName, character],
+		ownedVow = vowByName[trackName, character];
+		Return[
+			Association[
+				"Type" -> "Vow",
+				"Name" -> trackName,
+				"Rank" -> ownedVow["Rank"],
+				"Progress" -> ownedVow["Progress"]
+			]
+		]
+	];
+	threatVowName = threatLocationByName[trackName, character];
+	If[StringQ[threatVowName],
+		ownedThreat = $state[character, "vows", threatVowName, "Threat"];
+		Return[
+			Association[
+				"Type" -> "Threat",
+				"Name" -> trackName,
+				"Vow" -> threatVowName,
+				"Rank" -> ownedThreat["Menace", "rank"],
+				"Progress" -> ownedThreat["Menace", "progress"]
+			]
+		]
+	];
+	If[delveExistsQ[trackName, character],
+		ownedDelve = delveByName[trackName, character];
+		Return[
+			Association[
+				"Type" -> "Delve",
+				"Name" -> trackName,
+				"Rank" -> ownedDelve["Rank"],
+				"Progress" -> ownedDelve["Progress"]
+			]
+		]
+	];
+	If[progressTrackExistsQ[trackName, character],
+		Return[
+			Association[
+				"Type" -> "ProgressTrack",
+				"Name" -> trackName,
+				"Rank" -> $state[character, "progressTracks", trackName, "rank"],
+				"Progress" -> $state[character, "progressTracks", trackName, "progress"]
+			]
+		]
+	];
+	Message[markProgress::notrack, trackName, character];
+	$Failed
+];
+
+formatProgressValue[value_] :=
+	ToString[NumberForm[N[value], {3, 2}, NumberPadding -> {"", "0"}]];
+
+progressSummary[label_String, rank_, progress_] :=
+	Row[
+		{
+			Style[
+				StringJoin[label, ": "],
+				FontFamily -> "Futura",
+				FontSize -> scaledSize[16],
+				FontWeight -> Bold,
+				GrayLevel[0.255]
+			],
+			moveTextStyle[
+				StringJoin[ToString[rank], " - ", formatProgressValue[progress], "/10"]
+			]
+		}
+	];
+
+displayVowCard[vowData_Association] := Module[
+	{rows, ownedThreat},
+	ownedThreat = Lookup[vowData, "Threat", None];
+	rows = {
+		header["Vow", vowData["Name"]],
+		progressSummary["Progress", vowData["Rank"], vowData["Progress"]]
+	};
+	If[AssociationQ[ownedThreat],
+		rows = Join[
+			rows,
+			{
+				subtitleStyle["Threat"],
+				moveTextStyle[StringJoin[ownedThreat["Name"], ": ", ownedThreat["Goal"]]],
+				progressSummary[
+					"Menace",
+					ownedThreat["Menace", "rank"],
+					ownedThreat["Menace", "progress"]
+				]
+			}
+		]
+	];
+	ironFramed[Column[rows, Spacings -> 0.8, Alignment -> Left]]
+];
+
+displayThreatCard[vowName_String, threatData_Association] :=
+	ironFramed[
+		Column[
+			{
+				header["Threat", threatData["Name"]],
+				subtitleStyle[StringJoin["Vow: ", vowName]],
+				moveTextStyle[threatData["Goal"]],
+				progressSummary[
+					"Menace",
+					threatData["Menace", "rank"],
+					threatData["Menace", "progress"]
+				]
+			},
+			Spacings -> 0.8,
+			Alignment -> Left
+		]
+	];
+
+displayThreatFulfilled[vowName_String, threatData_Association] :=
+	Print[
+		ironFramed[
+			Column[
+				{
+					header["Threat Fulfilled", threatData["Name"]],
+					subtitleStyle[StringJoin["Vow: ", vowName]],
+					moveTextStyle[threatData["Goal"]],
+					moveTextStyle["Forsake Your Vow."]
+				},
+				Spacings -> 0.8,
+				Alignment -> Left
+			]
+		]
+	];
+
+markVowProgress[vowName_String, n_Integer, character_] := Module[
+	{target, markValue},
+	target = progressTargetData[vowName, character];
+	If[target === $Failed || target["Type"] =!= "Vow", Return[$Failed]];
+	markValue = n rankMarkValue[target["Rank"]];
+	adjustTargetProgress[target, markValue, character]
+];
+
+markThreatProgressByVow[vowName_String, n_Integer, character_] := Module[
+	{ownedThreat, target, previous, markValue, updated},
+	ownedThreat = threatByVowName[vowName, character];
+	If[ownedThreat === $Failed, Return[$Failed]];
+	previous = ownedThreat["Menace", "progress"];
+	target = Association[
+		"Type" -> "Threat",
+		"Name" -> ownedThreat["Name"],
+		"Vow" -> vowName,
+		"Rank" -> ownedThreat["Menace", "rank"],
+		"Progress" -> previous
+	];
+	markValue = n rankMarkValue[ownedThreat["Menace", "rank"]];
+	updated = adjustTargetProgress[target, markValue, character];
+	If[previous < 10 && updated >= 10,
+		displayThreatFulfilled[vowName, $state[character, "vows", vowName, "Threat"]]
+	];
+	updated
+];
+
+markThreatProgressByName[threatName_String, n_Integer, character_] := Module[
+	{vowName},
+	vowName = threatLocationByName[threatName, character];
+	If[!StringQ[vowName], Return[$Failed]];
+	markThreatProgressByVow[vowName, n, character]
+];
+
+progressTypeTitle["Vow"] := "Vow";
+progressTypeTitle["Threat"] := "Threat";
+progressTypeTitle["Delve"] := "Delve";
+progressTypeTitle["ProgressTrack"] := "Progress Track";
+progressTypeTitle[other_] := ToString[other];
+
+displayProgressTargetCard[target_Association] := Module[
+	{rows, label},
+	label = If[target["Type"] === "Threat", "Menace", "Progress"];
+	rows = {
+		header[progressTypeTitle[target["Type"]], target["Name"]]
+	};
+	If[target["Type"] === "Threat" && KeyExistsQ[target, "Vow"],
+		rows = Append[rows, subtitleStyle[StringJoin["Vow: ", target["Vow"]]]]
+	];
+	rows = Append[rows, progressSummary[label, target["Rank"], target["Progress"]]];
+	ironFramed[Column[rows, Spacings -> 0.8, Alignment -> Left]]
+];
+
+setTargetProgress[target_Association, value_, character_] := Module[
+	{clamped},
+	clamped = clampValue[value, {0, 10}];
+	If[!TrueQ[value == clamped],
+		Message[progress::clamped, target["Name"], character, value, clamped]
+	];
+	Switch[
+		target["Type"],
+		"Vow",
+			$state[character, "vows", target["Name"], "Progress"] = clamped,
+		"Threat",
+			$state[character, "vows", target["Vow"], "Threat", "Menace", "progress"] = clamped,
+		"Delve",
+			$state[character, "delves", target["Name"], "Progress"] = clamped,
+		"ProgressTrack",
+			$state[character, "progressTracks", target["Name"], "progress"] = clamped,
+		_,
+			Return[$Failed]
+	];
+	clamped
+];
+
+adjustTargetProgress[target_Association, delta_, character_] :=
+	setTargetProgress[target, target["Progress"] + delta, character];
+
+setTargetRank[target_Association, rank_?rankQ, character_] := Module[{},
+	Switch[
+		target["Type"],
+		"Vow",
+			$state[character, "vows", target["Name"], "Rank"] = rank,
+		"Threat",
+			$state[character, "vows", target["Vow"], "Threat", "Menace", "rank"] = rank,
+		"Delve",
+			$state[character, "delves", target["Name"], "Rank"] = rank,
+		"ProgressTrack",
+			$state[character, "progressTracks", target["Name"], "rank"] = rank,
+		_,
+			Return[$Failed]
+	];
+	rank
+];
+
+rankIndex[rank_?rankQ] :=
+	First[FirstPosition[ranks, rank]];
+
+nextRank[rank_?rankQ] := Module[
+	{index},
+	index = rankIndex[rank];
+	If[index >= Length[ranks],
+		Missing["NoHigherRank"],
+		ranks[[index + 1]]
+	]
+];
+
+raiseTargetRank[target_Association, character_] := Module[
+	{rank},
+	rank = nextRank[target["Rank"]];
+	If[rank === Missing["NoHigherRank"],
+		Message[progress::epic, target["Name"], character];
+		Return[$Failed]
+	];
+	setTargetRank[target, rank, character]
+];
+
+
 (* ::Section:: *)
 (*Core API implementation*)
 
@@ -2133,19 +2854,19 @@ displayAssetCards[cards_List] :=
 
 
 resetIronSession[] := (Clear[$state, $soloCharacter]; ); 
-beginStory[] := beginStory[Automatic]; 
-beginStory[name_] := Module[{root, storyName, story, arc, base, storyDir, chapterDir, notebookPath, oldNotebookFile}, 
-    If[chapterNotebookQ[], storyName = Replace[name, Automatic :> storyNameFromSoloCharacter[]]; If[storyName === $Failed, Return[$Failed]]; 
-       If[ !StringQ[storyName], Message[beginStory::badname, storyName]; Return[$Failed]]; Return[renameCurrentStory[storyName]]]; root = storyRootDirectory[]; If[root === $Failed, Return[$Failed]]; 
-     storyName = Replace[name, Automatic :> storyNameFromSoloCharacter[]]; If[storyName === $Failed, Return[$Failed]]; If[ !StringQ[storyName], Message[beginStory::badname, storyName]; Return[$Failed]]; 
-     story = normalizeName[storyName]; arc = normalizeName["Introduction"]; storyDir = FileNameJoin[{root, story}]; 
+beginStory[] := (Message[beginStory::missing]; $Failed); 
+beginStory[name_String] := Module[{root, story, arc, base, storyDir, chapterDir, notebookPath, oldNotebookFile}, 
+    If[chapterNotebookQ[], Return[renameCurrentStory[name]]]; root = storyRootDirectory[]; If[root === $Failed, Return[$Failed]]; 
+     story = normalizeName[name]; arc = normalizeName["Introduction"]; storyDir = FileNameJoin[{root, story}]; 
      If[ !DirectoryQ[storyDir], CreateDirectory[storyDir, CreateIntermediateDirectories -> True]]; 
      base = makeNotebookBase[Association["Story" -> story, "ChapterNumber" -> 1, "Arc" -> arc, "ArcChapterNumber" -> 1]]; chapterDir = FileNameJoin[{storyDir, base}]; 
      If[DirectoryQ[chapterDir], Message[beginStory::direxists, chapterDir]; Return[$Failed]]; CreateDirectory[chapterDir, CreateIntermediateDirectories -> True]; 
      notebookPath = FileNameJoin[{chapterDir, StringJoin[base, ".nb"]}]; oldNotebookFile = NotebookFileName[]; If[oldNotebookFile === $Failed, Message[currentNotebookBase::unsaved]; Return[$Failed]]; 
      NotebookSave[currentNotebookObject[], notebookPath]; If[FileExistsQ[oldNotebookFile] && oldNotebookFile =!= notebookPath, DeleteFile[oldNotebookFile]]; 
-     If[AssociationQ[$state] && KeyExistsQ[$state, "seed"], $state["seed"] = chapterSeedFromBase[base]; seedChapter[]; ]; ensureChapterOneBoilerplate[]; 
+     seedStoryState[base]; ensureChapterOneBoilerplate[]; 
      Association["NotebookPath" -> notebookPath, "StoryDirectory" -> storyDir, "AlreadyBegun" -> False]]; 
+beginStory[name_] := (Message[beginStory::badname, name]; $Failed); 
+beginStory::missing = "beginStory requires an explicit story name: beginStory[name]."; 
 beginStory::badname = "Story name `1` is not a string."; 
 beginStory::direxists = "Cannot begin story because the target chapter directory already exists: `1`."; 
 Options[beginChapter] = {ArcName -> Automatic}; 
@@ -2163,12 +2884,15 @@ endChapter[] := Module[{statePath, notebookPath}, statePath = nextStatePath[]; n
 
 
 createCharacter[name_String, assetSpecs_List /; Length[assetSpecs] == 3, (edge_)?statValueQ, (heart_)?statValueQ, (iron_)?statValueQ, (shadow_)?statValueQ, 
-    (wits_)?statValueQ, {vowName_String, (vowRank_)?rankQ}, bonds:{___String} /; Length[bonds] <= 3] := 
-   Module[{character, ownedAssets}, ensureStateInitialized[]; ownedAssets = ownedAssetFromSpec /@ assetSpecs; If[MemberQ[ownedAssets, $Failed], Message[createCharacter::badassets]; Return[$Failed]]; 
+    (wits_)?statValueQ, vowSpec_, bonds:{___String} /; Length[bonds] <= 3] := 
+   Module[{character, ownedAssets, startingVow}, ensureStateInitialized[]; ownedAssets = ownedAssetFromSpec /@ assetSpecs; If[MemberQ[ownedAssets, $Failed], Message[createCharacter::badassets]; Return[$Failed]]; 
+     startingVow = ownedVowFromSpec[vowSpec]; If[startingVow === $Failed, Message[createCharacter::badvow]; Return[$Failed]];
      character = Association["assets" -> ownedAssets, "edge" -> edge, "heart" -> heart, "iron" -> iron, "shadow" -> shadow, "wits" -> wits, "health" -> 5, 
-       "spirit" -> 5, "supply" -> 5, "momentum" -> 2, "debilities" -> {}, "progressTracks" -> Association[vowName -> progressTrack[vowRank], "Bonds" -> progressTrack[Epic, 0.25*Length[bonds]], "Failures"->progressTrack[Epic]], 
-       "bonds" -> bonds, "earnedExperience" -> 0, "spentExperience" -> 0]; AssociateTo[$state, name -> character]; $soloCharacter = name; $state[name]]; 
+       "spirit" -> 5, "supply" -> 5, "momentum" -> 2, "debilities" -> {}, "vows" -> Association[startingVow["Name"] -> startingVow], 
+       "progressTracks" -> Association["Bonds" -> makeProgressTrack[Epic, 0.25*Length[bonds]], "Failures"->makeProgressTrack[Epic]], 
+       "bonds" -> bonds, "delves" -> <||>, "currentDelve" -> None, "earnedExperience" -> 0, "spentExperience" -> 0]; AssociateTo[$state, name -> character]; $soloCharacter = name; $state[name]]; 
 createCharacter::badassets = "Could not create the character because one or more starting assets are invalid.";
+createCharacter::badvow = "Could not create the character because the starting vow is invalid. Use starterVow[name, rank].";
        
 setSoloCharacter[character_String] := Module[{},
 	If[!AssociationQ[$state] || !KeyExistsQ[$state, character],
@@ -2179,6 +2903,135 @@ setSoloCharacter[character_String] := Module[{},
 ];
 
 setSoloCharacter::nochar = "No character named `1` exists in the current state.";
+
+
+(* ::Subsection::Closed:: *)
+(*Debility management*)
+
+
+markDebility[debility_?debilityQ, character_ : $soloCharacter] := Module[
+	{current},
+	If[!ensureCharacterState[character], Return[$Failed]];
+	current = getDebilities[character];
+	If[MemberQ[current, debility],
+		Message[markDebility::marked, debilityLabel[debility], character];
+		Return[current]
+	];
+	$state[character, "debilities"] = Append[current, debility];
+	enforceMomentumBounds[character];
+	$state[character, "debilities"]
+];
+
+markDebility[debility_, character_ : $soloCharacter] := (
+	Message[markDebility::invalid, debility];
+	$Failed
+);
+
+clearDebility[debility_?debilityQ, character_ : $soloCharacter] := Module[
+	{current},
+	If[!ensureCharacterState[character], Return[$Failed]];
+	If[MemberQ[permanentDebilities, debility],
+		Message[clearDebility::permanent, debilityLabel[debility]];
+		Return[$Failed]
+	];
+	current = getDebilities[character];
+	If[!MemberQ[current, debility],
+		Message[clearDebility::unmarked, debilityLabel[debility], character];
+		Return[current]
+	];
+	$state[character, "debilities"] = DeleteCases[current, debility];
+	enforceMomentumBounds[character];
+	$state[character, "debilities"]
+];
+
+clearDebility[debility_, character_ : $soloCharacter] := (
+	Message[clearDebility::invalid, debility];
+	$Failed
+);
+
+markDebility::invalid = "`1` is not an Ironsworn debility.";
+markDebility::marked = "`1` is already marked for character `2`.";
+clearDebility::invalid = "`1` is not an Ironsworn debility.";
+clearDebility::unmarked = "`1` is not marked for character `2`.";
+clearDebility::permanent = "`1` is permanent and cannot be cleared.";
+
+
+(* ::Subsection::Closed:: *)
+(*Vow management*)
+
+
+Options[starterVow] = {Threat -> None};
+
+starterVow[name_String, rank_?rankQ, opts : OptionsPattern[]] :=
+	makeStarterVowSpec[name, rank, OptionValue[Threat]];
+
+starterVow[args___] := (
+	Message[vow::badstarter, HoldForm[starterVow[args]]];
+	$Failed
+);
+
+Options[addVow] = {Threat -> None};
+
+addVow[name_String, rank_?rankQ, opts : OptionsPattern[]] :=
+	addVow[name, rank, $soloCharacter, opts];
+
+addVow[name_String, rank_?rankQ, character_String, opts : OptionsPattern[]] := Module[
+	{ownedVows, ownedVow},
+	ownedVows = normalizeCharacterVows[character];
+	If[ownedVows === $Failed, Return[$Failed]];
+	If[KeyExistsQ[ownedVows, name],
+		Message[vow::duplicate, name, character];
+		Return[$Failed]
+	];
+	ownedVow = makeVow[name, rank, OptionValue[Threat]];
+	If[ownedVow === $Failed, Return[$Failed]];
+	$state[character, "vows", name] = ownedVow;
+	ownedVow
+];
+
+vow[name_String, character_ : $soloCharacter] := Module[
+	{ownedVow, card},
+	ownedVow = vowByName[name, character];
+	If[!AssociationQ[ownedVow],
+		Message[vow::unknown, name, character];
+		Return[$Failed]
+	];
+	card = displayVowCard[ownedVow];
+	Print[card];
+	ownedVow
+];
+
+vows[] :=
+	vows[$soloCharacter];
+
+vows[character_] := Module[
+	{ownedVows, cards},
+	ownedVows = normalizeCharacterVows[character];
+	If[ownedVows === $Failed, Return[$Failed]];
+	cards = displayVowCard /@ Values[ownedVows];
+	Print[Column[cards, Spacings -> 1, Alignment -> Left]];
+	ownedVows
+];
+
+Options[threat] = {Display -> True};
+
+threat[vowName_String, opts : OptionsPattern[]] :=
+	threat[vowName, $soloCharacter, opts];
+
+threat[vowName_String, character_String, opts : OptionsPattern[]] := Module[
+	{ownedThreat},
+	ownedThreat = threatByVowName[vowName, character];
+	If[ownedThreat === $Failed, Return[$Failed]];
+	If[OptionValue[Display], Print[displayThreatCard[vowName, ownedThreat]]];
+	ThreatTrack[vowName, character]
+];
+
+vow::badstarter = "`1` is not a valid vow spec. Use starterVow[name, rank].";
+vow::badthreat = "`1` is not a valid threat spec. Use Threat -> {threatName, threatGoal}.";
+vow::nochar = "No character named `1` exists in the current state.";
+vow::unknown = "Character `2` does not have a vow named `1`.";
+vow::duplicate = "Character `2` already has a vow named `1`.";
+threat::none = "Vow `1` does not have an attached threat.";
 
 
 (* ::Subsection::Closed:: *)
@@ -2449,10 +3302,54 @@ actionRoll[(stat_)?statQ, character_String, opts:OptionsPattern[]] := Module[{ac
 
 
 Options[burnMomentum] = {Display -> True}; 
-burnMomentum[roll_Association, opts:OptionsPattern[]] := Module[{momentum, challengeDice, challengeDiceCancelled, burn}, momentum = roll["momentum"]; challengeDice = roll["challengeDice"]; 
-     challengeDiceCancelled = (Map[#1 < momentum & ])[challengeDice]; burn = Association["momentum" -> momentum, "challengeDice" -> challengeDice, "momentumReset" -> getMomentumReset[roll["character"]], 
-       "actionScore" -> roll["actionScore"], "result" -> actionRollResult[challengeDice, momentum], "challengeDiceCancelled" -> challengeDiceCancelled, "match" -> roll["match"]]; 
-     resetMomentum[roll["character"]]; If[OptionValue[Display], displayMomentumBurn[burn]]; burn]; 
+burnMomentum[roll_Association, opts:OptionsPattern[]] := Module[
+	{momentum, challengeDice, challengeDiceCancelled, beatCount, burn},
+	If[
+		!actionRollQ[roll] ||
+		!AllTrue[{"character", "momentum", "result", "match"}, KeyExistsQ[roll, #] &],
+		Message[burnMomentum::badroll];
+		Return[$Failed]
+	];
+	momentum = roll["momentum"];
+	If[momentum <= 0,
+		Message[burnMomentum::momentum, momentum];
+		Return[$Failed]
+	];
+	challengeDice = roll["challengeDice"];
+	challengeDiceCancelled = # < momentum & /@ challengeDice;
+	If[!AnyTrue[challengeDiceCancelled, TrueQ],
+		Message[burnMomentum::nocancel, momentum];
+		Return[$Failed]
+	];
+	beatCount = Total[
+		MapThread[
+			If[#2 || roll["actionScore"] > #1, 1, 0] &,
+			{challengeDice, challengeDiceCancelled}
+		]
+	];
+	burn = Association[
+		"momentum" -> momentum,
+		"challengeDice" -> challengeDice,
+		"momentumReset" -> getMomentumReset[roll["character"]],
+		"actionScore" -> roll["actionScore"],
+		"previousResult" -> roll["result"],
+		"result" -> rollResultFromBeatCount[beatCount],
+		"challengeDiceCancelled" -> challengeDiceCancelled,
+		"match" -> roll["match"]
+	];
+	resetMomentum[roll["character"]];
+	If[OptionValue[Display], displayMomentumBurn[burn]];
+	burn
+];
+
+burnMomentum[roll_, opts:OptionsPattern[]] := (
+	Message[burnMomentum::badroll];
+	$Failed
+);
+
+burnMomentum::badroll = "burnMomentum can only be used on an action roll.";
+burnMomentum::momentum = "Cannot burn momentum because roll momentum is not positive (`1`).";
+burnMomentum::nocancel = "Cannot burn momentum because no challenge die is less than momentum `1`.";
 
 
 (* ::Subsection::Closed:: *)
@@ -2465,12 +3362,14 @@ progressRoll[track_String, opts : OptionsPattern[]] :=
 	progressRoll[track, $soloCharacter, opts];
 
 progressRoll[track_String, character_String, opts : OptionsPattern[]] := Module[
-	{progressScore, challengeDice, die1, die2, roll},
-	progressScore = Floor[getProgress[track, character]];
+	{target, progressScore, challengeDice, die1, die2, roll},
+	target = progressTargetData[track, character];
+	If[target === $Failed, Return[$Failed]];
+	progressScore = Floor[target["Progress"]];
 	challengeDice = {die1, die2} = rollChallengeDice[];
 	roll = Association[
 		"character" -> character,
-		"trackName" -> track,
+		"trackName" -> target["Name"],
 		"progressScore" -> progressScore,
 		"challengeDice" -> challengeDice,
 		"match" -> die1 == die2,
@@ -2514,39 +3413,404 @@ takeSupply[n_Integer, character_ : $soloCharacter] :=
 (*Progress mutation*)
 
 
-markProgress[track_String, n_Integer, character_ : $soloCharacter] := Module[
-	{rank, markValue},
-	rank = getRank[track, character];
-	markValue = Replace[
-		rank,
-		{
-			Troublesome -> 3,
-			Dangerous -> 2,
-			Formidable -> 1,
-			Extreme -> 0.5,
-			Epic -> 0.25
-		}
+markProgress[ThreatTrack[vowName_String, handleCharacter_String], n_Integer?NonNegative, character_ : Automatic] :=
+	markThreatProgressByVow[
+		vowName,
+		n,
+		Replace[character, Automatic :> handleCharacter]
 	];
-	$state[character, "progressTracks", track, "progress"] += n markValue
+
+markProgress[track_String, n_Integer?NonNegative, character_ : $soloCharacter] := Module[
+	{target, markValue},
+	target = progressTargetData[track, character];
+	If[target === $Failed, Return[$Failed]];
+	Switch[
+		target["Type"],
+		"Vow",
+			markVowProgress[target["Name"], n, character],
+		"Threat",
+			markThreatProgressByVow[target["Vow"], n, character],
+		"Delve" | "ProgressTrack",
+			markValue = n rankMarkValue[target["Rank"]];
+			adjustTargetProgress[target, markValue, character],
+		_,
+			$Failed
+	]
 ];
+
+markProgress[_String | _ThreatTrack, n_Integer?Negative, character_ : $soloCharacter] := (
+	Message[progress::badunits, n];
+	$Failed
+);
+
+clearProgress[ThreatTrack[vowName_String, handleCharacter_String], n_Integer?NonNegative, character_ : Automatic] := Module[
+	{ownedThreat, target, markValue, useCharacter},
+	useCharacter = Replace[character, Automatic :> handleCharacter];
+	ownedThreat = threatByVowName[vowName, useCharacter];
+	If[ownedThreat === $Failed, Return[$Failed]];
+	target = Association[
+		"Type" -> "Threat",
+		"Name" -> ownedThreat["Name"],
+		"Vow" -> vowName,
+		"Rank" -> ownedThreat["Menace", "rank"],
+		"Progress" -> ownedThreat["Menace", "progress"]
+	];
+	markValue = n rankMarkValue[target["Rank"]];
+	adjustTargetProgress[target, -markValue, useCharacter]
+];
+
+clearProgress[track_String, n_Integer?NonNegative, character_ : $soloCharacter] := Module[
+	{target, markValue},
+	target = progressTargetData[track, character];
+	If[target === $Failed, Return[$Failed]];
+	markValue = n rankMarkValue[target["Rank"]];
+	adjustTargetProgress[target, -markValue, character]
+];
+
+clearProgress[_String | _ThreatTrack, n_Integer?Negative, character_ : $soloCharacter] := (
+	Message[progress::badunits, n];
+	$Failed
+);
+
+resetProgress[ThreatTrack[vowName_String, handleCharacter_String], character_ : Automatic] := Module[
+	{ownedThreat, target, useCharacter},
+	useCharacter = Replace[character, Automatic :> handleCharacter];
+	ownedThreat = threatByVowName[vowName, useCharacter];
+	If[ownedThreat === $Failed, Return[$Failed]];
+	target = Association[
+		"Type" -> "Threat",
+		"Name" -> ownedThreat["Name"],
+		"Vow" -> vowName,
+		"Rank" -> ownedThreat["Menace", "rank"],
+		"Progress" -> ownedThreat["Menace", "progress"]
+	];
+	setTargetProgress[target, 0, useCharacter]
+];
+
+resetProgress[track_String, character_ : $soloCharacter] := Module[
+	{target},
+	target = progressTargetData[track, character];
+	If[target === $Failed, Return[$Failed]];
+	setTargetProgress[target, 0, character]
+];
+
+resetProgressToOne[ThreatTrack[vowName_String, handleCharacter_String], character_ : Automatic] := Module[
+	{ownedThreat, target, useCharacter},
+	useCharacter = Replace[character, Automatic :> handleCharacter];
+	ownedThreat = threatByVowName[vowName, useCharacter];
+	If[ownedThreat === $Failed, Return[$Failed]];
+	target = Association[
+		"Type" -> "Threat",
+		"Name" -> ownedThreat["Name"],
+		"Vow" -> vowName,
+		"Rank" -> ownedThreat["Menace", "rank"],
+		"Progress" -> ownedThreat["Menace", "progress"]
+	];
+	setTargetProgress[target, 1, useCharacter]
+];
+
+resetProgressToOne[track_String, character_ : $soloCharacter] := Module[
+	{target},
+	target = progressTargetData[track, character];
+	If[target === $Failed, Return[$Failed]];
+	setTargetProgress[target, 1, character]
+];
+
+raiseProgressRank[ThreatTrack[vowName_String, handleCharacter_String], character_ : Automatic] := Module[
+	{ownedThreat, target, useCharacter},
+	useCharacter = Replace[character, Automatic :> handleCharacter];
+	ownedThreat = threatByVowName[vowName, useCharacter];
+	If[ownedThreat === $Failed, Return[$Failed]];
+	target = Association[
+		"Type" -> "Threat",
+		"Name" -> ownedThreat["Name"],
+		"Vow" -> vowName,
+		"Rank" -> ownedThreat["Menace", "rank"],
+		"Progress" -> ownedThreat["Menace", "progress"]
+	];
+	raiseTargetRank[target, useCharacter]
+];
+
+raiseProgressRank[track_String, character_ : $soloCharacter] := Module[
+	{target},
+	target = progressTargetData[track, character];
+	If[target === $Failed, Return[$Failed]];
+	raiseTargetRank[target, character]
+];
+
+progressTrack[track_String, character_ : $soloCharacter] := Module[
+	{target},
+	target = progressTargetData[track, character];
+	If[target === $Failed, Return[$Failed]];
+	Print[displayProgressTargetCard[target]];
+	target
+];
+
+progressTracks[character_ : $soloCharacter] := Module[
+	{tracks, cards},
+	If[!characterExistsQ[character],
+		Message[state::nochar, character];
+		Return[$Failed]
+	];
+	tracks = Lookup[$state[character], "progressTracks", <||>];
+	cards = KeyValueMap[
+		displayProgressTargetCard[
+			Association[
+				"Type" -> "ProgressTrack",
+				"Name" -> #1,
+				"Rank" -> #2["rank"],
+				"Progress" -> #2["progress"]
+			]
+		] &,
+		tracks
+	];
+	Print[Column[cards, Spacings -> 1, Alignment -> Left]];
+	tracks
+];
+
+markProgress::notrack = "No vow, threat, delve, or progress track named `1` exists for character `2`.";
+progress::badunits = "Progress units must be a non-negative integer, got `1`.";
+progress::clamped = "Progress for `1` on character `2` was clamped from `3` to `4`.";
+progress::epic = "Progress track `1` for character `2` is already Epic and cannot be raised.";
+progress::badrank = "`1` is not a valid progress rank.";
+progress::duplicate = "Character `2` already has a generic progress track named `1`.";
+progress::unknown = "Character `2` does not have a generic progress track named `1`.";
 
 
 (* ::Subsection::Closed:: *)
 (*Bond management*)
 
 
-addBond[bond_String, character_ : $soloCharacter] := Module[{},
-	AppendTo[$state[character, "bonds"], bond];
-	markProgress["bonds", 1, character]
+normalizeCharacterBonds[character_] := Module[
+	{ownedBonds},
+	If[!characterExistsQ[character],
+		Message[bond::nochar, character];
+		Return[$Failed]
+	];
+	ownedBonds = Lookup[$state[character], "bonds", {}];
+	If[ListQ[ownedBonds],
+		Return[ownedBonds]
+	];
+	$state[character, "bonds"] = {};
+	{}
 ];
+
+displayBondCard[name_String] :=
+	ironFramed[
+		Column[
+			{header["Bond", name]},
+			Spacings -> 0.8,
+			Alignment -> Left
+		]
+	];
+
+addBond[name_String, character_ : $soloCharacter] := Module[
+	{ownedBonds, progressResult, updated},
+	ownedBonds = normalizeCharacterBonds[character];
+	If[ownedBonds === $Failed, Return[$Failed]];
+	If[MemberQ[ownedBonds, name],
+		Message[bond::duplicate, name, character];
+		Return[$Failed]
+	];
+	progressResult = markProgress["Bonds", 1, character];
+	If[progressResult === $Failed, Return[$Failed]];
+	updated = Append[ownedBonds, name];
+	$state[character, "bonds"] = updated;
+	updated
+];
+
+bond[name_String, character_ : $soloCharacter] := Module[
+	{ownedBonds},
+	ownedBonds = normalizeCharacterBonds[character];
+	If[ownedBonds === $Failed, Return[$Failed]];
+	If[!MemberQ[ownedBonds, name],
+		Message[bond::unknown, name, character];
+		Return[$Failed]
+	];
+	Print[displayBondCard[name]];
+	name
+];
+
+bonds[] :=
+	bonds[$soloCharacter];
+
+bonds[character_] := Module[
+	{ownedBonds, cards},
+	ownedBonds = normalizeCharacterBonds[character];
+	If[ownedBonds === $Failed, Return[$Failed]];
+	cards = displayBondCard /@ ownedBonds;
+	Print[Column[cards, Spacings -> 1, Alignment -> Left]];
+	ownedBonds
+];
+
+removeBond[name_String, character_ : $soloCharacter] := Module[
+	{ownedBonds, position, updated},
+	ownedBonds = normalizeCharacterBonds[character];
+	If[ownedBonds === $Failed, Return[$Failed]];
+	position = FirstPosition[ownedBonds, name, Missing["UnknownBond"]];
+	If[!ListQ[position],
+		Message[bond::unknown, name, character];
+		Return[$Failed]
+	];
+	updated = Delete[ownedBonds, position];
+	$state[character, "bonds"] = updated;
+	clearProgress["Bonds", 1, character];
+	updated
+];
+
+bond::nochar = "No character named `1` exists in the current state.";
+bond::duplicate = "Character `2` already has a bond with `1`.";
+bond::unknown = "Character `2` does not have a bond with `1`.";
+
+
+(* ::Subsection::Closed:: *)
+(*Delve management*)
+
+
+displayDelveCard[delveData_Association] :=
+	ironFramed[
+		Column[
+			{
+				header["Delve", delveData["Name"]],
+				subtitleStyle[
+					StringJoin[delveData["Theme"], " ", delveData["Domain"]]
+				],
+				progressSummary["Progress", delveData["Rank"], delveData["Progress"]]
+			},
+			Spacings -> 0.8,
+			Alignment -> Left
+		]
+	];
+
+addDelve[name_String, rank_?rankQ, theme_String, domain_String, character_ : $soloCharacter] := Module[
+	{ownedDelves, ownedDelve},
+	If[!delveThemeQ[theme],
+		Message[delve::badtheme, theme, StringRiffle[delveThemes, ", "]];
+		Return[$Failed]
+	];
+	If[!delveDomainQ[domain],
+		Message[delve::baddomain, domain, StringRiffle[delveDomains, ", "]];
+		Return[$Failed]
+	];
+	ownedDelves = normalizeCharacterDelves[character];
+	If[ownedDelves === $Failed, Return[$Failed]];
+	If[KeyExistsQ[ownedDelves, name],
+		Message[delve::duplicate, name, character];
+		Return[$Failed]
+	];
+	ownedDelve = makeDelve[name, rank, theme, domain];
+	$state[character, "delves", name] = ownedDelve;
+	ownedDelve
+];
+
+addDelve[name_String, rank_, theme_String, domain_String, character_ : $soloCharacter] /; !rankQ[rank] := (
+	Message[progress::badrank, rank];
+	$Failed
+);
+
+setCurrentDelve[name_String, character_ : $soloCharacter] := Module[
+	{ownedDelve},
+	ownedDelve = delveByName[name, character];
+	If[!AssociationQ[ownedDelve],
+		Message[delve::unknown, name, character];
+		Return[$Failed]
+	];
+	$state[character, "currentDelve"] = name;
+	ownedDelve
+];
+
+delve[] := Module[
+	{ownedDelve},
+	ownedDelve = currentDelveData[$soloCharacter];
+	If[ownedDelve === $Failed, Return[$Failed]];
+	Print[displayDelveCard[ownedDelve]];
+	ownedDelve
+];
+
+delve[name_String] :=
+	delve[name, $soloCharacter];
+
+delve[name_String, character_] := Module[
+	{ownedDelve},
+	ownedDelve = delveByName[name, character];
+	If[!AssociationQ[ownedDelve],
+		Message[delve::unknown, name, character];
+		Return[$Failed]
+	];
+	Print[displayDelveCard[ownedDelve]];
+	ownedDelve
+];
+
+delves[character_ : $soloCharacter] := Module[
+	{ownedDelves, cards},
+	ownedDelves = normalizeCharacterDelves[character];
+	If[ownedDelves === $Failed, Return[$Failed]];
+	cards = displayDelveCard /@ Values[ownedDelves];
+	Print[Column[cards, Spacings -> 1, Alignment -> Left]];
+	ownedDelves
+];
+
+removeDelve[name_String, character_ : $soloCharacter] := Module[
+	{ownedDelves},
+	ownedDelves = normalizeCharacterDelves[character];
+	If[ownedDelves === $Failed, Return[$Failed]];
+	If[!KeyExistsQ[ownedDelves, name],
+		Message[delve::unknown, name, character];
+		Return[$Failed]
+	];
+	$state[character, "delves"] = KeyDrop[ownedDelves, name];
+	If[Lookup[$state[character], "currentDelve", None] === name,
+		$state[character, "currentDelve"] = None
+	];
+	$state[character, "delves"]
+];
+
+delve::nochar = "No character named `1` exists in the current state.";
+delve::nocurrent = "Character `1` does not have a current delve.";
+delve::unknown = "Character `2` does not have a delve named `1`.";
+delve::duplicate = "Character `2` already has a delve named `1`.";
+delve::badtheme = "Unknown delve theme `1`. Use one of: `2`.";
+delve::baddomain = "Unknown delve domain `1`. Use one of: `2`.";
 
 
 (* ::Subsection::Closed:: *)
 (*Progress track registration*)
 
 
-addProgressTrack[track_String, rank_?rankQ, character_:$soloCharacter] := character["progressTracks", track] = progressTrack[rank];
-removeProgressTrack[track_String, character_:$soloCharacter] := character["progressTracks"] = KeyDrop[character["progressTracks"], {track}];
+addProgressTrack[track_String, rank_?rankQ, character_:$soloCharacter] := Module[
+	{tracks},
+	If[!characterExistsQ[character],
+		Message[state::nochar, character];
+		Return[$Failed]
+	];
+	tracks = Lookup[$state[character], "progressTracks", <||>];
+	If[!AssociationQ[tracks], tracks = <||>];
+	If[KeyExistsQ[tracks, track],
+		Message[progress::duplicate, track, character];
+		Return[$Failed]
+	];
+	$state[character, "progressTracks"] = tracks;
+	$state[character, "progressTracks", track] = makeProgressTrack[rank]
+];
+
+addProgressTrack[track_String, rank_, character_:$soloCharacter] /; !rankQ[rank] := (
+	Message[progress::badrank, rank];
+	$Failed
+);
+
+removeProgressTrack[track_String, character_:$soloCharacter] := Module[
+	{tracks},
+	If[!characterExistsQ[character],
+		Message[state::nochar, character];
+		Return[$Failed]
+	];
+	tracks = Lookup[$state[character], "progressTracks", <||>];
+	If[!AssociationQ[tracks] || !KeyExistsQ[tracks, track],
+		Message[progress::unknown, track, character];
+		Return[$Failed]
+	];
+	$state[character, "progressTracks"] = KeyDrop[tracks, track]
+];
 
 
 (* ::Subsection::Closed:: *)
@@ -2562,6 +3826,7 @@ spendExperience[n_Integer, character_ : $soloCharacter] :=
 
 (* ::Subsection::Closed:: *)
 (*Reroll*)
+
 
 Options[reroll] = {Display -> True};
 
@@ -2924,12 +4189,35 @@ payThePrice[] := displayMove["payThePrice"];
 
 
 askTheOracle[] := displayMove["askTheOracle"];
+
+askTheOracle["Reveal a Danger"] := Module[
+	{ownedDelve},
+	ownedDelve = currentDelveDataQuiet[$soloCharacter];
+	If[AssociationQ[ownedDelve],
+		oracleRoll[
+			StringJoin["Reveal a Danger (", ownedDelve["Theme"], ", ", ownedDelve["Domain"], ")"],
+			revealDangerCombinedTable[ownedDelve["Theme"], ownedDelve["Domain"]]
+		],
+		oracleRoll["Reveal a Danger: Alternate", revealDangerAlternateTable]
+	]
+];
+
+askTheOracle["Reveal a Danger", theme_String, domain_String] := oracleRoll["Reveal a Danger ("<>theme<>", "<>domain<>")", revealDangerCombinedTable[theme, domain]];
+
+askTheOracle["Delve Site Feature"] := Module[
+	{ownedDelve},
+	ownedDelve = currentDelveData[$soloCharacter];
+	If[ownedDelve === $Failed, Return[$Failed]];
+	oracleRoll[
+		StringJoin["Delve Site Feature (", ownedDelve["Theme"], ", ", ownedDelve["Domain"], ")"],
+		delveSiteFeatureTable[ownedDelve["Theme"], ownedDelve["Domain"]]
+	]
+];
+
+askTheOracle["Delve Site Feature", theme_String, domain_String] := oracleRoll["Delve Site Feature ("<>theme<>", "<>domain<>")", delveSiteFeatureTable[theme, domain]];
 askTheOracle[tableName_String] := oracleRoll[tableName, oracles[tableName]];
 askTheOracle["Yes/No", odds_String] := oracleRoll["Yes/No: " <> odds, oracles["Yes/No: " <> odds]];
 askTheOracle["Yes/No", yesOutcome_String, noOutcome_String] := oracleRoll["Yes/No", yesNo[yesOutcome, noOutcome]];
-askTheOracle["Reveal a Danger"] := oracleRoll["Reveal a Danger: Alternate", revealDangerAlternateTable];
-askTheOracle["Reveal a Danger", theme_String, domain_String] := oracleRoll["Reveal a Danger ("<>theme<>", "<>domain<>")", revealDangerCombinedTable[theme, domain]];
-askTheOracle["Delve Site Feature", theme_String, domain_String] := oracleRoll["Delve Site Feature ("<>theme<>", "<>domain<>")", delveSiteFeatureTable[theme, domain]];
 
 
 (* ::Subsection::Closed:: *)
