@@ -235,13 +235,50 @@ raiseProgressRank::usage =
 "raiseProgressRank[track] raises track rank by one step for the solo character.
 raiseProgressRank[track, character] raises track rank by one step for character.";
 
-progressTrack::usage =
-"progressTrack[track] displays the vow, threat, delve, or generic progress track named track for the solo character.
-progressTrack[track, character] displays the vow, threat, delve, or generic progress track named track for character.";
+addJourney::usage =
+"addJourney[name, rank] adds a journey progress track for the solo character.
+addJourney[name, rank, character] adds a journey progress track for character.";
 
-progressTracks::usage =
-"progressTracks[] displays all generic progress tracks for the solo character.
-progressTracks[character] displays all generic progress tracks for character.";
+setCurrentJourney::usage =
+"setCurrentJourney[name] sets the current journey for the solo character.
+setCurrentJourney[name, character] sets the current journey for character.";
+
+journey::usage =
+"journey[] displays the current journey for the solo character.
+journey[name] displays the named journey for the solo character.
+journey[name, character] displays the named journey for character.";
+
+journeys::usage =
+"journeys[] displays all journeys for the solo character.
+journeys[character] displays all journeys for character.";
+
+removeJourney::usage =
+"removeJourney[name] removes the named journey from the solo character.
+removeJourney[name, character] removes the named journey from character.";
+
+addFoe::usage =
+"addFoe[name, rank] adds a foe progress track for the solo character.
+addFoe[name, rank, character] adds a foe progress track for character.";
+
+foe::usage =
+"foe[name] displays the named foe for the solo character.
+foe[name, character] displays the named foe for character.";
+
+foes::usage =
+"foes[] displays all foes for the solo character.
+foes[character] displays all foes for character.";
+
+removeFoe::usage =
+"removeFoe[name] removes the named foe from the solo character.
+removeFoe[name, character] removes the named foe from character.";
+
+failures::usage =
+"failures[] displays the failure progress track for the solo character.
+failures[character] displays the failure progress track for character.";
+
+bondProgress::usage =
+"bondProgress[] displays the bonds progress track for the solo character.
+bondProgress[character] displays the bonds progress track for character.";
 
 
 (* ::Subsection::Closed:: *)
@@ -300,19 +337,6 @@ bonds[character] displays all bonds for character.";
 removeBond::usage =
 "removeBond[name] removes the named bond from the solo character and clears one tick on the bonds track.
 removeBond[name, character] removes the named bond from character and clears one tick on the bonds track.";
-
-
-(* ::Subsection::Closed:: *)
-(*Adding/removing progress tracks*)
-
-
-addProgressTrack::usage =
-"addProgressTrack[track, rank] adds a progress track with name track and the given rank to the solo character.
-addProgressTrack[track, rank, character] adds a progress track with name track and the given rank to the given character.";
-
-removeProgressTrack::usage = 
-"removeProgressTrack[track] removes the given progress track from the solo character.
-removeProgressTrack[track, character] removes the given progress track from the given character.";
 
 
 (* ::Subsection::Closed:: *)
@@ -886,7 +910,7 @@ titleCaseName[s_String] := StringRiffle[Capitalize /@ StringSplit[StringReplace[
 
 
 newState[] := newState[Automatic]; 
-newState[seed_] := $state = Association["journey" -> Association[], "combats" -> Association[], "seed" -> Replace[seed, Automatic :> RandomInteger[{1, 2^31 - 1}]]]; 
+newState[seed_] := $state = Association["seed" -> Replace[seed, Automatic :> RandomInteger[{1, 2^31 - 1}]]];
 ensureStateInitialized[] := Module[{base, seed}, If[AssociationQ[$state], Return[$state]]; base = currentNotebookBase[]; 
      seed = If[StringQ[base] && Quiet[parseNotebookBase[base] =!= $Failed, parseNotebookBase::badname], chapterSeedFromBase[base], Automatic]; newState[seed]; If[seed =!= Automatic, seedChapter[]]; 
      $state]; 
@@ -2575,9 +2599,150 @@ rankMarkValue[Formidable] := 1;
 rankMarkValue[Extreme] := 0.5;
 rankMarkValue[Epic] := 0.25;
 
-progressTrackExistsQ[trackName_String, character_] :=
-	characterExistsQ[character] &&
-	KeyExistsQ[Lookup[$state[character], "progressTracks", <||>], trackName];
+makeProgressObject[name_String, rank_?rankQ, progress_:0] :=
+	Association[
+		"Name" -> name,
+		"Rank" -> rank,
+		"Progress" -> clampValue[progress, {0, 10}]
+	];
+
+normalizeProgressObject[name_String, data_, defaultRank_?rankQ, defaultProgress_:0] := Module[
+	{objectName, rank, progress},
+	If[!AssociationQ[data],
+		Return[makeProgressObject[name, defaultRank, defaultProgress]]
+	];
+	objectName = Lookup[data, "Name", name];
+	If[!StringQ[objectName], objectName = name];
+	rank = Lookup[data, "Rank", Lookup[data, "rank", defaultRank]];
+	If[!rankQ[rank], rank = defaultRank];
+	progress = Lookup[data, "Progress", Lookup[data, "progress", defaultProgress]];
+	If[!NumericQ[progress], progress = defaultProgress];
+	makeProgressObject[objectName, rank, progress]
+];
+
+normalizeProgressObject[name_String, data_] :=
+	normalizeProgressObject[name, data, Dangerous, 0];
+
+legacyProgressTrack[character_, name_String] := Module[
+	{legacy},
+	legacy = Lookup[$state[character], "progressTracks", <||>];
+	If[AssociationQ[legacy], Lookup[legacy, name, Missing["NoLegacyTrack"]], Missing["NoLegacyTrack"]]
+];
+
+ensureCharacterCoreProgress[character_] := Module[
+	{legacyFailures, legacyBonds, bondDefault},
+	If[!characterExistsQ[character],
+		Message[state::nochar, character];
+		Return[$Failed]
+	];
+	legacyFailures = legacyProgressTrack[character, "Failures"];
+	If[!KeyExistsQ[$state[character], "failures"],
+		$state[character, "failures"] = normalizeProgressObject[
+			"Failures",
+			If[MissingQ[legacyFailures], makeProgressTrack[Epic], legacyFailures],
+			Epic
+		],
+		$state[character, "failures"] = normalizeProgressObject["Failures", $state[character, "failures"], Epic]
+	];
+	legacyBonds = legacyProgressTrack[character, "Bonds"];
+	bondDefault = 0.25 Length[Lookup[$state[character], "bonds", {}]];
+	If[!KeyExistsQ[$state[character], "bondProgress"],
+		$state[character, "bondProgress"] = normalizeProgressObject[
+			"Bonds",
+			If[MissingQ[legacyBonds], makeProgressTrack[Epic, bondDefault], legacyBonds],
+			Epic,
+			bondDefault
+		],
+		$state[character, "bondProgress"] = normalizeProgressObject["Bonds", $state[character, "bondProgress"], Epic, bondDefault]
+	];
+	If[!KeyExistsQ[$state[character], "journeys"] || !AssociationQ[$state[character, "journeys"]],
+		$state[character, "journeys"] = <||>
+	];
+	If[!KeyExistsQ[$state[character], "currentJourney"],
+		$state[character, "currentJourney"] = None
+	];
+	If[!KeyExistsQ[$state[character], "foes"] || !AssociationQ[$state[character, "foes"]],
+		$state[character, "foes"] = <||>
+	];
+	If[KeyExistsQ[$state[character], "progressTracks"],
+		$state[character] = KeyDrop[$state[character], "progressTracks"]
+	];
+	$state[character]
+];
+
+normalizeProgressObjectAssociation[character_, key_String] := Module[
+	{raw, normalized},
+	If[ensureCharacterCoreProgress[character] === $Failed, Return[$Failed]];
+	raw = Lookup[$state[character], key, <||>];
+	If[!AssociationQ[raw], raw = <||>];
+	normalized = Association @ KeyValueMap[
+		#1 -> normalizeProgressObject[#1, #2] &,
+		raw
+	];
+	$state[character, key] = normalized;
+	normalized
+];
+
+journeyExistsQ[name_String, character_] := Module[
+	{ownedJourneys},
+	ownedJourneys = normalizeCharacterJourneys[character];
+	If[ownedJourneys === $Failed, Return[False]];
+	KeyExistsQ[ownedJourneys, name]
+];
+
+journeyByName[name_String, character_] := Module[
+	{ownedJourneys},
+	ownedJourneys = normalizeCharacterJourneys[character];
+	If[ownedJourneys === $Failed, Return[$Failed]];
+	Lookup[ownedJourneys, name, Missing["UnknownJourney", name]]
+];
+
+currentJourneyName[character_] := Module[
+	{ownedJourneys, current},
+	ownedJourneys = normalizeCharacterJourneys[character];
+	If[ownedJourneys === $Failed, Return[$Failed]];
+	current = Lookup[$state[character], "currentJourney", None];
+	If[current === None,
+		Message[journey::nocurrent, character];
+		Return[$Failed]
+	];
+	If[!KeyExistsQ[ownedJourneys, current],
+		Message[journey::unknown, current, character];
+		Return[$Failed]
+	];
+	current
+];
+
+currentJourneyData[character_] := Module[
+	{current},
+	current = currentJourneyName[character];
+	If[current === $Failed, Return[$Failed]];
+	journeyByName[current, character]
+];
+
+foeExistsQ[name_String, character_] := Module[
+	{ownedFoes},
+	ownedFoes = normalizeCharacterFoes[character];
+	If[ownedFoes === $Failed, Return[False]];
+	KeyExistsQ[ownedFoes, name]
+];
+
+foeByName[name_String, character_] := Module[
+	{ownedFoes},
+	ownedFoes = normalizeCharacterFoes[character];
+	If[ownedFoes === $Failed, Return[$Failed]];
+	Lookup[ownedFoes, name, Missing["UnknownFoe", name]]
+];
+
+failureProgressData[character_] := Module[{},
+	If[ensureCharacterCoreProgress[character] === $Failed, Return[$Failed]];
+	$state[character, "failures"]
+];
+
+bondProgressData[character_] := Module[{},
+	If[ensureCharacterCoreProgress[character] === $Failed, Return[$Failed]];
+	$state[character, "bondProgress"]
+];
 
 normalizeThreatSpec[None] :=
 	None;
@@ -2933,7 +3098,8 @@ sceneByName[name_String, character_] := Module[
 ];
 
 progressTargetData[trackName_String, character_] := Module[
-	{ownedVow, threatVowName, ownedThreat, ownedDelve, ownedScene},
+	{ownedVow, threatVowName, ownedThreat, ownedDelve, ownedScene, ownedJourney, ownedFoe, ownedFailures, ownedBondProgress},
+	If[ensureCharacterCoreProgress[character] === $Failed, Return[$Failed]];
 	If[vowExistsQ[trackName, character],
 		ownedVow = vowByName[trackName, character];
 		Return[
@@ -2980,13 +3146,49 @@ progressTargetData[trackName_String, character_] := Module[
 			]
 		]
 	];
-	If[progressTrackExistsQ[trackName, character],
+	If[journeyExistsQ[trackName, character],
+		ownedJourney = journeyByName[trackName, character];
 		Return[
 			Association[
-				"Type" -> "ProgressTrack",
+				"Type" -> "Journey",
 				"Name" -> trackName,
-				"Rank" -> $state[character, "progressTracks", trackName, "rank"],
-				"Progress" -> $state[character, "progressTracks", trackName, "progress"]
+				"Rank" -> ownedJourney["Rank"],
+				"Progress" -> ownedJourney["Progress"]
+			]
+		]
+	];
+	If[foeExistsQ[trackName, character],
+		ownedFoe = foeByName[trackName, character];
+		Return[
+			Association[
+				"Type" -> "Foe",
+				"Name" -> trackName,
+				"Rank" -> ownedFoe["Rank"],
+				"Progress" -> ownedFoe["Progress"]
+			]
+		]
+	];
+	If[trackName === "Failures",
+		ownedFailures = failureProgressData[character];
+		If[ownedFailures === $Failed, Return[$Failed]];
+		Return[
+			Association[
+				"Type" -> "Failures",
+				"Name" -> "Failures",
+				"Rank" -> ownedFailures["Rank"],
+				"Progress" -> ownedFailures["Progress"]
+			]
+		]
+	];
+	If[trackName === "Bonds",
+		ownedBondProgress = bondProgressData[character];
+		If[ownedBondProgress === $Failed, Return[$Failed]];
+		Return[
+			Association[
+				"Type" -> "Bonds",
+				"Name" -> "Bonds",
+				"Rank" -> ownedBondProgress["Rank"],
+				"Progress" -> ownedBondProgress["Progress"]
 			]
 		]
 	];
@@ -3110,7 +3312,10 @@ progressTypeTitle["Vow"] := "Vow";
 progressTypeTitle["Threat"] := "Threat";
 progressTypeTitle["Delve"] := "Delve";
 progressTypeTitle["Scene"] := "Scene";
-progressTypeTitle["ProgressTrack"] := "Progress Track";
+progressTypeTitle["Journey"] := "Journey";
+progressTypeTitle["Foe"] := "Foe";
+progressTypeTitle["Failures"] := "Failures";
+progressTypeTitle["Bonds"] := "Bonds";
 progressTypeTitle[other_] := ToString[other];
 
 displayProgressTargetCard[target_Association] := Module[
@@ -3138,12 +3343,18 @@ setTargetProgress[target_Association, value_, character_] := Module[
 			$state[character, "vows", target["Name"], "Progress"] = clamped,
 		"Threat",
 			$state[character, "vows", target["Vow"], "Threat", "Menace", "progress"] = clamped,
-			"Delve",
-				$state[character, "delves", target["Name"], "Progress"] = clamped,
-			"Scene",
-				$state[character, "scene", "Progress"] = clamped,
-			"ProgressTrack",
-				$state[character, "progressTracks", target["Name"], "progress"] = clamped,
+		"Delve",
+			$state[character, "delves", target["Name"], "Progress"] = clamped,
+		"Scene",
+			$state[character, "scene", "Progress"] = clamped,
+		"Journey",
+			$state[character, "journeys", target["Name"], "Progress"] = clamped,
+		"Foe",
+			$state[character, "foes", target["Name"], "Progress"] = clamped,
+		"Failures",
+			$state[character, "failures", "Progress"] = clamped,
+		"Bonds",
+			$state[character, "bondProgress", "Progress"] = clamped,
 		_,
 			Return[$Failed]
 	];
@@ -3160,12 +3371,18 @@ setTargetRank[target_Association, rank_?rankQ, character_] := Module[{},
 			$state[character, "vows", target["Name"], "Rank"] = rank,
 		"Threat",
 			$state[character, "vows", target["Vow"], "Threat", "Menace", "rank"] = rank,
-			"Delve",
-				$state[character, "delves", target["Name"], "Rank"] = rank,
-			"Scene",
-				$state[character, "scene", "Rank"] = rank,
-			"ProgressTrack",
-				$state[character, "progressTracks", target["Name"], "rank"] = rank,
+		"Delve",
+			$state[character, "delves", target["Name"], "Rank"] = rank,
+		"Scene",
+			$state[character, "scene", "Rank"] = rank,
+		"Journey",
+			$state[character, "journeys", target["Name"], "Rank"] = rank,
+		"Foe",
+			$state[character, "foes", target["Name"], "Rank"] = rank,
+		"Failures",
+			$state[character, "failures", "Rank"] = rank,
+		"Bonds",
+			$state[character, "bondProgress", "Rank"] = rank,
 		_,
 			Return[$Failed]
 	];
@@ -3239,8 +3456,8 @@ createCharacter[name_String, assetSpecs_List /; Length[assetSpecs] == 3, (edge_)
      startingVow = ownedVowFromSpec[vowSpec]; If[startingVow === $Failed, Message[createCharacter::badvow]; Return[$Failed]];
      character = Association["assets" -> ownedAssets, "edge" -> edge, "heart" -> heart, "iron" -> iron, "shadow" -> shadow, "wits" -> wits, "health" -> 5, 
        "spirit" -> 5, "supply" -> 5, "momentum" -> 2, "debilities" -> {}, "vows" -> Association[startingVow["Name"] -> startingVow], 
-       "progressTracks" -> Association["Bonds" -> makeProgressTrack[Epic, 0.25*Length[bonds]], "Failures"->makeProgressTrack[Epic]], 
-       "bonds" -> bonds, "delves" -> <||>, "currentDelve" -> None, "scene" -> None, "earnedExperience" -> 0, "spentExperience" -> 0]; AssociateTo[$state, name -> character]; $soloCharacter = name; $state[name]];
+       "failures" -> makeProgressObject["Failures", Epic], "bondProgress" -> makeProgressObject["Bonds", Epic, 0.25*Length[bonds]],
+       "bonds" -> bonds, "journeys" -> <||>, "currentJourney" -> None, "foes" -> <||>, "delves" -> <||>, "currentDelve" -> None, "scene" -> None, "earnedExperience" -> 0, "spentExperience" -> 0]; AssociateTo[$state, name -> character]; $soloCharacter = name; $state[name]];
 createCharacter::badassets = "Could not create the character because one or more starting assets are invalid.";
 createCharacter::badvow = "Could not create the character because the starting vow is invalid. Use starterVow[name, rank].";
        
@@ -3885,7 +4102,7 @@ markProgress[track_String, n_Integer?NonNegative, character_ : $soloCharacter] :
 				markVowProgress[target["Name"], n, character],
 			"Threat",
 				markThreatProgressByVow[target["Vow"], n, character],
-			"Delve" | "Scene" | "ProgressTrack",
+			"Delve" | "Scene" | "Journey" | "Foe" | "Failures" | "Bonds",
 				markValue = n rankMarkValue[target["Rank"]];
 				adjustTargetProgress[target, markValue, character],
 			_,
@@ -4005,43 +4222,190 @@ raiseProgressRank[track_String, character_ : $soloCharacter] := Module[
 	raiseTargetRank[target, character]
 ];
 
-progressTrack[track_String, character_ : $soloCharacter] := Module[
-	{target},
-	target = progressTargetData[track, character];
-	If[target === $Failed, Return[$Failed]];
-	Print[displayProgressTargetCard[target]];
-	target
-];
-
-progressTracks[character_ : $soloCharacter] := Module[
-	{tracks, cards},
-	If[!characterExistsQ[character],
-		Message[state::nochar, character];
-		Return[$Failed]
-	];
-	tracks = Lookup[$state[character], "progressTracks", <||>];
-	cards = KeyValueMap[
-		displayProgressTargetCard[
-			Association[
-				"Type" -> "ProgressTrack",
-				"Name" -> #1,
-				"Rank" -> #2["rank"],
-				"Progress" -> #2["progress"]
-			]
-		] &,
-		tracks
-	];
-	Print[Column[cards, Spacings -> 1, Alignment -> Left]];
-	tracks
-];
-
-markProgress::notrack = "No vow, threat, delve, or progress track named `1` exists for character `2`.";
+markProgress::notrack = "No vow, threat, delve, scene, journey, foe, failures, or bonds track named `1` exists for character `2`.";
 progress::badunits = "Progress units must be a non-negative integer, got `1`.";
 progress::clamped = "Progress for `1` on character `2` was clamped from `3` to `4`.";
 progress::epic = "Progress track `1` for character `2` is already Epic and cannot be raised.";
 progress::badrank = "`1` is not a valid progress rank.";
-progress::duplicate = "Character `2` already has a generic progress track named `1`.";
-progress::unknown = "Character `2` does not have a generic progress track named `1`.";
+
+
+(* ::Subsection::Closed:: *)
+(*Journey and foe management*)
+
+
+normalizeCharacterJourneys[character_] :=
+	normalizeProgressObjectAssociation[character, "journeys"];
+
+normalizeCharacterFoes[character_] :=
+	normalizeProgressObjectAssociation[character, "foes"];
+
+displayProgressObject[type_String, object_Association] :=
+	displayProgressTargetCard[
+		Association[
+			"Type" -> type,
+			"Name" -> object["Name"],
+			"Rank" -> object["Rank"],
+			"Progress" -> object["Progress"]
+		]
+	];
+
+addJourney[name_String, rank_?rankQ, character_ : $soloCharacter] := Module[
+	{ownedJourneys, ownedJourney},
+	ownedJourneys = normalizeCharacterJourneys[character];
+	If[ownedJourneys === $Failed, Return[$Failed]];
+	If[KeyExistsQ[ownedJourneys, name],
+		Message[journey::duplicate, name, character];
+		Return[$Failed]
+	];
+	ownedJourney = makeProgressObject[name, rank];
+	$state[character, "journeys", name] = ownedJourney;
+	ownedJourney
+];
+
+addJourney[name_String, rank_, character_ : $soloCharacter] /; !rankQ[rank] := (
+	Message[progress::badrank, rank];
+	$Failed
+);
+
+setCurrentJourney[name_String, character_ : $soloCharacter] := Module[
+	{ownedJourney},
+	ownedJourney = journeyByName[name, character];
+	If[!AssociationQ[ownedJourney],
+		Message[journey::unknown, name, character];
+		Return[$Failed]
+	];
+	$state[character, "currentJourney"] = name;
+	ownedJourney
+];
+
+journey[] := Module[
+	{ownedJourney},
+	ownedJourney = currentJourneyData[$soloCharacter];
+	If[ownedJourney === $Failed, Return[$Failed]];
+	Print[displayProgressObject["Journey", ownedJourney]];
+	ownedJourney
+];
+
+journey[name_String] :=
+	journey[name, $soloCharacter];
+
+journey[name_String, character_] := Module[
+	{ownedJourney},
+	ownedJourney = journeyByName[name, character];
+	If[!AssociationQ[ownedJourney],
+		Message[journey::unknown, name, character];
+		Return[$Failed]
+	];
+	Print[displayProgressObject["Journey", ownedJourney]];
+	ownedJourney
+];
+
+journeys[] :=
+	journeys[$soloCharacter];
+
+journeys[character_] := Module[
+	{ownedJourneys, cards},
+	ownedJourneys = normalizeCharacterJourneys[character];
+	If[ownedJourneys === $Failed, Return[$Failed]];
+	cards = displayProgressObject["Journey", #] & /@ Values[ownedJourneys];
+	Print[Column[cards, Spacings -> 1, Alignment -> Left]];
+	ownedJourneys
+];
+
+removeJourney[name_String, character_ : $soloCharacter] := Module[
+	{ownedJourneys},
+	ownedJourneys = normalizeCharacterJourneys[character];
+	If[ownedJourneys === $Failed, Return[$Failed]];
+	If[!KeyExistsQ[ownedJourneys, name],
+		Message[journey::unknown, name, character];
+		Return[$Failed]
+	];
+	$state[character, "journeys"] = KeyDrop[ownedJourneys, name];
+	If[Lookup[$state[character], "currentJourney", None] === name,
+		$state[character, "currentJourney"] = None
+	];
+	$state[character, "journeys"]
+];
+
+addFoe[name_String, rank_?rankQ, character_ : $soloCharacter] := Module[
+	{ownedFoes, ownedFoe},
+	ownedFoes = normalizeCharacterFoes[character];
+	If[ownedFoes === $Failed, Return[$Failed]];
+	If[KeyExistsQ[ownedFoes, name],
+		Message[foe::duplicate, name, character];
+		Return[$Failed]
+	];
+	ownedFoe = makeProgressObject[name, rank];
+	$state[character, "foes", name] = ownedFoe;
+	ownedFoe
+];
+
+addFoe[name_String, rank_, character_ : $soloCharacter] /; !rankQ[rank] := (
+	Message[progress::badrank, rank];
+	$Failed
+);
+
+foe[name_String, character_ : $soloCharacter] := Module[
+	{ownedFoe},
+	ownedFoe = foeByName[name, character];
+	If[!AssociationQ[ownedFoe],
+		Message[foe::unknown, name, character];
+		Return[$Failed]
+	];
+	Print[displayProgressObject["Foe", ownedFoe]];
+	ownedFoe
+];
+
+foes[] :=
+	foes[$soloCharacter];
+
+foes[character_] := Module[
+	{ownedFoes, cards},
+	ownedFoes = normalizeCharacterFoes[character];
+	If[ownedFoes === $Failed, Return[$Failed]];
+	cards = displayProgressObject["Foe", #] & /@ Values[ownedFoes];
+	Print[Column[cards, Spacings -> 1, Alignment -> Left]];
+	ownedFoes
+];
+
+removeFoe[name_String, character_ : $soloCharacter] := Module[
+	{ownedFoes},
+	ownedFoes = normalizeCharacterFoes[character];
+	If[ownedFoes === $Failed, Return[$Failed]];
+	If[!KeyExistsQ[ownedFoes, name],
+		Message[foe::unknown, name, character];
+		Return[$Failed]
+	];
+	$state[character, "foes"] = KeyDrop[ownedFoes, name]
+];
+
+failures[] :=
+	failures[$soloCharacter];
+
+failures[character_] := Module[
+	{track},
+	track = failureProgressData[character];
+	If[track === $Failed, Return[$Failed]];
+	Print[displayProgressObject["Failures", track]];
+	track
+];
+
+bondProgress[] :=
+	bondProgress[$soloCharacter];
+
+bondProgress[character_] := Module[
+	{track},
+	track = bondProgressData[character];
+	If[track === $Failed, Return[$Failed]];
+	Print[displayProgressObject["Bonds", track]];
+	track
+];
+
+journey::duplicate = "Character `2` already has a journey named `1`.";
+journey::unknown = "Character `2` does not have a journey named `1`.";
+journey::nocurrent = "Character `1` does not have a current journey.";
+foe::duplicate = "Character `2` already has a foe named `1`.";
+foe::unknown = "Character `2` does not have a foe named `1`.";
 
 
 (* ::Subsection::Closed:: *)
@@ -4702,46 +5066,6 @@ delve::badobjective = "Delve objective must be None or a string, not `1`.";
 delve::baddenizens = "Denizens must be a 12-item list of strings or None.";
 delve::baddenizen = "Denizen must be a non-empty string or None, not `1`.";
 delve::badslot = "Denizen slot must be an integer from 1 to 12, not `1`.";
-
-
-(* ::Subsection::Closed:: *)
-(*Progress track registration*)
-
-
-addProgressTrack[track_String, rank_?rankQ, character_:$soloCharacter] := Module[
-	{tracks},
-	If[!characterExistsQ[character],
-		Message[state::nochar, character];
-		Return[$Failed]
-	];
-	tracks = Lookup[$state[character], "progressTracks", <||>];
-	If[!AssociationQ[tracks], tracks = <||>];
-	If[KeyExistsQ[tracks, track],
-		Message[progress::duplicate, track, character];
-		Return[$Failed]
-	];
-	$state[character, "progressTracks"] = tracks;
-	$state[character, "progressTracks", track] = makeProgressTrack[rank]
-];
-
-addProgressTrack[track_String, rank_, character_:$soloCharacter] /; !rankQ[rank] := (
-	Message[progress::badrank, rank];
-	$Failed
-);
-
-removeProgressTrack[track_String, character_:$soloCharacter] := Module[
-	{tracks},
-	If[!characterExistsQ[character],
-		Message[state::nochar, character];
-		Return[$Failed]
-	];
-	tracks = Lookup[$state[character], "progressTracks", <||>];
-	If[!AssociationQ[tracks] || !KeyExistsQ[tracks, track],
-		Message[progress::unknown, track, character];
-		Return[$Failed]
-	];
-	$state[character, "progressTracks"] = KeyDrop[tracks, track]
-];
 
 
 (* ::Subsection::Closed:: *)
