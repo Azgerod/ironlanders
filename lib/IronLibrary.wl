@@ -101,6 +101,22 @@ threat::usage =
 "threat[vowName] displays the threat attached to vowName for the solo character and returns a threat progress handle.
 threat[vowName, character] displays the threat attached to vowName for character and returns a threat progress handle.";
 
+removeVow::usage =
+"removeVow[name] removes the named vow from the solo character.
+removeVow[name, character] removes the named vow from character.";
+
+setThreat::usage =
+"setThreat[vowName, {threatName, threatGoal}] sets or replaces the threat attached to vowName for the solo character.
+setThreat[vowName, {threatName, threatGoal}, character] sets or replaces the threat attached to vowName for character.";
+
+removeThreat::usage =
+"removeThreat[vowName] removes the threat attached to vowName for the solo character.
+removeThreat[vowName, character] removes the threat attached to vowName for character.";
+
+clearThreatProgress::usage =
+"clearThreatProgress[vowName] clears the menace progress for the threat attached to vowName for the solo character.
+clearThreatProgress[vowName, character] clears the menace progress for the threat attached to vowName for character.";
+
 
 (* ::Subsection::Closed:: *)
 (*Debility management*)
@@ -157,6 +173,27 @@ adjustAssetTrack::usage =
 "adjustAssetTrack[assetName, trackName, delta] adjusts an owned asset track for the solo character, clamped to the printed track range.
 adjustAssetTrack[assetName, trackName, delta, character] adjusts an owned asset track for character.";
 
+removeAsset::usage =
+"removeAsset[name] removes an owned asset from the solo character without awarding experience.
+removeAsset[name, character] removes an owned asset from character without awarding experience.
+removeAsset[..., Display -> False] suppresses display.";
+
+companion::usage =
+"companion[name] displays the owned companion asset named name for the solo character.
+companion[name, character] displays the owned companion asset named name for character.";
+
+companions::usage =
+"companions[] displays all owned companion assets for the solo character.
+companions[character] displays all owned companion assets for character.";
+
+setCompanionHealth::usage =
+"setCompanionHealth[name, value] sets an owned companion's health track for the solo character.
+setCompanionHealth[name, value, character] sets an owned companion's health track for character.";
+
+adjustCompanionHealth::usage =
+"adjustCompanionHealth[name, delta] adjusts an owned companion's health track for the solo character.
+adjustCompanionHealth[name, delta, character] adjusts an owned companion's health track for character.";
+
 
 (* ::Subsection::Closed:: *)
 (*Action roll*)
@@ -173,6 +210,9 @@ actionRoll[stat, character] makes an action roll using stat for character.";
 
 burnMomentum::usage =
 "burnMomentum[roll] burns momentum for roll and returns the modified roll result.";
+
+rarityDieSix::usage =
+"rarityDieSix[roll] displays a Rarity Die conversion to a strong hit and returns a copy of the action roll with a strong hit result.";
 
 
 (* ::Subsection::Closed:: *)
@@ -316,6 +356,10 @@ sufferSupply[n, character] adjusts character's supply by n.";
 takeSupply::usage =
 "takeSupply[n] adjusts the solo character's supply by n.
 takeSupply[n, character] adjusts character's supply by n.";
+
+recover::usage =
+"recover[] applies the Take a Hiatus recovery package to the solo character without advancing threats.
+recover[character] applies the Take a Hiatus recovery package to character without advancing threats.";
 
 
 (* ::Subsection::Closed:: *)
@@ -480,6 +524,7 @@ askTheOracle[\"Delve Site Feature\", theme, domain] rolls on the Delve Site Feat
 askTheOracle[\"Delve Site Name\"] composes a site name using the current delve's domain.
 askTheOracle[\"Delve Site Name\", domain] composes a site name using domain.
 askTheOracle[\"Monstrosity\"], askTheOracle[\"Trap\"], askTheOracle[\"Combat Event\"], and askTheOracle[\"Threat\"] roll composite Delve oracle results.
+askTheOracle[\"Settlement: Name\"], askTheOracle[\"Settlement: Quick Name\"], askTheOracle[\"Core: Prompt\"], askTheOracle[\"Character\"], askTheOracle[\"Settlement\"], askTheOracle[\"Combat Scene\"], and askTheOracle[\"Journey Waypoint\"] roll composite oracle results.
 askTheOracle[\"Threat\", category] rolls on a specific threat category.";
 
 
@@ -931,6 +976,7 @@ stats = {Edge, Heart, Iron, Shadow, Wits, Health, Spirit, Supply};
 ranks = {Troublesome, Dangerous, Formidable, Extreme, Epic};
 debilities = {Wounded, Shaken, Unprepared, Encumbered, Maimed, Corrupted, Cursed, Tormented};
 permanentDebilities = {Maimed, Corrupted};
+recoverableConditions = {Wounded, Shaken, Unprepared, Encumbered};
 delveThemes = {"Ancient", "Corrupted", "Fortified", "Hallowed", "Haunted", "Infested", "Ravaged", "Wild"};
 delveDomains = {"Barrow", "Cavern", "Frozen Cavern", "Icereach", "Mine", "Pass", "Ruin", "Sea Cave", "Shadowfen", "Stronghold", "Tanglewood", "Underkeep"};
 denizenSlotRanges = {
@@ -952,7 +998,7 @@ denizenSlotThresholds = {27, 41, 55, 69, 75, 81, 87, 93, 95, 97, 99, 100};
 
 statQ[input_] := MemberQ[stats, input]; 
 rankQ[input_] := MemberQ[ranks, input]; 
-statValueQ[input_Integer] := 1 <= input <= 5; 
+statValueQ[input_Integer] := 0 <= input <= 5;
 debilityQ[input_] := MemberQ[debilities, input];
 delveThemeQ[input_String] := MemberQ[delveThemes, input];
 delveDomainQ[input_String] := MemberQ[delveDomains, input];
@@ -1455,6 +1501,11 @@ rollActionDie[] := RandomInteger[{1, 6}];
 rollResultFromBeatCount[count_Integer] :=
 	<|0 -> "miss", 1 -> "weakHit", 2 -> "strongHit"|>[count];
 
+rollResultRank["miss"] := 0;
+rollResultRank["weakHit"] := 1;
+rollResultRank["strongHit"] := 2;
+rollResultRank[_] := -1;
+
 actionRollResult[challengeDice_List, actionScore_Integer] :=
 	rollResultFromBeatCount[
 		Count[challengeDice, die_ /; actionScore > die]
@@ -1883,6 +1934,22 @@ displayReturnToSiteRoll[roll_Association] :=
 		]
 	];
 
+displayRarityDieSix[roll_Association] :=
+	Print[
+		ironFramed[
+			Column[
+				{
+					header["Rarity Die", "Rolled 6"],
+					Item[d6Image[6], Alignment -> Center],
+					Item[Rotate[mainStyle["\[Rule]"], -(Pi/2)], Alignment -> Center],
+					Item[actionRollResultDisplay["strongHit", False], Alignment -> Center]
+				},
+				Spacings -> {Automatic, rollHeaderBodyGap, 0.8, rollBodyResultGap},
+				Alignment -> Center
+			]
+		]
+	];
+
 
 (* ::Subsubsection::Closed:: *)
 (*Reroll display*)
@@ -2293,6 +2360,40 @@ ownedAssetIndex[assetName_String, character_] := Module[
 		Missing["NotOwned", assetName],
 		First[positions]
 	]
+];
+
+ownedAssetContext[assetName_String, character_] := Module[
+	{record, ownedAssets, positions, index},
+	record = assetRecord[assetName];
+	If[!AssociationQ[record],
+		Message[asset::unknown, assetName];
+		Return[$Failed]
+	];
+	ownedAssets = normalizeCharacterAssets[character];
+	If[ownedAssets === $Failed, Return[$Failed]];
+	positions = Flatten @ Position[Lookup[ownedAssets, "Name", Missing["NoName"]], assetName];
+	If[positions === {},
+		Message[asset::notowned, assetName, character];
+		Return[$Failed]
+	];
+	index = First[positions];
+	Association[
+		"Record" -> record,
+		"Assets" -> ownedAssets,
+		"Index" -> index,
+		"Owned" -> ownedAssets[[index]]
+	]
+];
+
+ownedCompanionContext[assetName_String, character_] := Module[
+	{context},
+	context = ownedAssetContext[assetName, character];
+	If[context === $Failed, Return[$Failed]];
+	If[Lookup[context["Record"], "Category", ""] =!= "Companion",
+		Message[asset::notcompanion, assetName];
+		Return[$Failed]
+	];
+	context
 ];
 
 availableExperience[character_] :=
@@ -3593,6 +3694,48 @@ threat[vowName_String, character_String, opts : OptionsPattern[]] := Module[
 	ThreatTrack[vowName, character]
 ];
 
+removeVow[name_String, character_ : $soloCharacter] := Module[
+	{ownedVows, removed},
+	ownedVows = normalizeCharacterVows[character];
+	If[ownedVows === $Failed, Return[$Failed]];
+	If[!KeyExistsQ[ownedVows, name],
+		Message[vow::unknown, name, character];
+		Return[$Failed]
+	];
+	removed = ownedVows[name];
+	$state[character, "vows"] = KeyDrop[ownedVows, name];
+	removed
+];
+
+setThreat[vowName_String, threatSpec_, character_ : $soloCharacter] := Module[
+	{ownedVow, normalizedThreat},
+	ownedVow = vowByName[vowName, character];
+	If[!AssociationQ[ownedVow],
+		Message[vow::unknown, vowName, character];
+		Return[$Failed]
+	];
+	normalizedThreat = normalizeThreatSpec[threatSpec];
+	If[normalizedThreat === $Failed, Return[$Failed]];
+	$state[character, "vows", vowName, "Threat"] = normalizedThreat;
+	$state[character, "vows", vowName]
+];
+
+removeThreat[vowName_String, character_ : $soloCharacter] := Module[
+	{ownedThreat},
+	ownedThreat = threatByVowName[vowName, character];
+	If[ownedThreat === $Failed, Return[$Failed]];
+	$state[character, "vows", vowName, "Threat"] = None;
+	ownedThreat
+];
+
+clearThreatProgress[vowName_String, character_ : $soloCharacter] := Module[
+	{ownedThreat},
+	ownedThreat = threatByVowName[vowName, character];
+	If[ownedThreat === $Failed, Return[$Failed]];
+	$state[character, "vows", vowName, "Threat", "Menace", "progress"] = 0;
+	$state[character, "vows", vowName, "Threat"]
+];
+
 vow::badstarter = "`1` is not a valid vow spec. Use starterVow[name, rank].";
 vow::badthreat = "`1` is not a valid threat spec. Use Threat -> {threatName, threatGoal}.";
 vow::nochar = "No character named `1` exists in the current state.";
@@ -3830,6 +3973,76 @@ adjustAssetTrack[assetName_String, trackName_String, delta_Integer, character_ :
 	setAssetTrack[assetName, trackName, current + delta, character]
 ];
 
+Options[removeAsset] = {Display -> True};
+
+removeAsset[name_String, opts : OptionsPattern[]] :=
+	removeAsset[name, $soloCharacter, opts];
+
+removeAsset[name_String, character_, opts : OptionsPattern[]] := Module[
+	{context, ownedAssets, removed},
+	context = ownedAssetContext[name, character];
+	If[context === $Failed, Return[$Failed]];
+	ownedAssets = context["Assets"];
+	removed = context["Owned"];
+	$state[character, "assets"] = Delete[ownedAssets, context["Index"]];
+	If[OptionValue[Display], displayAssetCard[removed, "Removed Asset"]];
+	removed
+];
+
+companion[name_String, character_ : $soloCharacter] := Module[
+	{context},
+	context = ownedCompanionContext[name, character];
+	If[context === $Failed, Return[$Failed]];
+	displayAssetCard[context["Owned"]];
+	context["Owned"]
+];
+
+companions[] :=
+	companions[$soloCharacter];
+
+companions[character_] := Module[
+	{ownedAssets, companionAssets, cards},
+	ownedAssets = normalizeCharacterAssets[character];
+	If[ownedAssets === $Failed, Return[$Failed]];
+	companionAssets = Select[
+		ownedAssets,
+		AssociationQ[assetRecord[#["Name"]]] && Lookup[assetRecord[#["Name"]], "Category", ""] === "Companion" &
+	];
+	cards = assetCardExpression /@ companionAssets;
+	displayAssetCards[cards];
+	companionAssets
+];
+
+Options[setCompanionHealth] = {Display -> True};
+
+setCompanionHealth[name_String, value_Integer, opts : OptionsPattern[]] :=
+	setCompanionHealth[name, value, $soloCharacter, opts];
+
+setCompanionHealth[name_String, value_Integer, character_, opts : OptionsPattern[]] := Module[
+	{context, clamped, updated},
+	context = ownedCompanionContext[name, character];
+	If[context === $Failed, Return[$Failed]];
+	clamped = setAssetTrack[name, "health", value, character];
+	If[clamped === $Failed, Return[$Failed]];
+	updated = $state[character, "assets", context["Index"]];
+	If[OptionValue[Display], displayAssetCard[updated, "Companion Health"]];
+	clamped
+];
+
+Options[adjustCompanionHealth] = {Display -> True};
+
+adjustCompanionHealth[name_String, delta_Integer, opts : OptionsPattern[]] :=
+	adjustCompanionHealth[name, delta, $soloCharacter, opts];
+
+adjustCompanionHealth[name_String, delta_Integer, character_, opts : OptionsPattern[]] := Module[
+	{context, tracks, current},
+	context = ownedCompanionContext[name, character];
+	If[context === $Failed, Return[$Failed]];
+	tracks = Join[initialAssetTracks[context["Record"]], Lookup[context["Owned"], "Tracks", <||>]];
+	current = Lookup[tracks, "health", Lookup[assetTrackDefinition[context["Record"], "health"], "Default", 0]];
+	setCompanionHealth[name, current + delta, character, opts]
+];
+
 normalizeRarityName[rarity_String] := Module[
 	{trimmed},
 	trimmed = StringTrim[rarity];
@@ -3953,6 +4166,7 @@ asset::raritycompanion = "Companion asset `1` cannot be augmented with a rarity.
 asset::noraritycost = "Asset `1` is not eligible for rarity augmentation.";
 asset::rarityduplicate = "Asset `1` already has rarity `2`.";
 asset::norarity = "Asset `1` does not have a rarity to remove.";
+asset::notcompanion = "Asset `1` is not a companion.";
 
 
 (* ::Subsection::Closed:: *)
@@ -3975,7 +4189,7 @@ actionRoll[(stat_)?statQ, character_String, opts:OptionsPattern[]] := Module[{ac
 
 Options[burnMomentum] = {Display -> True}; 
 burnMomentum[roll_Association, opts:OptionsPattern[]] := Module[
-	{momentum, challengeDice, challengeDiceCancelled, beatCount, burn},
+	{momentum, challengeDice, challengeDiceCancelled, beatCount, result, burn},
 	If[
 		!actionRollQ[roll] ||
 		!AllTrue[{"character", "momentum", "result", "match"}, KeyExistsQ[roll, #] &],
@@ -3999,13 +4213,18 @@ burnMomentum[roll_Association, opts:OptionsPattern[]] := Module[
 			{challengeDice, challengeDiceCancelled}
 		]
 	];
+	result = rollResultFromBeatCount[beatCount];
+	If[rollResultRank[result] <= rollResultRank[roll["result"]],
+		Message[burnMomentum::nobenefit, roll["result"], result];
+		Return[$Failed]
+	];
 	burn = Association[
 		"momentum" -> momentum,
 		"challengeDice" -> challengeDice,
 		"momentumReset" -> getMomentumReset[roll["character"]],
 		"actionScore" -> roll["actionScore"],
 		"previousResult" -> roll["result"],
-		"result" -> rollResultFromBeatCount[beatCount],
+		"result" -> result,
 		"challengeDiceCancelled" -> challengeDiceCancelled,
 		"match" -> roll["match"]
 	];
@@ -4022,6 +4241,37 @@ burnMomentum[roll_, opts:OptionsPattern[]] := (
 burnMomentum::badroll = "burnMomentum can only be used on an action roll.";
 burnMomentum::momentum = "Cannot burn momentum because roll momentum is not positive (`1`).";
 burnMomentum::nocancel = "Cannot burn momentum because no challenge die is less than momentum `1`.";
+burnMomentum::nobenefit = "Cannot burn momentum because the result would not improve (`1` -> `2`).";
+
+
+(* ::Subsection::Closed:: *)
+(*Rarity die conversion*)
+
+
+Options[rarityDieSix] = {Display -> True};
+
+rarityDieSix[roll_Association, opts : OptionsPattern[]] := Module[
+	{newRoll},
+	If[!actionRollQ[roll],
+		Message[rarityDieSix::badroll];
+		Return[$Failed]
+	];
+	newRoll = Association[roll];
+	newRoll["result"] = "strongHit";
+	newRoll["rarityDie"] = Association[
+		"value" -> 6,
+		"previousResult" -> Lookup[roll, "result", Missing["NoResult"]]
+	];
+	If[OptionValue[Display], displayRarityDieSix[newRoll]];
+	newRoll
+];
+
+rarityDieSix[roll_, opts : OptionsPattern[]] := (
+	Message[rarityDieSix::badroll];
+	$Failed
+);
+
+rarityDieSix::badroll = "rarityDieSix can only be used on an action roll.";
 
 
 (* ::Subsection::Closed:: *)
@@ -4079,6 +4329,41 @@ sufferSupply[n_Integer, character_ : $soloCharacter] :=
 
 takeSupply[n_Integer, character_ : $soloCharacter] :=
 	adjustSupply[n, character];
+
+recover[] :=
+	recover[$soloCharacter];
+
+recover[character_] := Module[
+	{ownedAssets, updatedAssets},
+	If[!ensureCharacterState[character], Return[$Failed]];
+	ownedAssets = normalizeCharacterAssets[character];
+	If[ownedAssets === $Failed, Return[$Failed]];
+	$state[character, "debilities"] = Complement[getDebilities[character], recoverableConditions];
+	$state[character, "health"] = 5;
+	$state[character, "spirit"] = 5;
+	$state[character, "supply"] = 5;
+	$state[character, "momentum"] = getMomentumReset[character];
+	updatedAssets = Map[
+		Module[{record, trackDef, updated, tracks},
+			record = assetRecord[#["Name"]];
+			If[!AssociationQ[record] || Lookup[record, "Category", ""] =!= "Companion",
+				#,
+				trackDef = assetTrackDefinition[record, "health"];
+				If[!AssociationQ[trackDef],
+					#,
+					updated = Association[#];
+					tracks = Join[initialAssetTracks[record], Lookup[updated, "Tracks", <||>]];
+					tracks["health"] = trackDef["Max"];
+					updated["Tracks"] = tracks;
+					updated
+				]
+			]
+		] &,
+		ownedAssets
+	];
+	$state[character, "assets"] = updatedAssets;
+	$state[character]
+];
 
 
 (* ::Subsection::Closed:: *)
@@ -5562,6 +5847,162 @@ compositeOracleRoll[title_String, specs_List, resultFunction_] := Module[
 	Association["components" -> components, "outcome" -> result]
 ];
 
+labelOutcomeLines[components_List] :=
+	StringRiffle[
+		(StringJoin[#["label"], ": ", #["outcome"]] &) /@ components,
+		"\n"
+	];
+
+settlementNameOracle[] := Module[
+	{categoryRoll, category, nameRoll, components, result},
+	categoryRoll = siteNameComponent["Category", "Settlement: Name (Category)"];
+	If[categoryRoll === $Failed, Return[$Failed]];
+	category = categoryRoll["outcome"];
+	nameRoll = siteNameComponent[category, "Settlement: Name (" <> category <> ")"];
+	If[nameRoll === $Failed, Return[$Failed]];
+	components = {categoryRoll, nameRoll};
+	result = nameRoll["outcome"];
+	displayCompositeOracleRoll["Settlement: Name", components, result];
+	Association[
+		"components" -> components,
+		"category" -> category,
+		"outcome" -> result
+	]
+];
+
+splitOracleOptions[text_String] :=
+	StringTrim /@ StringSplit[text, " or "];
+
+quickSettlementName[prefix_String, suffix_String] :=
+	StringTrim[prefix, "-"] <> StringTrim[suffix, "-"];
+
+settlementQuickNameOracle[] := Module[
+	{prefixRoll, suffixRoll, prefixes, suffixes, names, components, result},
+	prefixRoll = siteNameComponent["Prefix", "Settlement: Quick Name (Prefix)"];
+	suffixRoll = siteNameComponent["Suffix", "Settlement: Quick Name (Suffix)"];
+	If[prefixRoll === $Failed || suffixRoll === $Failed, Return[$Failed]];
+	prefixes = splitOracleOptions[prefixRoll["outcome"]];
+	suffixes = splitOracleOptions[suffixRoll["outcome"]];
+	names = Flatten[Outer[quickSettlementName, prefixes, suffixes], 1];
+	components = {prefixRoll, suffixRoll};
+	result = StringRiffle[names, ", "];
+	displayCompositeOracleRoll["Settlement: Quick Name", components, result];
+	Association[
+		"components" -> components,
+		"names" -> names,
+		"outcome" -> result
+	]
+];
+
+coreComponentTableName["Action"] := "Core: Action";
+coreComponentTableName["Descriptor"] := "Core: Descriptor";
+coreComponentTableName["Focus"] := "Core: Focus";
+coreComponentTableName["Theme"] := "Core: Theme";
+
+corePromptOracle[] := Module[
+	{promptRoll, parts, components, result},
+	promptRoll = siteNameComponent["Prompt", "Core: Prompt"];
+	If[promptRoll === $Failed, Return[$Failed]];
+	parts = StringSplit[promptRoll["outcome"], " + "];
+	components = siteNameComponent[#, coreComponentTableName[#]] & /@ parts;
+	If[MemberQ[components, $Failed], Return[$Failed]];
+	result = StringRiffle[Lookup[components, "outcome"], " "];
+	displayCompositeOracleRoll["Core: Prompt", Prepend[components, promptRoll], result];
+	Association[
+		"components" -> Prepend[components, promptRoll],
+		"prompt" -> promptRoll["outcome"],
+		"outcome" -> result
+	]
+];
+
+characterOracle[] :=
+	compositeOracleRoll[
+		"Character",
+		{
+			{"First Look", "Character: First Look"},
+			{"Activity", "Character: Activity"},
+			{"Disposition", "Character: Disposition"},
+			{"Role", "Character: Role"},
+			{"Goal", "Character: Goal"},
+			{"Revealed Details", "Character: Revealed Details"}
+		},
+		labelOutcomeLines
+	];
+
+settlementLandType["Settled"] := "Settled Lands";
+settlementLandType["Settled Lands"] := "Settled Lands";
+settlementLandType["Boundary"] := "Boundary Lands";
+settlementLandType["Boundary Lands"] := "Boundary Lands";
+settlementLandType["Remote"] := "Remote Lands";
+settlementLandType["Remote Lands"] := "Remote Lands";
+settlementLandType[other_] := other;
+
+settlementOracle[] :=
+	settlementOracle[Automatic];
+
+settlementOracle[landType_] := Module[
+	{specs, normalizedLandType},
+	specs = {
+		{"Condition", "Settlement: Condition"},
+		{"First Look", "Settlement: First Look"},
+		{"Projects", "Settlement: Projects"},
+		{"Troubles", "Settlement: Troubles"},
+		{"Cultural Touchstones", "Settlement: Cultural Touchstones"}
+	};
+	If[landType =!= Automatic,
+		normalizedLandType = settlementLandType[landType];
+		specs = Prepend[specs, {"Type", "Settlement: Type (" <> normalizedLandType <> ")"}]
+	];
+	compositeOracleRoll["Settlement", specs, labelOutcomeLines]
+];
+
+combatSceneOracle[] :=
+	compositeOracleRoll[
+		"Combat Scene",
+		{
+			{"Battleground", "Combat: Battleground"},
+			{"Tactic", "Combat: Tactic"},
+			{"Event Method", "Combat: Event Method"},
+			{"Event Target", "Combat: Event Target"}
+		},
+		Function[
+			components,
+			StringRiffle[
+				{
+					"Battleground: " <> components[[1, "outcome"]],
+					"Tactic: " <> components[[2, "outcome"]],
+					"Event: " <> components[[3, "outcome"]] <> " " <> components[[4, "outcome"]]
+				},
+				"\n"
+			]
+		]
+	];
+
+journeyWaypointOracle[] :=
+	journeyWaypointOracle["Overland"];
+
+journeyWaypointOracle[kind_String] := Module[
+	{tableName, title},
+	{tableName, title} = Switch[
+		kind,
+		"Coastal Waters",
+			{"Location: Coastal Waters Waypoint", "Journey Waypoint (Coastal Waters)"},
+		"Overland",
+			{"Location: Overland Waypoint", "Journey Waypoint"},
+		_,
+			{"Location: " <> kind <> " Waypoint", "Journey Waypoint (" <> kind <> ")"}
+	];
+	compositeOracleRoll[
+		title,
+		{
+			{"Waypoint", tableName},
+			{"Descriptor", "Core: Descriptor"},
+			{"Focus", "Core: Focus"}
+		},
+		labelOutcomeLines
+	]
+];
+
 monstrosityOracle[] := Module[
 	{components, characteristics, abilities, result},
 	components = Join[
@@ -5569,12 +6010,12 @@ monstrosityOracle[] := Module[
 			siteNameComponent["Size", "Monstrosity: Size"],
 			siteNameComponent["Primary Form", "Monstrosity: Primary Form"]
 		},
-		Table[siteNameComponent["Characteristic " <> ToString[i], "Monstrosity: Characteristics"], {i, 4}],
-		Table[siteNameComponent["Ability " <> ToString[i], "Monstrosity: Abilities"], {i, 4}]
+		Table[siteNameComponent["Characteristic " <> ToString[i], "Monstrosity: Characteristics"], {i, 3}],
+		Table[siteNameComponent["Ability " <> ToString[i], "Monstrosity: Abilities"], {i, 3}]
 	];
 	If[MemberQ[components, $Failed], Return[$Failed]];
-	characteristics = Lookup[components[[3 ;; 6]], "outcome"];
-	abilities = Lookup[components[[7 ;; 10]], "outcome"];
+	characteristics = Lookup[components[[3 ;; 5]], "outcome"];
+	abilities = Lookup[components[[6 ;; 8]], "outcome"];
 	result = StringRiffle[
 		{
 			"Size: " <> components[[1, "outcome"]],
@@ -5664,6 +6105,33 @@ askTheOracle["Delve Site Name"] := Module[
 
 askTheOracle["Delve Site Name", domain_String] :=
 	delveSiteNameOracle[domain];
+
+askTheOracle["Settlement: Name"] :=
+	settlementNameOracle[];
+
+askTheOracle["Settlement: Quick Name"] :=
+	settlementQuickNameOracle[];
+
+askTheOracle["Core: Prompt"] :=
+	corePromptOracle[];
+
+askTheOracle["Character"] :=
+	characterOracle[];
+
+askTheOracle["Settlement"] :=
+	settlementOracle[];
+
+askTheOracle["Settlement", landType_String] :=
+	settlementOracle[landType];
+
+askTheOracle["Combat Scene"] :=
+	combatSceneOracle[];
+
+askTheOracle["Journey Waypoint"] :=
+	journeyWaypointOracle[];
+
+askTheOracle["Journey Waypoint", kind_String] :=
+	journeyWaypointOracle[kind];
 
 askTheOracle["Monstrosity"] :=
 	monstrosityOracle[];

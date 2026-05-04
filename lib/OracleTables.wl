@@ -2402,6 +2402,88 @@ oracles["Settlement: Quick Name (Suffix)"] = <|
 
 
 (* ::Subsection::Closed:: *)
+(*Character prelude oracles*)
+
+
+(* ::Subsubsection::Closed:: *)
+(*Character: Prelude Event*)
+
+
+oracles["Character: Prelude Event"] = <|
+	2 -> "Alchemist (Path): You found a journal full of crazed rantings and scribbled alchemical secrets amid a troll's collection of lost and stolen things. Fascinated, you attempted to reproduce the formulas. Some concoctions still elude you.",
+	4 -> "Animal Kin (Path): One night, sleeping in the wilds, you experienced a vivid dream of wild places, of hunting and being hunted. You awoke to find the elder beast studying you impassively.",
+	6 -> "Banner-sworn (Path): You swore the vow without conviction. A simple task. A service done and paid for. But in that mission, you found a calling.",
+	8 -> "Blade-bound (Path): Whispers guided you to an old barrow, where you pulled the blade from the skeletal grasp of its former bearer.",
+	10 -> "Commander (Path): When your leader fell in battle, you took up their banner and rallied your dispirited shield-mates. They follow you still.",
+	12 -> "Dancer (Path): You stumbled upon a secret glade and saw the elves dancing. In the years since, you strive to attain the beauty of their unearthly movements. You know you'll never fully succeed.",
+	14 -> "Devotant (Path): The priest said you bear the mark of a long-forgotten god and were destined for martyrdom. You followed no faith and laughed at the notion--until that god revealed itself to you.",
+	16 -> "Empowered (Path): The revelation of your birthright surprised everyone--you most of all. Since then, everything has changed.",
+	18 -> "Fated (Path): Friends dared you to visit the local seer. You played along, figuring it was worth a few laughs. But in the mystic's words, you experienced a haunting vision of a terrible fate--and swore a vow to prevent it.",
+	20 -> "Fortune Hunter (Path): You swore to a task out of love and loyalty, and were wronged. Now, your word has a price.",
+	22 -> "Herbalist (Path): You spent hours each day in the nearby woods, foraging for herbs to ease a loved one's sickness. They were skilled in herbcraft and instructed you in your search for remedies. But in the end, it wasn't enough--they passed in the spring. You still carry their worn satchel.",
+	24 -> "Honorbound (Path): When a close kin brought disgrace to your clan, you accepted the vow they abandoned. Whatever it takes, you will regain your honor.",
+	26 -> "Improviser (Path): A wandering peddler stayed with you for a time. They taught you the value of even the most mundane things, of cobbling together solutions far from the comforts of home. A wayward soul, they departed without a word early one morning, but left you a pack and a set of tools to help find your own way.",
+	28 -> "Infiltrator (Path): You were captured by an enemy and held in a far-off place. You managed to escape, but did not flee. Instead, you lived under their noses, a rat in the warrens. Eventually, you learned the best path to gain your revenge.",
+	30 -> "Lorekeeper (Path): You sought answers from an elder sage. They sensed your eagerness for secret truths and took you on as an apprentice. Some time later, in their last hours, they passed the archive to you. Now it is yours--a gift and a curse.",
+	32 -> "Masked (Path): You spent time in the company of elves and earned their respect. When you departed, they gifted you one of their uncanny wooden masks.",
+	34 -> "Outcast (Path): You were accused of a betrayal and banished from your home. Those who loved you dearest now consider you dead.",
+	36 -> "Pretender (Path): You were forced to live under a false identity, and grew accustomed to the deception. Now, you change your name as easily as your clothes.",
+	38 -> "Rider (Path): You served as a warden, patrolling the wilds surrounding your home. Amid many dangers, you and your mount learned to work as one.",
+	40 -> "Sighted (Path): Deep in the woods, you stumbled upon an iron pillar--ancient, yet untouched by the ravages of age. You reached out to touch its smooth, featureless surface. Then, nothing. When you awoke days later, you were in an unfamiliar place with a new ability to see the unseen.",
+	42 -> "Slayer (Path): In your dreams, you still hear the screams and the horrible roar of that thing. You failed that night, but will not falter again.",
+	44 -> "Spirit-bound (Path): It was an unforgiving winter, and someone close to you did not survive. You hold yourself responsible for their death, and they haunt you still.",
+	46 -> "Storyweaver (Path): An elder gifted their stories to you, endless tales of the old world and the new. You share these stories in their honor, and collect tales of your own that you might also pass on.",
+	48 -> "Trickster (Path): You fell in with a group of swindlers and thieves. They picked their targets with care, and you learned that there is as much honor among the shadows as in the light.",
+	50 -> "Veteran (Path): You answered the call to war and fought many battles. Somehow you evaded death, but others weren't so lucky. In time, you learned a costly lesson--this fight was not your own.",
+	52 -> "Waterborn (Path): You stayed with the fisher folk of a seaside village, and learned their ways. The wind and the wave still call to you, even when you are far from the sea.",
+	54 -> "Wayfinder (Path): You struck off on your own, journeying deep into unknown lands. You did not find what you sought, but those first wayward steps still guide your travels.",
+	56 -> "Wildblood (Path): An exiled wanderer taught you the ways of tracking and woodcraft. When a fugitive escaped into a deep wood, it fell to you to hunt them down.",
+	58 -> "Wright (Path): You apprenticed under a cruel and untalented artisan. After secretly learning and perfecting the craft on your own, you stole away with your former master's tools.",
+	60 -> "Archer (Combat Talent): Every missed shot has a cost, someone once told you. They were right. The day your arrow fell short was when you lost someone dear to you. You won't let it happen again.",
+	61 -> "Berserker (Combat Talent): The warrior wore only animal pelts in battle. You never forgot the look in their eyes--or how they tore through a dozen foes before finally falling to spear and axe. You honor their memory by wearing their bloodstained pelt.",
+	62 -> "Brawler (Combat Talent): When your weapon broke in a desperate battle, you started swinging your fists. That's when they began to fear you.",
+	63 -> "Cutthroat (Combat Talent): You stood your ground with nothing but a dull knife. The raider chief laughed--and offered you a place among their band.",
+	64 -> "Duelist (Combat Talent): Your friend betrayed you. Someday, when you are ready, you will face them in the dueling circle.",
+	65 -> "Fletcher (Combat Talent): You learned the art of fletching from a kindly hunter who took you in when others would not. Among your quiver, there is one special arrow saved for the beast that killed him.",
+	66 -> "Ironclad (Combat Talent): Your parent fell in battle. Their blade-pierced armor passed to you, along with their vow.",
+	67 -> "Long-arm (Combat Talent): A broken leg left you hobbled. When you found the elderwood tree still smoldering, split down its heart by lightning, you carved a staff from its fallen limb. Though the injury has healed, the staff remains.",
+	68 -> "Shield-bearer (Combat Talent): After suffering a grievous wound, you were determined to never again let the iron of an enemy slip past your guard. Your shield is your life.",
+	69 -> "Skirmisher (Combat Talent): You underwent a rite of passage to kill a dangerous beast. The test left you with a broken spear, a scar that still lingers, and a fang pendant as a trophy.",
+	70 -> "Slinger (Combat Talent): You defended your home with a meager weapon, and brought down a dreadful foe.",
+	71 -> "Sunderer (Combat Talent): In the aftermath of an attack, you claimed the axe of a fallen foe. You bear it to this day.",
+	72 -> "Swordmaster (Combat Talent): You took the fragments of your kin-sword to a master ironsmith. They agreed to reforge the broken blade--for a costly price.",
+	73 -> "Thunder-bringer (Combat Talent): As thanks for your service, a giant-friend gifted you their smithing hammer--a small thing to them, but it takes both your arms to swing.",
+	74 -> "Cave Lion (Companion): The plaintive mewling sounds led you to the abandoned cub. Others warned that such a creature could never be tamed, and they were right. But you are inseparable nonetheless.",
+	75 -> "Giant Spider (Companion): You encountered the fearful creature in an old ruin. You expected it to kill you, but instead, it spoke in a voice that only you can hear.",
+	76 -> "Hawk (Companion): You found the hawk pierced by an arrow, grounded and near death. You nursed it back to health.",
+	77 -> "Horse (Companion): You encountered a riderless horse. It was spooked and bearing a bloodstained saddle. No amount of coaxing would allow it to be ridden or led, but it followed you at a distance. Eventually, you gained its trust.",
+	78 -> "Hound (Companion): The hound waited stubbornly among the smoldering wood and ashes of a ruined village, as if hoping its former owner would return. It decided you'd do well enough.",
+	79 -> "Kindred (Companion): You saved your friend's life, and they swore to someday return the favor. The way things are going, it won't be long before they get the chance.",
+	80 -> "Mammoth (Companion): You were wounded and half-frozen when the beast found you. It shielded you from the wind and snow with its body. When you woke, it was still there--its breath steaming like a forge.",
+	81 -> "Owl (Companion): The owl with uncanny eyes perched upon a branch overlooking the grave of a loved one, a grim specter who still keeps a vigil over you.",
+	82 -> "Raven (Companion): The strange bird appeared on the day of your birth. A grim omen, some said. It has watched over you since.",
+	83 -> "Young Wyvern (Companion): You set off to slay a wyvern, but found only a nest of broken eggs and a single surviving youngling.",
+	84 -> "Augur (Ritual): You've long heard whispers in the chattering of crows, but it was the day they led you safely through a perilous wild that you fully reckoned the power inherent in their cries.",
+	85 -> "Awakening (Ritual): Their life faded from their eyes as you watched. You were helpless to save them. But in those desperate moments, you learned to breathe life into other things.",
+	86 -> "Bind (Ritual): A lover taught you the dances of bear, stag, wolf and boar, but warned of the allure of the wildcall. They disappeared soon after.",
+	87 -> "Communion (Ritual): A close brush with death left you forever changed. The veil between worlds is now as fragile as gossamer.",
+	88 -> "Divination (Ritual): You knew the old seer only briefly, but--sickened and dying--she gave you her precious rune-carved stones. The stones choose their keeper, she told you.",
+	89 -> "Invoke (Ritual): The witch sensed something in you, a latent, sleeping power. She taught you to awaken it, and then to harness it. But you soon learned she had her own purposes, of which you wanted no part.",
+	90 -> "Keen (Ritual): Your first kill left you with regret. When you sing a keen, it is their memory that haunts you most.",
+	91 -> "Leech (Ritual): A close kin succumbed to the lure of a dark power. Now, you fear you walk the same path.",
+	92 -> "Lightbearer (Ritual): They shut you away in darkness, leaving you for the things that lurked in that place. You cowered, waiting for death. But then you found the light within, and made your escape.",
+	93 -> "Scry (Ritual): The fire revealed a vision--something you'd much rather forget. Since then, you can cast your gaze through the flames to distant people and places. Each time you perform the ritual, you fear you'll once again see that first dreadful vision.",
+	94 -> "Shadow-walk (Ritual): An errant step carried you unbidden into the world of shadow. Now you walk those paths willingly.",
+	95 -> "Sway (Ritual): When the storm struck, you found no shelter. It lashed the landscape with unbound fury, uprooting trees and hurling whirlwinds of stone and branch. But it left you untouched--eager to share its secrets. The wind knows things, you learned. You need only listen.",
+	96 -> "Talisman (Ritual): You befriended a varou who was outcast from their clan. They taught you the secrets of crafting protective charms. In exchange, you swore a vow to them.",
+	97 -> "Tether (Ritual): You were far from home, unsure even of which direction it lay. In a moment of quiet desperation--lost, cold, hungry--you heard the spirits of your home call to you. They guided you back.",
+	98 -> "Totem (Ritual): A beloved animal companion died protecting you. You carry a clipping of its fur as a remembrance of your bond--alongside other totems.",
+	99 -> "Visage (Ritual): They burned your home. Killed your kin. Now, when you wear a painted mask of blood and ash, you wield the power of your grief and anger against your foes.",
+	100 -> "Ward (Ritual): A powerful mystic saved you from a night of horrors with a handful of salt and urgent, whispered chants. To this day, you remember those words."
+|>;
+
+
+(* ::Subsection::Closed:: *)
 (*Character oracles*)
 
 
@@ -3773,10 +3855,10 @@ oracles["Monstrosity: Abilities"] = <|
 
 
 (* ::Subsubsection::Closed:: *)
-(*Threat Action*)
+(*Threat: Action*)
 
 
-oracles["Threat Action"] = <|
+oracles["Threat: Action"] = <|
 	30 -> "The threat readies its next step, or a new danger looms. If you are in a position to prevent this development, you may attempt to do so. If you succeed, Reach a Milestone. Otherwise, mark menace.",
 	70 -> "The threat works subtly to advance toward its goal, or the danger escalates. Mark menace.",
 	100 -> "The threat makes a dramatic and immediate move, or a major event reveals new complications. Mark menace twice."
