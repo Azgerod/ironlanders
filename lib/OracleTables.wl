@@ -3106,6 +3106,34 @@ oracles["Character: Name (Firstborn - Troll)"] = <|
 
 
 (* ::Subsubsection::Closed:: *)
+(*Site Starters*)
+
+
+oracles["Site Starters"] = <|
+	5 -> "Alva's Rest - Fortified Barrow (page 96)",
+	10 -> "Bleakroot Depths - Wild Frozen Cavern (page 96)",
+	15 -> "Bonewilds - Haunted Tanglewood (page 97)",
+	20 -> "Darkfall Caves - Infested Cavern (page 97)",
+	25 -> "Deeprot Bog - Hallowed Shadowfen (page 98)",
+	30 -> "Egan's Folly - Haunted Pass (page 98)",
+	35 -> "Foulwater Plunge - Corrupted Sea Cave (page 99)",
+	40 -> "Frostmark - Fortified Icereach (page 99)",
+	45 -> "Greathammer Deep - Ravaged Mine (page 100)",
+	50 -> "Holdfast Barrow - Haunted Barrow (page 100)",
+	55 -> "Hollowmount Island - Ancient Underkeep (page 101)",
+	60 -> "Icebound Reach - Wild Icereach (page 101)",
+	65 -> "Lastrock Mine - Infested Mine (page 102)",
+	70 -> "Redhome Sanctum - Corrupted Underkeep (page 102)",
+	74 -> "Sinking Temple - Ravaged Ruin (page 103)",
+	80 -> "Smoldering Wood - Ravaged Tanglewood (page 103)",
+	84 -> "Stillgrave Mire - Haunted Shadowfen (page 104)",
+	90 -> "Stonesong Spire - Hallowed Stronghold (page 104)",
+	94 -> "Topplekeep - Infested Ruin (page 105)",
+	100 -> "Trail of Spirits - Ancient Pass (page 105)"
+|>;
+
+
+(* ::Subsubsection::Closed:: *)
 (*Delve Site: Theme*)
 
 

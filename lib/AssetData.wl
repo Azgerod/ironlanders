@@ -2902,7 +2902,84 @@ assetData = <|
 		"Tracks" -> <||>,
 		"SourcePage" -> 18
 	|>
+	|>;
+
+assetRarityCosts = <|
+	"Alchemist" -> 5,
+	"Animal Kin" -> 3,
+	"Banner-sworn" -> 4,
+	"Battle-scarred" -> 3,
+	"Blade-bound" -> 4,
+	"Bonded" -> 3,
+	"Dancer" -> 3,
+	"Devotant" -> 3,
+	"Empowered" -> 3,
+	"Fortune Hunter" -> 4,
+	"Herbalist" -> 3,
+	"Honorbound" -> 3,
+	"Improviser" -> 4,
+	"Infiltrator" -> 5,
+	"Loyalist" -> 3,
+	"Masked" -> 5,
+	"Oathbreaker" -> 3,
+	"Outcast" -> 3,
+	"Pretender" -> 5,
+	"Revenant" -> 3,
+	"Rider" -> 4,
+	"Ritualist" -> 3,
+	"Shadow-kin" -> 3,
+	"Sighted" -> 4,
+	"Slayer" -> 3,
+	"Spirit-bound" -> 3,
+	"Storyweaver" -> 4,
+	"Trickster" -> 4,
+	"Veteran" -> 3,
+	"Waterborn" -> 3,
+	"Wayfinder" -> 4,
+	"Weaponmaster" -> 3,
+	"Wildblood" -> 4,
+	"Wright" -> 3,
+	"Archer" -> 4,
+	"Berserker" -> 5,
+	"Brawler" -> 5,
+	"Cutthroat" -> 3,
+	"Duelist" -> 3,
+	"Fletcher" -> 4,
+	"Ironclad" -> 5,
+	"Long-arm" -> 5,
+	"Shield-bearer" -> 4,
+	"Skirmisher" -> 4,
+	"Slinger" -> 4,
+	"Sunderer" -> 4,
+	"Swordmaster" -> 4,
+	"Thunder-bringer" -> 4,
+	"Augur" -> 3,
+	"Awakening" -> 4,
+	"Bind" -> 5,
+	"Communion" -> 3,
+	"Divination" -> 3,
+	"Invoke" -> 5,
+	"Keen" -> 5,
+	"Leech" -> 3,
+	"Lightbearer" -> 4,
+	"Scry" -> 3,
+	"Shadow-walk" -> 4,
+	"Sway" -> 3,
+	"Talisman" -> 4,
+	"Tether" -> 4,
+	"Totem" -> 4,
+	"Visage" -> 4,
+	"Ward" -> 3
 |>;
+
+assetData = Association @ KeyValueMap[
+	#1 -> If[
+		KeyExistsQ[assetRarityCosts, #1],
+		Join[#2, <|"RarityCost" -> assetRarityCosts[#1]|>],
+		#2
+	] &,
+	assetData
+];
 
 
 (* ::Subsection::Closed:: *)

@@ -215,7 +215,8 @@ Typical usage is moveFunction[]; choose[%, n].";
 
 
 markProgress::usage =
-"markProgress[track, n] marks n progress units on track for the solo character.
+"markProgress[track] marks 1 progress unit on track for the solo character.
+markProgress[track, n] marks n progress units on track for the solo character.
 markProgress[track, n, character] marks n progress units on track for character.";
 
 clearProgress::usage =
@@ -315,16 +316,12 @@ removeProgressTrack[track, character] removes the given progress track from the 
 
 
 (* ::Subsection::Closed:: *)
-(*Mark/spend experience*)
+(*Mark experience*)
 
 
 markExperience::usage =
 "markExperience[n] adds n earned experience to the solo character.
 markExperience[n, character] adds n earned experience to character.";
-
-spendExperience::usage =
-"spendExperience[n] adds n spent experience to the solo character.
-spendExperience[n, character] adds n spent experience to character.";
 
 
 (* ::Subsection::Closed:: *)
@@ -388,6 +385,23 @@ followAPath[actionRoll] displays the Follow a Path outcome corresponding to acti
 beginTheScene::usage =
 "beginTheScene[] displays the Begin the Scene move header.";
 
+beginScene::usage =
+"beginScene[name, rank] creates the active scene challenge for the solo character.
+beginScene[name, rank, character] creates the active scene challenge for character.";
+
+scene::usage =
+"scene[] displays the active scene challenge for the solo character.
+scene[character] displays the active scene challenge for character.";
+
+removeScene::usage =
+"removeScene[] removes the active scene challenge for the solo character.
+removeScene[character] removes the active scene challenge for character.";
+
+markSceneCountdown::usage =
+"markSceneCountdown[] marks 1 segment on the solo character's active scene countdown.
+markSceneCountdown[n] marks n segments on the solo character's active scene countdown.
+markSceneCountdown[n, character] marks n segments on character's active scene countdown.";
+
 faceDangerScene::usage =
 "faceDangerScene[] displays the scene challenge version of the Face Danger move header.
 faceDangerScene[actionRoll] displays the scene challenge Face Danger outcome corresponding to actionRoll.";
@@ -438,7 +452,11 @@ askTheOracle[\"Yes/No\", yesOutcome, noOutcome] rolls on the Yes/No oracle with 
 askTheOracle[\"Reveal a Danger\"] rolls on the current delve's Reveal a Danger oracle when a current delve is set; otherwise it rolls on the alternate Reveal a Danger oracle.
 askTheOracle[\"Reveal a Danger\", theme, domain] rolls on the Reveal a Danger oracle for theme and domain.
 askTheOracle[\"Delve Site Feature\"] rolls on the current delve's Delve Site Feature oracle.
-askTheOracle[\"Delve Site Feature\", theme, domain] rolls on the Delve Site Feature oracle for theme and domain.";
+askTheOracle[\"Delve Site Feature\", theme, domain] rolls on the Delve Site Feature oracle for theme and domain.
+askTheOracle[\"Delve Site Name\"] composes a site name using the current delve's domain.
+askTheOracle[\"Delve Site Name\", domain] composes a site name using domain.
+askTheOracle[\"Monstrosity\"], askTheOracle[\"Trap\"], askTheOracle[\"Combat Event\"], and askTheOracle[\"Threat\"] roll composite Delve oracle results.
+askTheOracle[\"Threat\", category] rolls on a specific threat category.";
 
 
 (* ::Subsubsection::Closed:: *)
@@ -545,8 +563,12 @@ discoverASite::usage =
 "discoverASite[] displays the Discover a Site move header.";
 
 addDelve::usage =
-"addDelve[name, rank, theme, domain] adds a delve site for the solo character.
-addDelve[name, rank, theme, domain, character] adds a delve site for character.";
+"addDelve[name, rank, themeOrThemes, domainOrDomains] adds a delve site for the solo character.
+addDelve[name, rank, themeOrThemes, domainOrDomains, denizens] adds a delve site with a 12-slot denizens matrix.
+addDelve[..., character] adds a delve site for character.
+
+themeOrThemes and domainOrDomains may be a string or a two-string list, but a delve cannot have both two themes and two domains.
+addDelve[..., Objective -> objective] records an optional objective string.";
 
 setCurrentDelve::usage =
 "setCurrentDelve[name] sets the current delve for the solo character.
@@ -564,6 +586,46 @@ delves[character] displays all delves for character.";
 removeDelve::usage =
 "removeDelve[name] removes the named delve for the solo character.
 removeDelve[name, character] removes the named delve for character.";
+
+setDelveTheme::usage =
+"setDelveTheme[themeOrThemes] updates the current delve's theme cards.
+setDelveTheme[delveName, themeOrThemes] updates the named delve's theme cards for the solo character.
+setDelveTheme[delveName, themeOrThemes, character] updates the named delve's theme cards for character.";
+
+setDelveDomain::usage =
+"setDelveDomain[domainOrDomains] updates the current delve's domain cards.
+setDelveDomain[delveName, domainOrDomains] updates the named delve's domain cards for the solo character.
+setDelveDomain[delveName, domainOrDomains, character] updates the named delve's domain cards for character.";
+
+returnToSite::usage =
+"returnToSite[] rolls the return challenge dice for the current delve and returns the lower die value to clear manually.
+returnToSite[delveName] rolls for the named delve for the solo character.
+returnToSite[delveName, character] rolls for the named delve for character.";
+
+riskZone::usage =
+"riskZone[] displays the current delve's risk zone and returns its default rank.
+riskZone[delveName] displays the named delve's risk zone and returns its default rank for the solo character.
+riskZone[delveName, character] displays the named delve's risk zone and returns its default rank for character.";
+
+denizens::usage =
+"denizens[] displays the current delve's denizens matrix.
+denizens[delveName] displays the named delve's denizens matrix for the solo character.
+denizens[delveName, character] displays the named delve's denizens matrix for character.";
+
+rollDenizen::usage =
+"rollDenizen[] rolls on the current delve's denizens matrix.
+rollDenizen[delveName] rolls on the named delve's denizens matrix for the solo character.
+rollDenizen[delveName, character] rolls on the named delve's denizens matrix for character.";
+
+setDenizen::usage =
+"setDenizen[slot, name] sets slot in the current delve's denizens matrix.
+setDenizen[delveName, slot, name] sets slot in the named delve's denizens matrix for the solo character.
+setDenizen[delveName, slot, name, character] sets slot in the named delve's denizens matrix for character.";
+
+clearDenizen::usage =
+"clearDenizen[slot] clears slot in the current delve's denizens matrix.
+clearDenizen[delveName, slot] clears slot in the named delve's denizens matrix for the solo character.
+clearDenizen[delveName, slot, character] clears slot in the named delve's denizens matrix for character.";
 
 delveTheDepths::usage =
 "delveTheDepths[] displays the Delve the Depths move header.
@@ -616,6 +678,16 @@ gainARarity::usage =
 
 wieldARarity::usage =
 "wieldARarity[] displays the Wield a Rarity move header.";
+
+addRarity::usage =
+"addRarity[assetName, rarityName] spends experience to augment an eligible owned asset for the solo character.
+addRarity[assetName, rarityName, character] spends experience to augment an eligible owned asset for character.
+addRarity[..., Display -> False] suppresses display.";
+
+removeRarity::usage =
+"removeRarity[assetName] removes a rarity from an owned asset for the solo character and awards 1 experience.
+removeRarity[assetName, character] removes a rarity from an owned asset for character and awards 1 experience.
+removeRarity[..., Display -> False] suppresses display.";
 
 
 (* ::Subsection::Closed:: *)
@@ -677,6 +749,9 @@ Display::usage =
 
 Threat::usage =
 "Threat is an option for starterVow and addVow that specifies an attached threat as {threatName, threatGoal}.";
+
+Objective::usage =
+"Objective is an option for addDelve that specifies the site objective.";
 
 
 (* ::Subsection::Closed:: *)
@@ -834,6 +909,17 @@ debilities = {Wounded, Shaken, Unprepared, Encumbered, Maimed, Corrupted, Cursed
 permanentDebilities = {Maimed, Corrupted};
 delveThemes = {"Ancient", "Corrupted", "Fortified", "Hallowed", "Haunted", "Infested", "Ravaged", "Wild"};
 delveDomains = {"Barrow", "Cavern", "Frozen Cavern", "Icereach", "Mine", "Pass", "Ruin", "Sea Cave", "Shadowfen", "Stronghold", "Tanglewood", "Underkeep"};
+denizenSlotRanges = {
+	"01-27", "28-41", "42-55", "56-69",
+	"70-75", "76-81", "82-87", "88-93",
+	"94-95", "96-97", "98-99", "00"
+};
+denizenSlotLabels = {
+	"Very Common", "Common", "Common", "Common",
+	"Uncommon", "Uncommon", "Uncommon", "Uncommon",
+	"Rare", "Rare", "Rare", "Unforeseen"
+};
+denizenSlotThresholds = {27, 41, 55, 69, 75, 81, 87, 93, 95, 97, 99, 100};
 
 
 (* ::Subsubsection::Closed:: *)
@@ -1366,13 +1452,18 @@ oracleRollOutcome[table_Association, value_Integer] := Module[{key},
 	table[key]
 ];
 
-oracleRoll[tableName_String, table_Association] := Module[{oracleDice, od1, od2, value, outcome, match},
+oracleRollData[table_Association] := Module[{oracleDice, od1, od2, value, outcome, match},
 	oracleDice = {od1, od2} = rollOracleDice[];
 	value = oracleRollValue[oracleDice];
 	outcome = oracleRollOutcome[table, value];
 	match = (od1==od2);
-	displayOracleRoll[tableName, oracleDice, match, outcome];
 	<|"oracleDice" -> oracleDice, "value" -> value, "outcome" -> outcome, "match" -> match|>
+];
+
+oracleRoll[tableName_String, table_Association] := Module[{roll},
+	roll = oracleRollData[table];
+	displayOracleRoll[tableName, roll["oracleDice"], roll["match"], roll["outcome"]];
+	roll
 ];
 
 
@@ -1720,6 +1811,54 @@ displayOracleRoll[table_String, {d1_, d2_}, match_, outcome_String] :=
        {Item[mainStyle[StringJoin[outcome, If[match, " (MATCH)", ""]]], Alignment -> Center], SpanFromLeft}}, Alignment -> {{Center}, {Center, Top, Center}}, 
       Spacings -> {0, {Automatic, rollHeaderBodyGap, 1, 2}}]]]; 
 
+oracleDiceDisplay[{d1_, d2_}] :=
+	Grid[
+		{{Item[d10Image[d1], Alignment -> Right], Item[d10Image[d2], Alignment -> Left]}},
+		Alignment -> {{Right, Left}, Center},
+		Spacings -> {0, 0}
+	];
+
+oracleComponentRoll[label_String, table_Association] :=
+	Join[<|"label" -> label|>, oracleRollData[table]];
+
+displayCompositeOracleRoll[title_String, components_List, result_String] :=
+	Print[
+		ironFramed[
+			Column[
+				{
+					header["Oracle Roll", title],
+					Grid[
+						({
+							Style[#["label"], FontFamily -> "Futura", FontSize -> scaledSize[14], FontWeight -> Bold, GrayLevel[0.255]],
+							oracleDiceDisplay[#["oracleDice"]],
+							moveTextStyle[StringJoin[#["outcome"], If[#["match"], " (MATCH)", ""]]]
+						} &) /@ components,
+						Alignment -> {{Left, Center, Left}, Center},
+						Spacings -> {1.2, 0.8}
+					],
+					mainStyle[result]
+				},
+				Spacings -> {1.0, 0.8},
+				Alignment -> Left
+			]
+		]
+	];
+
+displayReturnToSiteRoll[roll_Association] :=
+	Print[
+		ironFramed[
+			Grid[
+				{
+					{Item[header["Return to Site", roll["delveName"]], Alignment -> Left]},
+					{Item[Column[d10Image /@ ReverseSort[roll["challengeDice"]], Spacings -> 0], Alignment -> Center]},
+					{Item[mainStyle[StringJoin["Lower die: ", ToString[roll["lowerDie"]]]], Alignment -> Center]}
+				},
+				Alignment -> {{Center}, {Center, Top, Center}},
+				Spacings -> {2, {Automatic, rollHeaderBodyGap, rollBodyResultGap}}
+			]
+		]
+	];
+
 
 (* ::Subsubsection::Closed:: *)
 (*Reroll display*)
@@ -2055,13 +2194,14 @@ makeOwnedAsset[name_String, abilitySpec_, fields_Association] := Module[
 	If[abilities === $Failed, Return[$Failed]];
 	normalizedFields = normalizeAssetFields[fields, record];
 	If[normalizedFields === $Failed, Return[$Failed]];
-	Association[
-		"Name" -> record["Name"],
-		"Abilities" -> abilities,
-		"Fields" -> normalizedFields,
-		"Tracks" -> initialAssetTracks[record]
-	]
-];
+		Association[
+			"Name" -> record["Name"],
+			"Abilities" -> abilities,
+			"Fields" -> normalizedFields,
+			"Tracks" -> initialAssetTracks[record],
+			"Rarity" -> None
+		]
+	];
 
 makeStarterAssetSpec[name_String, abilitySpec_, fields_Association] := Module[
 	{owned},
@@ -2109,7 +2249,8 @@ normalizeCharacterAssets[character_] := Module[
 	];
 	rawAssets = Lookup[$state[character], "assets", {}];
 	If[AllTrue[rawAssets, ownedAssetQ],
-		Return[rawAssets]
+		$state[character, "assets"] = Association[#, "Rarity" -> Lookup[#, "Rarity", None]] & /@ rawAssets;
+		Return[$state[character, "assets"]]
 	];
 	normalizedAssets = ownedAssetFromSpec /@ rawAssets;
 	If[MemberQ[normalizedAssets, $Failed],
@@ -2316,9 +2457,40 @@ assetTrackRows[record_Association, tracks_Association] := Module[
 	]
 ];
 
-assetCardExpression[record_Association, selectedAbilities_List, fields_Association, tracks_Association, status_:None] := Module[
-	{statusRows, fieldRows, requirementRows, abilityRows, trackRows},
+assetRarityRows[None] :=
+	{};
+
+assetRarityRows[rarity_String] /; StringLength[StringTrim[rarity]] > 0 :=
+	{
+		assetContentPane[
+			Row[
+				{
+					Style[
+						"Rarity: ",
+						FontFamily -> "Futura",
+						FontSize -> scaledSize[16],
+						FontWeight -> Bold,
+						GrayLevel[0.255]
+					],
+					Style[
+						rarity,
+						FontFamily -> "Times New Roman",
+						FontSize -> scaledSize[18],
+						FontSlant -> Italic,
+						GrayLevel[0.255]
+					]
+				}
+			]
+		]
+	};
+
+assetRarityRows[_] :=
+	{};
+
+assetCardExpression[record_Association, selectedAbilities_List, fields_Association, tracks_Association, rarity_:None, status_:None] := Module[
+	{statusRows, rarityRows, fieldRows, requirementRows, abilityRows, trackRows},
 	statusRows = If[status === None, {}, {assetContentPane[subtitleStyle[status]]}];
+	rarityRows = assetRarityRows[rarity];
 	fieldRows = assetFieldRows[record, fields];
 	requirementRows = If[
 		StringLength[StringTrim[Lookup[record, "Requirement", ""]]] == 0,
@@ -2331,14 +2503,15 @@ assetCardExpression[record_Association, selectedAbilities_List, fields_Associati
 		Column[
 			Join[
 					statusRows,
-					{
-						assetCategoryBand[record["Category"]],
-						assetContentPane[titleStyle[record["Name"]]]
-					},
-				fieldRows,
-				requirementRows,
-				abilityRows,
-				trackRows
+						{
+							assetCategoryBand[record["Category"]],
+							assetContentPane[titleStyle[record["Name"]]]
+						},
+					rarityRows,
+					fieldRows,
+					requirementRows,
+					abilityRows,
+					trackRows
 			],
 			Spacings -> 0.8,
 			Alignment -> Left
@@ -2355,12 +2528,13 @@ assetCardExpression[owned_Association, status_:None] := Module[
 	];
 	assetCardExpression[
 		record,
-		Lookup[owned, "Abilities", {}],
-		Lookup[owned, "Fields", <||>],
-		Lookup[owned, "Tracks", <||>],
-		status
-	]
-];
+			Lookup[owned, "Abilities", {}],
+			Lookup[owned, "Fields", <||>],
+			Lookup[owned, "Tracks", <||>],
+			Lookup[owned, "Rarity", None],
+			status
+		]
+	];
 
 assetReferenceCard[name_String] := Module[
 	{record, fields},
@@ -2371,12 +2545,13 @@ assetReferenceCard[name_String] := Module[
 	];
 	fields = normalizeAssetFields[<||>, record];
 	assetCardExpression[
-		record,
-		defaultAssetAbilities[record],
-		fields,
-		initialAssetTracks[record]
-	]
-];
+			record,
+			defaultAssetAbilities[record],
+			fields,
+			initialAssetTracks[record],
+			None
+		]
+	];
 
 displayAssetCard[owned_Association, status_:None] := Module[
 	{card},
@@ -2517,34 +2692,151 @@ threatLocationByName[threatName_String, character_] := Module[
 	]
 ];
 
-makeDelve[name_String, rank_?rankQ, theme_String, domain_String] :=
+normalizeDelveCards[cards_String, kind_String] :=
+	normalizeDelveCards[{cards}, kind];
+
+normalizeDelveCards[cards : {__String}, "Theme"] /; 1 <= Length[cards] <= 2 := Module[
+	{invalid},
+	invalid = Select[cards, !delveThemeQ[#] &];
+	If[invalid =!= {},
+		Message[delve::badtheme, First[invalid], StringRiffle[delveThemes, ", "]];
+		Return[$Failed]
+	];
+	cards
+];
+
+normalizeDelveCards[cards : {__String}, "Domain"] /; 1 <= Length[cards] <= 2 := Module[
+	{invalid},
+	invalid = Select[cards, !delveDomainQ[#] &];
+	If[invalid =!= {},
+		Message[delve::baddomain, First[invalid], StringRiffle[delveDomains, ", "]];
+		Return[$Failed]
+	];
+	cards
+];
+
+normalizeDelveCards[_, kind_String] := (
+	Message[delve::badcards, kind];
+	$Failed
+);
+
+validateDelveCardPair[themes_List, domains_List] :=
+	If[Length[themes] == 2 && Length[domains] == 2,
+		Message[delve::toomanycards];
+		$Failed,
+		True
+	];
+
+defaultDenizens[] :=
+	ConstantArray[None, 12];
+
+normalizeDenizenSlot[None] :=
+	None;
+
+normalizeDenizenSlot[name_String] /; StringLength[StringTrim[name]] > 0 :=
+	name;
+
+normalizeDenizenSlot[_] :=
+	$Failed;
+
+normalizeDenizens[Automatic] :=
+	defaultDenizens[];
+
+normalizeDenizens[denizenSpec_List] /; Length[denizenSpec] == 12 := Module[
+	{normalized},
+	normalized = normalizeDenizenSlot /@ denizenSpec;
+	If[MemberQ[normalized, $Failed],
+		Message[delve::baddenizens];
+		Return[$Failed]
+	];
+	normalized
+];
+
+normalizeDenizens[_] := (
+	Message[delve::baddenizens];
+	$Failed
+);
+
+makeDelve[name_String, rank_?rankQ, themeSpec_, domainSpec_, objective_, denizenSpec_:Automatic] := Module[
+	{themes, domains, denizenList},
+	themes = normalizeDelveCards[themeSpec, "Theme"];
+	If[themes === $Failed, Return[$Failed]];
+	domains = normalizeDelveCards[domainSpec, "Domain"];
+	If[domains === $Failed, Return[$Failed]];
+	If[validateDelveCardPair[themes, domains] === $Failed, Return[$Failed]];
+	If[!(objective === None || StringQ[objective]),
+		Message[delve::badobjective, objective];
+		Return[$Failed]
+	];
+	denizenList = normalizeDenizens[denizenSpec];
+	If[denizenList === $Failed, Return[$Failed]];
 	Association[
 		"Name" -> name,
 		"Rank" -> rank,
-		"Theme" -> theme,
-		"Domain" -> domain,
+		"Themes" -> themes,
+		"Domains" -> domains,
+		"Theme" -> First[themes],
+		"Domain" -> First[domains],
+		"Objective" -> objective,
+		"Denizens" -> denizenList,
 		"Progress" -> 0
-	];
+	]
+];
 
-ownedDelveQ[delve_Association] :=
+normalizeOwnedDelve[delve_Association] /;
 	KeyExistsQ[delve, "Name"] &&
 	KeyExistsQ[delve, "Rank"] &&
-	KeyExistsQ[delve, "Theme"] &&
-	KeyExistsQ[delve, "Domain"] &&
-	KeyExistsQ[delve, "Progress"];
+	KeyExistsQ[delve, "Progress"] := Module[
+	{themes, domains, objective, denizenList, normalized},
+	themes = Which[
+		KeyExistsQ[delve, "Themes"], normalizeDelveCards[delve["Themes"], "Theme"],
+		KeyExistsQ[delve, "Theme"], normalizeDelveCards[delve["Theme"], "Theme"],
+		True, $Failed
+	];
+	If[themes === $Failed, Return[$Failed]];
+	domains = Which[
+		KeyExistsQ[delve, "Domains"], normalizeDelveCards[delve["Domains"], "Domain"],
+		KeyExistsQ[delve, "Domain"], normalizeDelveCards[delve["Domain"], "Domain"],
+		True, $Failed
+	];
+	If[domains === $Failed, Return[$Failed]];
+	If[validateDelveCardPair[themes, domains] === $Failed, Return[$Failed]];
+	objective = Lookup[delve, "Objective", None];
+	If[!(objective === None || StringQ[objective]), objective = None];
+	denizenList = normalizeDenizens[Lookup[delve, "Denizens", Automatic]];
+	If[denizenList === $Failed, denizenList = defaultDenizens[]];
+	normalized = Association[delve];
+	normalized["Themes"] = themes;
+	normalized["Domains"] = domains;
+	normalized["Theme"] = First[themes];
+	normalized["Domain"] = First[domains];
+	normalized["Objective"] = objective;
+	normalized["Denizens"] = denizenList;
+	normalized
+];
+
+normalizeOwnedDelve[_] :=
+	$Failed;
+
+ownedDelveQ[delve_Association] :=
+	AssociationQ[normalizeOwnedDelve[delve]];
 
 normalizeCharacterDelves[character_] := Module[
-	{rawDelves},
+	{rawDelves, normalized},
 	If[!characterExistsQ[character],
 		Message[delve::nochar, character];
 		Return[$Failed]
 	];
 	rawDelves = Lookup[$state[character], "delves", <||>];
-	If[AssociationQ[rawDelves] && AllTrue[Values[rawDelves], ownedDelveQ],
-		If[!KeyExistsQ[$state[character], "currentDelve"],
-			$state[character, "currentDelve"] = None
-		];
-		Return[rawDelves]
+	If[AssociationQ[rawDelves],
+		normalized = Association @ KeyValueMap[#1 -> normalizeOwnedDelve[#2] &, rawDelves];
+		If[!MemberQ[Values[normalized], $Failed],
+			$state[character, "delves"] = normalized;
+			If[!KeyExistsQ[$state[character], "currentDelve"],
+				$state[character, "currentDelve"] = None
+			];
+			Return[normalized]
+		]
 	];
 	$state[character, "delves"] = <||>;
 	$state[character, "currentDelve"] = None;
@@ -2598,8 +2890,50 @@ currentDelveDataQuiet[character_] := Module[
 	ownedDelves[current]
 ];
 
+normalizeCharacterScene[character_] := Module[
+	{rawScene, normalized},
+	If[!characterExistsQ[character],
+		Message[scene::nochar, character];
+		Return[$Failed]
+	];
+	rawScene = Lookup[$state[character], "scene", None];
+	If[rawScene === None,
+		Return[None]
+	];
+	If[
+		AssociationQ[rawScene] &&
+		KeyExistsQ[rawScene, "Name"] &&
+		KeyExistsQ[rawScene, "Rank"] &&
+		KeyExistsQ[rawScene, "Progress"] &&
+		KeyExistsQ[rawScene, "Countdown"],
+		normalized = Association[rawScene];
+		normalized["Progress"] = clampValue[normalized["Progress"], {0, 10}];
+		normalized["Countdown"] = clampValue[normalized["Countdown"], {0, 4}];
+		$state[character, "scene"] = normalized;
+		Return[normalized]
+	];
+	$state[character, "scene"] = None;
+	None
+];
+
+sceneExistsQ[name_String, character_] := Module[
+	{ownedScene},
+	ownedScene = normalizeCharacterScene[character];
+	If[ownedScene === $Failed || ownedScene === None, Return[False]];
+	ownedScene["Name"] === name
+];
+
+sceneByName[name_String, character_] := Module[
+	{ownedScene},
+	ownedScene = normalizeCharacterScene[character];
+	If[ownedScene === $Failed || ownedScene === None,
+		Return[Missing["UnknownScene", name]]
+	];
+	If[ownedScene["Name"] === name, ownedScene, Missing["UnknownScene", name]]
+];
+
 progressTargetData[trackName_String, character_] := Module[
-	{ownedVow, threatVowName, ownedThreat, ownedDelve},
+	{ownedVow, threatVowName, ownedThreat, ownedDelve, ownedScene},
 	If[vowExistsQ[trackName, character],
 		ownedVow = vowByName[trackName, character];
 		Return[
@@ -2632,6 +2966,17 @@ progressTargetData[trackName_String, character_] := Module[
 				"Name" -> trackName,
 				"Rank" -> ownedDelve["Rank"],
 				"Progress" -> ownedDelve["Progress"]
+			]
+		]
+	];
+	If[sceneExistsQ[trackName, character],
+		ownedScene = sceneByName[trackName, character];
+		Return[
+			Association[
+				"Type" -> "Scene",
+				"Name" -> trackName,
+				"Rank" -> ownedScene["Rank"],
+				"Progress" -> ownedScene["Progress"]
 			]
 		]
 	];
@@ -2764,6 +3109,7 @@ markThreatProgressByName[threatName_String, n_Integer, character_] := Module[
 progressTypeTitle["Vow"] := "Vow";
 progressTypeTitle["Threat"] := "Threat";
 progressTypeTitle["Delve"] := "Delve";
+progressTypeTitle["Scene"] := "Scene";
 progressTypeTitle["ProgressTrack"] := "Progress Track";
 progressTypeTitle[other_] := ToString[other];
 
@@ -2792,10 +3138,12 @@ setTargetProgress[target_Association, value_, character_] := Module[
 			$state[character, "vows", target["Name"], "Progress"] = clamped,
 		"Threat",
 			$state[character, "vows", target["Vow"], "Threat", "Menace", "progress"] = clamped,
-		"Delve",
-			$state[character, "delves", target["Name"], "Progress"] = clamped,
-		"ProgressTrack",
-			$state[character, "progressTracks", target["Name"], "progress"] = clamped,
+			"Delve",
+				$state[character, "delves", target["Name"], "Progress"] = clamped,
+			"Scene",
+				$state[character, "scene", "Progress"] = clamped,
+			"ProgressTrack",
+				$state[character, "progressTracks", target["Name"], "progress"] = clamped,
 		_,
 			Return[$Failed]
 	];
@@ -2812,10 +3160,12 @@ setTargetRank[target_Association, rank_?rankQ, character_] := Module[{},
 			$state[character, "vows", target["Name"], "Rank"] = rank,
 		"Threat",
 			$state[character, "vows", target["Vow"], "Threat", "Menace", "rank"] = rank,
-		"Delve",
-			$state[character, "delves", target["Name"], "Rank"] = rank,
-		"ProgressTrack",
-			$state[character, "progressTracks", target["Name"], "rank"] = rank,
+			"Delve",
+				$state[character, "delves", target["Name"], "Rank"] = rank,
+			"Scene",
+				$state[character, "scene", "Rank"] = rank,
+			"ProgressTrack",
+				$state[character, "progressTracks", target["Name"], "rank"] = rank,
 		_,
 			Return[$Failed]
 	];
@@ -2890,7 +3240,7 @@ createCharacter[name_String, assetSpecs_List /; Length[assetSpecs] == 3, (edge_)
      character = Association["assets" -> ownedAssets, "edge" -> edge, "heart" -> heart, "iron" -> iron, "shadow" -> shadow, "wits" -> wits, "health" -> 5, 
        "spirit" -> 5, "supply" -> 5, "momentum" -> 2, "debilities" -> {}, "vows" -> Association[startingVow["Name"] -> startingVow], 
        "progressTracks" -> Association["Bonds" -> makeProgressTrack[Epic, 0.25*Length[bonds]], "Failures"->makeProgressTrack[Epic]], 
-       "bonds" -> bonds, "delves" -> <||>, "currentDelve" -> None, "earnedExperience" -> 0, "spentExperience" -> 0]; AssociateTo[$state, name -> character]; $soloCharacter = name; $state[name]]; 
+       "bonds" -> bonds, "delves" -> <||>, "currentDelve" -> None, "scene" -> None, "earnedExperience" -> 0, "spentExperience" -> 0]; AssociateTo[$state, name -> character]; $soloCharacter = name; $state[name]];
 createCharacter::badassets = "Could not create the character because one or more starting assets are invalid.";
 createCharacter::badvow = "Could not create the character because the starting vow is invalid. Use starterVow[name, rank].";
        
@@ -3263,6 +3613,106 @@ adjustAssetTrack[assetName_String, trackName_String, delta_Integer, character_ :
 	setAssetTrack[assetName, trackName, current + delta, character]
 ];
 
+normalizeRarityName[rarity_String] := Module[
+	{trimmed},
+	trimmed = StringTrim[rarity];
+	If[StringLength[trimmed] == 0, $Failed, trimmed]
+];
+
+normalizeRarityName[_] :=
+	$Failed;
+
+assetRarityCost[record_Association] :=
+	Lookup[record, "RarityCost", Missing["NoRarityCost"]];
+
+Options[addRarity] = {Display -> True};
+
+addRarity[assetName_String, rarityName_, opts : OptionsPattern[]] :=
+	addRarity[assetName, rarityName, $soloCharacter, opts];
+
+addRarity[assetName_String, rarityName_, character_, opts : OptionsPattern[]] := Module[
+	{record, rarity, cost, ownedAssets, positions, index, owned, updated, updatedAssets},
+	record = assetRecord[assetName];
+	If[!AssociationQ[record],
+		Message[asset::unknown, assetName];
+		Return[$Failed]
+	];
+	rarity = normalizeRarityName[rarityName];
+	If[rarity === $Failed,
+		Message[asset::badrarity, rarityName];
+		Return[$Failed]
+	];
+	If[Lookup[record, "Category", ""] === "Companion",
+		Message[asset::raritycompanion, assetName];
+		Return[$Failed]
+	];
+	cost = assetRarityCost[record];
+	If[!IntegerQ[cost],
+		Message[asset::noraritycost, assetName];
+		Return[$Failed]
+	];
+	ownedAssets = normalizeCharacterAssets[character];
+	If[ownedAssets === $Failed, Return[$Failed]];
+	positions = Flatten @ Position[Lookup[ownedAssets, "Name", Missing["NoName"]], assetName];
+	If[positions === {},
+		Message[asset::notowned, assetName, character];
+		Return[$Failed]
+	];
+	index = First[positions];
+	owned = ownedAssets[[index]];
+	If[Lookup[owned, "Rarity", None] =!= None,
+		Message[asset::rarityduplicate, assetName, Lookup[owned, "Rarity", None]];
+		Return[$Failed]
+	];
+	If[availableExperience[character] < cost,
+		Message[asset::xp, character, cost, availableExperience[character]];
+		Return[$Failed]
+	];
+	updated = Association[owned];
+	updated["Rarity"] = rarity;
+	updatedAssets = ownedAssets;
+	updatedAssets[[index]] = updated;
+	$state[character, "assets"] = updatedAssets;
+	spendExperience[cost, character];
+	If[OptionValue[Display], displayAssetCard[updated, "Added Rarity"]];
+	updated
+];
+
+Options[removeRarity] = {Display -> True};
+
+removeRarity[assetName_String, opts : OptionsPattern[]] :=
+	removeRarity[assetName, $soloCharacter, opts];
+
+removeRarity[assetName_String, character_, opts : OptionsPattern[]] := Module[
+	{record, ownedAssets, positions, index, owned, updated, updatedAssets},
+	record = assetRecord[assetName];
+	If[!AssociationQ[record],
+		Message[asset::unknown, assetName];
+		Return[$Failed]
+	];
+	ownedAssets = normalizeCharacterAssets[character];
+	If[ownedAssets === $Failed, Return[$Failed]];
+	positions = Flatten @ Position[Lookup[ownedAssets, "Name", Missing["NoName"]], assetName];
+	If[positions === {},
+		Message[asset::notowned, assetName, character];
+		Return[$Failed]
+	];
+	index = First[positions];
+	owned = ownedAssets[[index]];
+	If[Lookup[owned, "Rarity", None] === None,
+		Message[asset::norarity, assetName];
+		Return[$Failed]
+	];
+	updated = Association[owned];
+	updated["Rarity"] = None;
+	updatedAssets = ownedAssets;
+	updatedAssets[[index]] = updated;
+	$state[character, "assets"] = updatedAssets;
+	markExperience[1, character];
+	If[OptionValue[Display], displayAssetCard[updated, "Removed Rarity"]];
+	updated
+];
+
 asset::unknown = "Unknown asset `1`. Use the exact canonical asset name.";
 asset::nodefault = "Asset `1` has no printed default selected ability. Use starterAsset[`1`, abilityIndex].";
 asset::badability = "Ability `1` is not available for asset `2`. Valid ability indices are 1 through `3`.";
@@ -3281,6 +3731,11 @@ asset::track = "Track `1` is not defined for asset `2`.";
 asset::badcategory = "Unknown asset category `1`. Use one of: `2`.";
 asset::drawcount = "Cannot draw `1` distinct assets from a pool of `2`.";
 asset::baddraw = "`1` is not a valid drawAssets call.";
+asset::badrarity = "Rarity name must be a non-empty string, not `1`.";
+asset::raritycompanion = "Companion asset `1` cannot be augmented with a rarity.";
+asset::noraritycost = "Asset `1` is not eligible for rarity augmentation.";
+asset::rarityduplicate = "Asset `1` already has rarity `2`.";
+asset::norarity = "Asset `1` does not have a rarity to remove.";
 
 
 (* ::Subsection::Closed:: *)
@@ -3426,17 +3881,29 @@ markProgress[track_String, n_Integer?NonNegative, character_ : $soloCharacter] :
 	If[target === $Failed, Return[$Failed]];
 	Switch[
 		target["Type"],
-		"Vow",
-			markVowProgress[target["Name"], n, character],
-		"Threat",
-			markThreatProgressByVow[target["Vow"], n, character],
-		"Delve" | "ProgressTrack",
-			markValue = n rankMarkValue[target["Rank"]];
-			adjustTargetProgress[target, markValue, character],
-		_,
-			$Failed
-	]
-];
+			"Vow",
+				markVowProgress[target["Name"], n, character],
+			"Threat",
+				markThreatProgressByVow[target["Vow"], n, character],
+			"Delve" | "Scene" | "ProgressTrack",
+				markValue = n rankMarkValue[target["Rank"]];
+				adjustTargetProgress[target, markValue, character],
+			_,
+				$Failed
+		]
+	];
+
+markProgress[track_String, character_String] :=
+	markProgress[track, 1, character];
+
+markProgress[track_String] :=
+	markProgress[track, 1, $soloCharacter];
+
+markProgress[ThreatTrack[vowName_String, handleCharacter_String], character_String] :=
+	markProgress[ThreatTrack[vowName, handleCharacter], 1, character];
+
+markProgress[ThreatTrack[vowName_String, handleCharacter_String]] :=
+	markProgress[ThreatTrack[vowName, handleCharacter], 1, Automatic];
 
 markProgress[_String | _ThreatTrack, n_Integer?Negative, character_ : $soloCharacter] := (
 	Message[progress::badunits, n];
@@ -3664,46 +4131,274 @@ bond::unknown = "Character `2` does not have a bond with `1`.";
 
 
 (* ::Subsection::Closed:: *)
-(*Delve management*)
+(*Scene management*)
 
 
-displayDelveCard[delveData_Association] :=
+sceneCountdownSummary[countdown_] :=
+	Row[
+		{
+			Style[
+				"Countdown: ",
+				FontFamily -> "Futura",
+				FontSize -> scaledSize[16],
+				FontWeight -> Bold,
+				GrayLevel[0.255]
+			],
+			moveTextStyle[StringJoin[ToString[countdown], "/4"]]
+		}
+	];
+
+displaySceneCard[sceneData_Association] :=
 	ironFramed[
 		Column[
 			{
-				header["Delve", delveData["Name"]],
-				subtitleStyle[
-					StringJoin[delveData["Theme"], " ", delveData["Domain"]]
-				],
-				progressSummary["Progress", delveData["Rank"], delveData["Progress"]]
+				header["Scene", sceneData["Name"]],
+				progressSummary["Progress", sceneData["Rank"], sceneData["Progress"]],
+				sceneCountdownSummary[sceneData["Countdown"]]
 			},
 			Spacings -> 0.8,
 			Alignment -> Left
 		]
 	];
 
-addDelve[name_String, rank_?rankQ, theme_String, domain_String, character_ : $soloCharacter] := Module[
+beginScene[name_String, rank_?rankQ, character_ : $soloCharacter] := Module[
+	{ownedScene, newScene},
+	ownedScene = normalizeCharacterScene[character];
+	If[ownedScene === $Failed, Return[$Failed]];
+	If[AssociationQ[ownedScene],
+		Message[scene::active, character, ownedScene["Name"]];
+		Return[$Failed]
+	];
+	newScene = Association[
+		"Name" -> name,
+		"Rank" -> rank,
+		"Progress" -> 0,
+		"Countdown" -> 0
+	];
+	$state[character, "scene"] = newScene;
+	Print[displaySceneCard[newScene]];
+	newScene
+];
+
+beginScene[name_String, rank_, character_ : $soloCharacter] /; !rankQ[rank] := (
+	Message[progress::badrank, rank];
+	$Failed
+);
+
+scene[] :=
+	scene[$soloCharacter];
+
+scene[character_] := Module[
+	{ownedScene},
+	ownedScene = normalizeCharacterScene[character];
+	If[ownedScene === $Failed, Return[$Failed]];
+	If[ownedScene === None,
+		Message[scene::none, character];
+		Return[$Failed]
+	];
+	Print[displaySceneCard[ownedScene]];
+	ownedScene
+];
+
+removeScene[] :=
+	removeScene[$soloCharacter];
+
+removeScene[character_] := Module[
+	{ownedScene},
+	ownedScene = normalizeCharacterScene[character];
+	If[ownedScene === $Failed, Return[$Failed]];
+	If[ownedScene === None,
+		Message[scene::none, character];
+		Return[$Failed]
+	];
+	$state[character, "scene"] = None;
+	ownedScene
+];
+
+markSceneCountdown[] :=
+	markSceneCountdown[1, $soloCharacter];
+
+markSceneCountdown[n_Integer?NonNegative] :=
+	markSceneCountdown[n, $soloCharacter];
+
+markSceneCountdown[n_Integer?NonNegative, character_] := Module[
+	{ownedScene, previous, requested, clamped},
+	ownedScene = normalizeCharacterScene[character];
+	If[ownedScene === $Failed, Return[$Failed]];
+	If[ownedScene === None,
+		Message[scene::none, character];
+		Return[$Failed]
+	];
+	previous = ownedScene["Countdown"];
+	requested = previous + n;
+	clamped = clampValue[requested, {0, 4}];
+	If[!TrueQ[requested == clamped],
+		Message[scene::clamped, ownedScene["Name"], character, requested, clamped]
+	];
+	$state[character, "scene", "Countdown"] = clamped;
+	ownedScene = $state[character, "scene"];
+	If[previous < 4 && clamped >= 4,
+		Message[scene::filled, ownedScene["Name"]]
+	];
+	Print[displaySceneCard[ownedScene]];
+	clamped
+];
+
+markSceneCountdown[n_Integer?Negative, character_ : $soloCharacter] := (
+	Message[scene::badcount, n];
+	$Failed
+);
+
+scene::nochar = "No character named `1` exists in the current state.";
+scene::active = "Character `1` already has an active scene named `2`.";
+scene::none = "Character `1` does not have an active scene.";
+scene::filled = "Scene countdown for `1` is filled.";
+scene::clamped = "Scene countdown for `1` on character `2` was clamped from `3` to `4`.";
+scene::badcount = "Scene countdown marks must be a non-negative integer, got `1`.";
+
+
+(* ::Subsection::Closed:: *)
+(*Delve management*)
+
+
+delveCardSummary[delveData_Association] := Module[
+	{themeText, domainText},
+	themeText = StringRiffle[Lookup[delveData, "Themes", {delveData["Theme"]}], " / "];
+	domainText = StringRiffle[Lookup[delveData, "Domains", {delveData["Domain"]}], " / "];
+	StringJoin["Theme: ", themeText, "   Domain: ", domainText]
+];
+
+denizenDisplayName[None] :=
+	"\[LongDash]";
+
+denizenDisplayName[name_String] :=
+	name;
+
+denizenRows[denizenList_List] :=
+	MapThread[
+		{
+			Style[ToString[#1], FontFamily -> "Futura", FontSize -> scaledSize[12], FontWeight -> Bold, GrayLevel[0.255]],
+			Style[#2, FontFamily -> "Futura", FontSize -> scaledSize[12], GrayLevel[0.255]],
+			Style[#3, FontFamily -> "Futura", FontSize -> scaledSize[12], GrayLevel[0.255]],
+			Style[denizenDisplayName[#4], FontFamily -> "Times New Roman", FontSize -> scaledSize[14], GrayLevel[0.255]]
+		} &,
+		{Range[12], denizenSlotLabels, denizenSlotRanges, denizenList}
+	];
+
+denizenMatrixGrid[denizenList_List] :=
+	Grid[
+		Prepend[
+			denizenRows[denizenList],
+			Style[#, FontFamily -> "Futura", FontSize -> scaledSize[12], FontWeight -> Bold, GrayLevel[0.255]] & /@
+				{"Slot", "Frequency", "Roll", "Denizen"}
+		],
+		Alignment -> {{Left, Left, Left, Left}, Center},
+		Spacings -> {1.1, 0.35},
+		Dividers -> {False, {2 -> GrayLevel[0.75]}}
+	];
+
+displayDelveCard[delveData_Association] := Module[
+	{rows, objective, denizenList},
+	objective = Lookup[delveData, "Objective", None];
+	denizenList = Lookup[delveData, "Denizens", defaultDenizens[]];
+	rows = {
+		header["Delve", delveData["Name"]],
+		subtitleStyle[delveCardSummary[delveData]]
+	};
+	If[objective =!= None,
+		rows = Join[rows, {subtitleStyle["Objective"], moveTextStyle[objective]}]
+	];
+	rows = Join[
+		rows,
+		{
+			progressSummary["Progress", delveData["Rank"], delveData["Progress"]],
+			subtitleStyle["Denizens"],
+			denizenMatrixGrid[denizenList]
+		}
+	];
+	ironFramed[
+		Column[
+			rows,
+			Spacings -> 0.8,
+			Alignment -> Left
+		]
+	]
+];
+
+displayRiskZoneCard[delveData_Association, zone_Association] :=
+	Print[
+		ironFramed[
+			Column[
+				{
+					header["Risk Zone", delveData["Name"]],
+					subtitleStyle[zone["Name"]],
+					progressSummary["Progress", delveData["Rank"], delveData["Progress"]],
+					moveTextStyle[StringJoin[
+						"Suggested ranks: ",
+						ToString[zone["Ranks"][[1]]],
+						" or ",
+						ToString[zone["Ranks"][[2]]],
+						". Default: ",
+						ToString[zone["Rank"]],
+						"."
+					]]
+				},
+				Spacings -> 0.8,
+				Alignment -> Left
+			]
+		]
+	];
+
+displayDenizenRoll[delveName_String, roll_Association] :=
+	Print[
+		ironFramed[
+			Column[
+				{
+					header["Denizen", delveName],
+					oracleDiceDisplay[roll["oracleDice"]],
+					moveTextStyle[StringJoin[
+						"Slot ",
+						ToString[roll["slot"]],
+						" (",
+						roll["frequency"],
+						", ",
+						roll["range"],
+						"): ",
+						If[roll["denizen"] === None, "Blank", roll["denizen"]]
+					]]
+				},
+				Spacings -> 0.8,
+				Alignment -> Center
+			]
+		]
+	];
+
+Options[addDelve] = {Objective -> None};
+
+addDelve[name_String, rank_?rankQ, themeSpec_, domainSpec_, opts : OptionsPattern[]] :=
+	addDelve[name, rank, themeSpec, domainSpec, Automatic, $soloCharacter, opts];
+
+addDelve[name_String, rank_?rankQ, themeSpec_, domainSpec_, character_String, opts : OptionsPattern[]] :=
+	addDelve[name, rank, themeSpec, domainSpec, Automatic, character, opts];
+
+addDelve[name_String, rank_?rankQ, themeSpec_, domainSpec_, denizenSpec_List, opts : OptionsPattern[]] :=
+	addDelve[name, rank, themeSpec, domainSpec, denizenSpec, $soloCharacter, opts];
+
+addDelve[name_String, rank_?rankQ, themeSpec_, domainSpec_, denizenSpec_, character_String, opts : OptionsPattern[]] := Module[
 	{ownedDelves, ownedDelve},
-	If[!delveThemeQ[theme],
-		Message[delve::badtheme, theme, StringRiffle[delveThemes, ", "]];
-		Return[$Failed]
-	];
-	If[!delveDomainQ[domain],
-		Message[delve::baddomain, domain, StringRiffle[delveDomains, ", "]];
-		Return[$Failed]
-	];
 	ownedDelves = normalizeCharacterDelves[character];
 	If[ownedDelves === $Failed, Return[$Failed]];
 	If[KeyExistsQ[ownedDelves, name],
 		Message[delve::duplicate, name, character];
 		Return[$Failed]
 	];
-	ownedDelve = makeDelve[name, rank, theme, domain];
+	ownedDelve = makeDelve[name, rank, themeSpec, domainSpec, OptionValue[Objective], denizenSpec];
+	If[ownedDelve === $Failed, Return[$Failed]];
 	$state[character, "delves", name] = ownedDelve;
 	ownedDelve
 ];
 
-addDelve[name_String, rank_, theme_String, domain_String, character_ : $soloCharacter] /; !rankQ[rank] := (
+addDelve[name_String, rank_, ___] /; !rankQ[rank] := (
 	Message[progress::badrank, rank];
 	$Failed
 );
@@ -3765,12 +4460,248 @@ removeDelve[name_String, character_ : $soloCharacter] := Module[
 	$state[character, "delves"]
 ];
 
+setDelveTheme[themeSpec_] := Module[
+	{current},
+	current = currentDelveName[$soloCharacter];
+	If[current === $Failed, Return[$Failed]];
+	setDelveTheme[current, themeSpec, $soloCharacter]
+];
+
+setDelveTheme[delveName_String, themeSpec_] :=
+	setDelveTheme[delveName, themeSpec, $soloCharacter];
+
+setDelveTheme[delveName_String, themeSpec_, character_] := Module[
+	{ownedDelve, themes},
+	ownedDelve = delveByName[delveName, character];
+	If[!AssociationQ[ownedDelve],
+		Message[delve::unknown, delveName, character];
+		Return[$Failed]
+	];
+	themes = normalizeDelveCards[themeSpec, "Theme"];
+	If[themes === $Failed, Return[$Failed]];
+	If[validateDelveCardPair[themes, ownedDelve["Domains"]] === $Failed, Return[$Failed]];
+	$state[character, "delves", delveName, "Themes"] = themes;
+	$state[character, "delves", delveName, "Theme"] = First[themes];
+	$state[character, "delves", delveName]
+];
+
+setDelveDomain[domainSpec_] := Module[
+	{current},
+	current = currentDelveName[$soloCharacter];
+	If[current === $Failed, Return[$Failed]];
+	setDelveDomain[current, domainSpec, $soloCharacter]
+];
+
+setDelveDomain[delveName_String, domainSpec_] :=
+	setDelveDomain[delveName, domainSpec, $soloCharacter];
+
+setDelveDomain[delveName_String, domainSpec_, character_] := Module[
+	{ownedDelve, domains},
+	ownedDelve = delveByName[delveName, character];
+	If[!AssociationQ[ownedDelve],
+		Message[delve::unknown, delveName, character];
+		Return[$Failed]
+	];
+	domains = normalizeDelveCards[domainSpec, "Domain"];
+	If[domains === $Failed, Return[$Failed]];
+	If[validateDelveCardPair[ownedDelve["Themes"], domains] === $Failed, Return[$Failed]];
+	$state[character, "delves", delveName, "Domains"] = domains;
+	$state[character, "delves", delveName, "Domain"] = First[domains];
+	$state[character, "delves", delveName]
+];
+
+returnToSite[] := Module[
+	{current},
+	current = currentDelveName[$soloCharacter];
+	If[current === $Failed, Return[$Failed]];
+	returnToSite[current, $soloCharacter]
+];
+
+returnToSite[delveName_String] :=
+	returnToSite[delveName, $soloCharacter];
+
+returnToSite[delveName_String, character_] := Module[
+	{ownedDelve, dice, roll},
+	ownedDelve = delveByName[delveName, character];
+	If[!AssociationQ[ownedDelve],
+		Message[delve::unknown, delveName, character];
+		Return[$Failed]
+	];
+	dice = rollChallengeDice[];
+	roll = Association[
+		"character" -> character,
+		"delveName" -> delveName,
+		"challengeDice" -> dice,
+		"lowerDie" -> Min[dice],
+		"match" -> SameQ @@ dice
+	];
+	displayReturnToSiteRoll[roll];
+	roll
+];
+
+riskZoneData[delveData_Association] := Module[
+	{progress, ranks, name, rank},
+	progress = delveData["Progress"];
+	{name, ranks} = Which[
+		progress < 4,
+			{"Low Risk", {Troublesome, Dangerous}},
+		progress < 8,
+			{"Medium Risk", {Dangerous, Formidable}},
+		True,
+			{"High Risk", {Formidable, Extreme}}
+	];
+	rank = If[rankIndex[delveData["Rank"]] <= rankIndex[Dangerous], First[ranks], Last[ranks]];
+	Association["Name" -> name, "Ranks" -> ranks, "Rank" -> rank]
+];
+
+riskZone[] := Module[
+	{current},
+	current = currentDelveName[$soloCharacter];
+	If[current === $Failed, Return[$Failed]];
+	riskZone[current, $soloCharacter]
+];
+
+riskZone[delveName_String] :=
+	riskZone[delveName, $soloCharacter];
+
+riskZone[delveName_String, character_] := Module[
+	{ownedDelve, zone},
+	ownedDelve = delveByName[delveName, character];
+	If[!AssociationQ[ownedDelve],
+		Message[delve::unknown, delveName, character];
+		Return[$Failed]
+	];
+	zone = riskZoneData[ownedDelve];
+	displayRiskZoneCard[ownedDelve, zone];
+	zone["Rank"]
+];
+
+denizens[] := Module[
+	{current},
+	current = currentDelveName[$soloCharacter];
+	If[current === $Failed, Return[$Failed]];
+	denizens[current, $soloCharacter]
+];
+
+denizens[delveName_String] :=
+	denizens[delveName, $soloCharacter];
+
+denizens[delveName_String, character_] := Module[
+	{ownedDelve},
+	ownedDelve = delveByName[delveName, character];
+	If[!AssociationQ[ownedDelve],
+		Message[delve::unknown, delveName, character];
+		Return[$Failed]
+	];
+	Print[
+		ironFramed[
+			Column[
+				{header["Denizens", delveName], denizenMatrixGrid[ownedDelve["Denizens"]]},
+				Spacings -> 0.8,
+				Alignment -> Left
+			]
+		]
+	];
+	ownedDelve["Denizens"]
+];
+
+denizenSlotFromValue[value_Integer] :=
+	First @ FirstPosition[denizenSlotThresholds, threshold_ /; value <= threshold];
+
+rollDenizen[] := Module[
+	{current},
+	current = currentDelveName[$soloCharacter];
+	If[current === $Failed, Return[$Failed]];
+	rollDenizen[current, $soloCharacter]
+];
+
+rollDenizen[delveName_String] :=
+	rollDenizen[delveName, $soloCharacter];
+
+rollDenizen[delveName_String, character_] := Module[
+	{ownedDelve, dice, value, slot, roll},
+	ownedDelve = delveByName[delveName, character];
+	If[!AssociationQ[ownedDelve],
+		Message[delve::unknown, delveName, character];
+		Return[$Failed]
+	];
+	dice = rollOracleDice[];
+	value = oracleRollValue[dice];
+	slot = denizenSlotFromValue[value];
+	roll = Association[
+		"character" -> character,
+		"delveName" -> delveName,
+		"oracleDice" -> dice,
+		"value" -> value,
+		"slot" -> slot,
+		"frequency" -> denizenSlotLabels[[slot]],
+		"range" -> denizenSlotRanges[[slot]],
+		"denizen" -> ownedDelve["Denizens"][[slot]]
+	];
+	displayDenizenRoll[delveName, roll];
+	roll
+];
+
+setDenizen[slot_Integer, name_] := Module[
+	{current},
+	current = currentDelveName[$soloCharacter];
+	If[current === $Failed, Return[$Failed]];
+	setDenizen[current, slot, name, $soloCharacter]
+];
+
+setDenizen[delveName_String, slot_Integer, name_] :=
+	setDenizen[delveName, slot, name, $soloCharacter];
+
+setDenizen[delveName_String, slot_Integer, name_, character_] := Module[
+	{ownedDelve, normalized, denizenList},
+	If[!Between[{1, 12}][slot],
+		Message[delve::badslot, slot];
+		Return[$Failed]
+	];
+	ownedDelve = delveByName[delveName, character];
+	If[!AssociationQ[ownedDelve],
+		Message[delve::unknown, delveName, character];
+		Return[$Failed]
+	];
+	normalized = normalizeDenizenSlot[name];
+	If[normalized === $Failed,
+		Message[delve::baddenizen, name];
+		Return[$Failed]
+	];
+	denizenList = ownedDelve["Denizens"];
+	If[StringQ[normalized],
+		denizenList = Replace[denizenList, normalized -> None, {1}]
+	];
+	denizenList[[slot]] = normalized;
+	$state[character, "delves", delveName, "Denizens"] = denizenList;
+	denizenList
+];
+
+clearDenizen[slot_Integer] := Module[
+	{current},
+	current = currentDelveName[$soloCharacter];
+	If[current === $Failed, Return[$Failed]];
+	clearDenizen[current, slot, $soloCharacter]
+];
+
+clearDenizen[delveName_String, slot_Integer] :=
+	clearDenizen[delveName, slot, $soloCharacter];
+
+clearDenizen[delveName_String, slot_Integer, character_] :=
+	setDenizen[delveName, slot, None, character];
+
 delve::nochar = "No character named `1` exists in the current state.";
 delve::nocurrent = "Character `1` does not have a current delve.";
 delve::unknown = "Character `2` does not have a delve named `1`.";
 delve::duplicate = "Character `2` already has a delve named `1`.";
 delve::badtheme = "Unknown delve theme `1`. Use one of: `2`.";
 delve::baddomain = "Unknown delve domain `1`. Use one of: `2`.";
+delve::badcards = "Delve `1` cards must be a string or a one- or two-string list.";
+delve::toomanycards = "A delve can have two themes or two domains, but not both.";
+delve::badobjective = "Delve objective must be None or a string, not `1`.";
+delve::baddenizens = "Denizens must be a 12-item list of strings or None.";
+delve::baddenizen = "Denizen must be a non-empty string or None, not `1`.";
+delve::badslot = "Denizen slot must be an integer from 1 to 12, not `1`.";
 
 
 (* ::Subsection::Closed:: *)
@@ -4188,16 +5119,203 @@ payThePrice[] := displayMove["payThePrice"];
 (*Ask the Oracle*)
 
 
+oracleTableByName[tableName_String] := Module[
+	{table},
+	If[!KeyExistsQ[oracles, tableName],
+		Message[oracle::unknown, tableName];
+		Return[$Failed]
+	];
+	table = oracles[tableName];
+	If[!AssociationQ[table],
+		Message[oracle::unknown, tableName];
+		Return[$Failed]
+	];
+	table
+];
+
+oracleRollByName[tableName_String] := Module[
+	{table},
+	table = oracleTableByName[tableName];
+	If[table === $Failed, Return[$Failed]];
+	oracleRoll[tableName, table]
+];
+
+chooseOddEvenCard[value_Integer, cards_List] :=
+	If[Length[cards] == 2 && EvenQ[value], Last[cards], First[cards]];
+
+featureCardsForValue[value_Integer, themes_List, domains_List] :=
+	{
+		If[value <= 20, chooseOddEvenCard[value, themes], First[themes]],
+		If[value > 20, chooseOddEvenCard[value, domains], First[domains]]
+	};
+
+dangerCardsForValue[value_Integer, themes_List, domains_List] :=
+	{
+		If[value <= 30, chooseOddEvenCard[value, themes], First[themes]],
+		If[30 < value <= 45, chooseOddEvenCard[value, domains], First[domains]]
+	};
+
+delveCompositeOracleRoll[title_String, delveData_Association, tableFunction_, cardFunction_] := Module[
+	{dice, value, match, theme, domain, table, outcome},
+	dice = rollOracleDice[];
+	value = oracleRollValue[dice];
+	match = SameQ @@ dice;
+	{theme, domain} = cardFunction[value, delveData["Themes"], delveData["Domains"]];
+	table = tableFunction[theme, domain];
+	outcome = oracleRollOutcome[table, value];
+	displayOracleRoll[StringJoin[title, " (", theme, ", ", domain, ")"], dice, match, outcome];
+	Association[
+		"oracleDice" -> dice,
+		"value" -> value,
+		"outcome" -> outcome,
+		"match" -> match,
+		"theme" -> theme,
+		"domain" -> domain
+	]
+];
+
+siteNamePossessive[name_String] :=
+	If[StringEndsQ[name, "s"], name <> "'", name <> "'s"];
+
+siteNameComponent[label_String, tableName_String] := Module[
+	{table},
+	table = oracleTableByName[tableName];
+	If[table === $Failed, Return[$Failed]];
+	oracleComponentRoll[label, table]
+];
+
+delveSiteNameOracle[domainSpec_] := Module[
+	{domains, templateRoll, result, components, domain, placeRoll, descriptionRoll, detailRoll, namesakeRoll},
+	domains = normalizeDelveCards[domainSpec, "Domain"];
+	If[domains === $Failed, Return[$Failed]];
+	templateRoll = siteNameComponent["Template", "Delve Site: Name (Template)"];
+	If[templateRoll === $Failed, Return[$Failed]];
+	result = templateRoll["outcome"];
+	components = {templateRoll};
+	domain = chooseOddEvenCard[templateRoll["value"], domains];
+	placeRoll = siteNameComponent["Place (" <> domain <> ")", "Delve Site: Name (Place - " <> domain <> ")"];
+	If[placeRoll === $Failed, Return[$Failed]];
+	AppendTo[components, placeRoll];
+	result = StringReplace[result, "[Place]" -> placeRoll["outcome"]];
+	If[StringContainsQ[result, "[Description]"],
+		descriptionRoll = siteNameComponent["Description", "Delve Site: Name (Description)"];
+		If[descriptionRoll === $Failed, Return[$Failed]];
+		AppendTo[components, descriptionRoll];
+		result = StringReplace[result, "[Description]" -> descriptionRoll["outcome"]]
+	];
+	If[StringContainsQ[result, "[Detail]"],
+		detailRoll = siteNameComponent["Detail", "Delve Site: Name (Detail)"];
+		If[detailRoll === $Failed, Return[$Failed]];
+		AppendTo[components, detailRoll];
+		result = StringReplace[result, "[Detail]" -> detailRoll["outcome"]]
+	];
+	If[StringContainsQ[result, "[Namesake's]"],
+		namesakeRoll = siteNameComponent["Namesake", "Delve Site: Name (Namesake)"];
+		If[namesakeRoll === $Failed, Return[$Failed]];
+		AppendTo[components, namesakeRoll];
+		result = StringReplace[result, "[Namesake's]" -> siteNamePossessive[namesakeRoll["outcome"]]]
+	];
+	If[StringContainsQ[result, "[Namesake]"],
+		namesakeRoll = siteNameComponent["Namesake", "Delve Site: Name (Namesake)"];
+		If[namesakeRoll === $Failed, Return[$Failed]];
+		AppendTo[components, namesakeRoll];
+		result = StringReplace[result, "[Namesake]" -> namesakeRoll["outcome"]]
+	];
+	displayCompositeOracleRoll["Delve Site Name", components, result];
+	Association[
+		"components" -> components,
+		"domain" -> domain,
+		"outcome" -> result
+	]
+];
+
+compositeOracleRoll[title_String, specs_List, resultFunction_] := Module[
+	{components, result},
+	components = siteNameComponent @@@ specs;
+	If[MemberQ[components, $Failed], Return[$Failed]];
+	result = resultFunction[components];
+	displayCompositeOracleRoll[title, components, result];
+	Association["components" -> components, "outcome" -> result]
+];
+
+monstrosityOracle[] := Module[
+	{components, characteristics, abilities, result},
+	components = Join[
+		{
+			siteNameComponent["Size", "Monstrosity: Size"],
+			siteNameComponent["Primary Form", "Monstrosity: Primary Form"]
+		},
+		Table[siteNameComponent["Characteristic " <> ToString[i], "Monstrosity: Characteristics"], {i, 4}],
+		Table[siteNameComponent["Ability " <> ToString[i], "Monstrosity: Abilities"], {i, 4}]
+	];
+	If[MemberQ[components, $Failed], Return[$Failed]];
+	characteristics = Lookup[components[[3 ;; 6]], "outcome"];
+	abilities = Lookup[components[[7 ;; 10]], "outcome"];
+	result = StringRiffle[
+		{
+			"Size: " <> components[[1, "outcome"]],
+			"Form: " <> components[[2, "outcome"]],
+			"Characteristics: " <> StringRiffle[characteristics, ", "],
+			"Abilities: " <> StringRiffle[abilities, ", "]
+		},
+		"\n"
+	];
+	displayCompositeOracleRoll["Monstrosity", components, result];
+	Association[
+		"components" -> components,
+		"size" -> components[[1, "outcome"]],
+		"form" -> components[[2, "outcome"]],
+		"characteristics" -> characteristics,
+		"abilities" -> abilities,
+		"outcome" -> result
+	]
+];
+
+threatCategoryDetail[category_String] := Module[
+	{tableName, detail},
+	tableName = "Threat: " <> category;
+	If[!KeyExistsQ[oracles, tableName], Return[$Failed]];
+	detail = siteNameComponent[category, tableName];
+	If[detail === $Failed, Return[$Failed]];
+	detail
+];
+
+threatOracle[] := Module[
+	{categoryRoll, components, detail, categoryRolls, results},
+	categoryRoll = siteNameComponent["Category", "Threat: Category"];
+	If[categoryRoll === $Failed, Return[$Failed]];
+	components = {categoryRoll};
+	results = {};
+	If[categoryRoll["outcome"] === "Roll Twice",
+		categoryRolls = Table[siteNameComponent["Category " <> ToString[i], "Threat: Category"], {i, 2}];
+		If[MemberQ[categoryRolls, $Failed], Return[$Failed]];
+		components = Join[components, categoryRolls];
+		Do[
+			If[category["outcome"] === "Roll Twice",
+				AppendTo[results, "Roll Twice"],
+				detail = threatCategoryDetail[category["outcome"]];
+				If[detail === $Failed, Return[$Failed]];
+				AppendTo[components, detail];
+				AppendTo[results, category["outcome"] <> ": " <> detail["outcome"]]
+			],
+			{category, categoryRolls}
+		],
+		detail = threatCategoryDetail[categoryRoll["outcome"]];
+		If[detail === $Failed, Return[$Failed]];
+		AppendTo[components, detail];
+		AppendTo[results, categoryRoll["outcome"] <> ": " <> detail["outcome"]]
+	];
+	displayCompositeOracleRoll["Threat", components, StringRiffle[results, "\n"]];
+	Association["components" -> components, "outcome" -> StringRiffle[results, "\n"]]
+];
+
 askTheOracle[] := displayMove["askTheOracle"];
 
 askTheOracle["Reveal a Danger"] := Module[
 	{ownedDelve},
 	ownedDelve = currentDelveDataQuiet[$soloCharacter];
 	If[AssociationQ[ownedDelve],
-		oracleRoll[
-			StringJoin["Reveal a Danger (", ownedDelve["Theme"], ", ", ownedDelve["Domain"], ")"],
-			revealDangerCombinedTable[ownedDelve["Theme"], ownedDelve["Domain"]]
-		],
+		delveCompositeOracleRoll["Reveal a Danger", ownedDelve, revealDangerCombinedTable, dangerCardsForValue],
 		oracleRoll["Reveal a Danger: Alternate", revealDangerAlternateTable]
 	]
 ];
@@ -4208,16 +5326,52 @@ askTheOracle["Delve Site Feature"] := Module[
 	{ownedDelve},
 	ownedDelve = currentDelveData[$soloCharacter];
 	If[ownedDelve === $Failed, Return[$Failed]];
-	oracleRoll[
-		StringJoin["Delve Site Feature (", ownedDelve["Theme"], ", ", ownedDelve["Domain"], ")"],
-		delveSiteFeatureTable[ownedDelve["Theme"], ownedDelve["Domain"]]
-	]
+	delveCompositeOracleRoll["Delve Site Feature", ownedDelve, delveSiteFeatureTable, featureCardsForValue]
 ];
 
 askTheOracle["Delve Site Feature", theme_String, domain_String] := oracleRoll["Delve Site Feature ("<>theme<>", "<>domain<>")", delveSiteFeatureTable[theme, domain]];
-askTheOracle[tableName_String] := oracleRoll[tableName, oracles[tableName]];
-askTheOracle["Yes/No", odds_String] := oracleRoll["Yes/No: " <> odds, oracles["Yes/No: " <> odds]];
+
+askTheOracle["Delve Site Name"] := Module[
+	{ownedDelve},
+	ownedDelve = currentDelveData[$soloCharacter];
+	If[ownedDelve === $Failed, Return[$Failed]];
+	delveSiteNameOracle[ownedDelve["Domains"]]
+];
+
+askTheOracle["Delve Site Name", domain_String] :=
+	delveSiteNameOracle[domain];
+
+askTheOracle["Monstrosity"] :=
+	monstrosityOracle[];
+
+askTheOracle["Trap"] :=
+	compositeOracleRoll[
+		"Trap",
+		{{"Event", "Delve Site: Trap Event"}, {"Component", "Delve Site: Trap Component"}},
+		(StringRiffle[Lookup[#, "outcome"], " "] &)
+	];
+
+askTheOracle["Combat Event"] :=
+	compositeOracleRoll[
+		"Combat Event",
+		{{"Method", "Combat: Event Method"}, {"Target", "Combat: Event Target"}},
+		(StringRiffle[Lookup[#, "outcome"], " "] &)
+	];
+
+askTheOracle["Threat"] :=
+	threatOracle[];
+
+askTheOracle["Threat", category_String] := Module[
+	{tableName},
+	tableName = "Threat: " <> category;
+	oracleRollByName[tableName]
+];
+
+askTheOracle[tableName_String] := oracleRollByName[tableName];
+askTheOracle["Yes/No", odds_String] := oracleRollByName["Yes/No: " <> odds];
 askTheOracle["Yes/No", yesOutcome_String, noOutcome_String] := oracleRoll["Yes/No", yesNo[yesOutcome, noOutcome]];
+
+oracle::unknown = "Unknown oracle table `1`.";
 
 
 (* ::Subsection::Closed:: *)
@@ -4467,7 +5621,23 @@ markYourFailure[] := displayMove["markYourFailure"];
 
 
 learnFromYourFailures[] := displayMove["learnFromYourFailures"];
-learnFromYourFailures[progressRoll_Association] := displayMove["learnFromYourFailures", progressRoll];
+learnFromYourFailures[progressRoll_Association] := Module[
+	{trackName, progressScore},
+	trackName = Lookup[progressRoll, "trackName", None];
+	progressScore = Lookup[progressRoll, "progressScore", Missing["NoProgressScore"]];
+	If[trackName =!= "Failures",
+		Message[learnFromYourFailures::badroll, trackName];
+		Return[$Failed]
+	];
+	If[!NumericQ[progressScore] || progressScore < 6,
+		Message[learnFromYourFailures::threshold, progressScore];
+		Return[$Failed]
+	];
+	displayMove["learnFromYourFailures", progressRoll]
+];
+
+learnFromYourFailures::badroll = "learnFromYourFailures[roll] requires a progress roll against Failures, not `1`.";
+learnFromYourFailures::threshold = "learnFromYourFailures[roll] requires the Failures progress score to be at least 6, not `1`.";
 
 
 (* ::Subsection::Closed:: *)

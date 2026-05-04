@@ -616,7 +616,7 @@ moves["forsakeYourVow", "header"] = paras[
 moves["advance"] = Association[];
 moves["advance", "name"] = "Advance";
 moves["advance", "header"] = paras[
-	p[b["When you focus on your skills, receive training, find inspiration, earn a reward, or gain a companion,"], " you may spend 5 experience to add a new asset, or 3 experience to upgrade an asset."]
+	p[b["When you focus on your skills, receive training, find inspiration, earn a reward, gain a companion, or take possession of an object of power,"], " you may spend experience to add a new asset, upgrade an asset, or augment an eligible asset with a rarity. Rarity costs vary by asset."]
 ];
 
 
