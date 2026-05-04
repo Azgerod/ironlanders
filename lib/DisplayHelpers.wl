@@ -855,6 +855,7 @@ sheetAccentDark := GrayLevel[0.30];
 sheetMid := GrayLevel[0.72];
 sheetLight := GrayLevel[0.9];
 sheetPale := GrayLevel[0.94];
+sheetHintInk := GrayLevel[0.62];
 
 sheetStyle[text_, size_, weight_:Plain, color_:sheetInk] :=
 	Style[
@@ -926,27 +927,33 @@ sheetLadderLabelBand[label_String, {x_, y_}, {width_, height_}] :=
 		Text[sheetStyle[ToUpperCase[label], 14, Bold, White], {x + width/2, y + height/2}]
 	};
 
-sheetLabelBandLeft[label_String, {x_, y_}, {width_, height_}] := Module[
-	{size, inset},
-	size = Which[
-		width <= 90, 10,
-		MemberQ[{"Bonds", "Background Vow", "Current Vow", "Failure"}, label], 14,
-		StringLength[label] > 22, 10,
-		StringLength[label] > 16, 11,
-		StringLength[label] > 12, 13,
-		True, 16
-	];
+sheetLeftLabelSize[label_String, width_] := Which[
+	width <= 90, 10,
+	MemberQ[{"Bonds", "Background Vow", "Current Vow", "Failure"}, label], 14,
+	StringLength[label] > 22, 10,
+	StringLength[label] > 16, 11,
+	StringLength[label] > 12, 13,
+	True, 16
+];
+
+sheetLabelBandLeft[label_String, {x_, y_}, {width_, height_}, textOptions_:<||>] := Module[
+	{size, inset, transform, text, textColor, textWeight},
+	size = Lookup[textOptions, "Size", sheetLeftLabelSize[label, width]];
 	inset = 14;
+	transform = Lookup[textOptions, "Transform", ToUpperCase];
+	text = If[transform === None, label, transform[label]];
+	textColor = Lookup[textOptions, "Color", sheetInk];
+	textWeight = Lookup[textOptions, "Weight", Bold];
 	{
-		sheetRect[{x, y}, {width, height}, sheetAccentDark, sheetAccentDark],
-		Text[sheetStyle[ToUpperCase[label], size, Bold, White], {x + inset, y + height/2}, {-1, 0}]
+		sheetRect[{x, y}, {width, height}, White, sheetInk],
+		Text[sheetStyle[text, size, textWeight, textColor], {x + inset, y + height/2}, {-1, 0}]
 	}
 ];
 
 sheetSmallLabelBand[label_String, {x_, y_}, {width_, height_}] :=
 	{
-		sheetRect[{x, y}, {width, height}, sheetAccentDark, sheetAccentDark, 1.0],
-		Text[sheetStyle[ToUpperCase[label], 12, Bold, White], {x + width/2, y + height/2}]
+		sheetRect[{x, y}, {width, height}, White, sheetInk, 1.0],
+		Text[sheetStyle[ToUpperCase[label], 12, Bold, sheetInk], {x + width/2, y + height/2}]
 	};
 
 sheetValueBox[label_String, value_, {x_, y_}, {width_, height_}] :=
@@ -955,6 +962,24 @@ sheetValueBox[label_String, value_, {x_, y_}, {width_, height_}] :=
 		Text[sheetStyle[ToUpperCase[label], 12, Bold], {x + width/2, y + height - 14}],
 		Text[sheetStyle[ToString[value], 26, Bold], {x + width/2, y + height/2 - 8}]
 	};
+
+sheetSignedNumberText[value_Integer, {x_, y_}, size_, weight_:Bold, color_:sheetInk] := Module[
+	{sign, digits, signX},
+	sign = Which[
+		value > 0, "+",
+		value < 0, "-",
+		True, None
+	];
+	digits = ToString[Abs[value]];
+	signX = x - Max[12, size (0.45 StringLength[digits] + 0.35)];
+	DeleteCases[
+		{
+			If[sign === None, Nothing, Text[sheetStyle[sign, size, weight, color], {signX, y}]],
+			Text[sheetStyle[digits, size, weight, color], {x, y}]
+		},
+		Nothing
+	]
+];
 
 sheetNameField[character_String] :=
 	{
@@ -1031,15 +1056,15 @@ sheetVerticalResource[label_String, value_Integer, {x_, y_}, {width_, height_}, 
 					slotY = y + (Length[values] - First[#2]) boxHeight;
 					fill = sheetLight;
 					textColor = sheetInk;
-					{
-						sheetRect[{x, slotY}, {width, boxHeight}, fill, sheetInk, 1.0],
-						Text[sheetStyle[ToString[#1], 20, Bold, textColor], {x + width/2, slotY + boxHeight/2}],
-						If[
+					Join[
+						{sheetRect[{x, slotY}, {width, boxHeight}, fill, sheetInk, 1.0]},
+						sheetSignedNumberText[#1, {x + width/2, slotY + boxHeight/2}, 20, Bold, textColor],
+						{If[
 							#1 === value,
 							sheetValueIndicator[{x, slotY}, {width, boxHeight}, Right],
 							Nothing
-						]
-					}
+						]}
+					]
 				] &,
 				values
 			],
@@ -1064,7 +1089,7 @@ sheetMomentumColumn[character_String, characterData_Association] := Module[
 		sheetLadderLabelBand["Momentum", {x, y + height - labelHeight}, {width, labelHeight}],
 		Flatten[
 			MapIndexed[
-				Module[{slotY, fill, textColor, label},
+				Module[{slotY, fill, textColor},
 					slotY = y + (Length[values] - First[#2]) boxHeight;
 					fill = Which[
 						#1 === reset, sheetDark,
@@ -1076,16 +1101,15 @@ sheetMomentumColumn[character_String, characterData_Association] := Module[
 						#1 > max, sheetInk,
 						True, sheetInk
 					];
-					label = If[#1 > 0, StringJoin["+", ToString[#1]], ToString[#1]];
-					{
-						sheetRect[{x, slotY}, {width, boxHeight}, fill, sheetInk, 1.0],
-						Text[sheetStyle[label, 17, Bold, textColor], {x + width/2, slotY + boxHeight/2}],
-						If[
+					Join[
+						{sheetRect[{x, slotY}, {width, boxHeight}, fill, sheetInk, 1.0]},
+						sheetSignedNumberText[#1, {x + width/2, slotY + boxHeight/2}, 17, Bold, textColor],
+						{If[
 							#1 === current,
 							sheetValueIndicator[{x, slotY}, {width, boxHeight}, Left],
 							Nothing
-						]
-					}
+						]}
+					]
 				] &,
 				values
 			],
@@ -1172,17 +1196,24 @@ sheetBondsPanel[characterData_Association, topY_:86] := Module[
 ];
 
 sheetVowRow[vowData_, label_String, {x_, y_}, {width_, height_}] := Module[
-	{hasVow, progress, rank, menace, bannerText, labelWidth, rankOptions, rankY},
+	{hasVow, vowName, hasVowName, progress, rank, menace, bannerText, bannerOptions, labelWidth, rankOptions, rankY},
 	hasVow = AssociationQ[vowData];
+	vowName = If[hasVow, Lookup[vowData, "Name", ""], ""];
+	hasVowName = StringQ[vowName] && StringTrim[vowName] =!= "";
 	progress = If[hasVow, vowData["Progress"], 0];
 	rank = If[hasVow, vowData["Rank"], None];
 	menace = If[hasVow && AssociationQ[Lookup[vowData, "Threat", None]], vowData["Threat", "Menace", "progress"], None];
-	bannerText = If[hasVow, vowData["Name"], ""];
+	bannerText = If[hasVowName, vowName, "Empty Vow"];
+	bannerOptions = If[
+		hasVowName,
+		<||>,
+		<|"Color" -> sheetHintInk|>
+	];
 	labelWidth = 206;
 	rankOptions = If[label === "Background Vow", {Extreme, Epic}, progressRanks];
 	rankY = y + height - 44;
 	{
-		sheetLabelBandLeft[bannerText, {x, y + height - 30}, {labelWidth, 29}],
+		sheetLabelBandLeft[bannerText, {x, y + height - 30}, {labelWidth, 29}, bannerOptions],
 		sheetProgressInset[progress, {x + labelWidth, y + height - 30}, {width - labelWidth, 29}, menace],
 		sheetRankDotsCentered[rank, {x, rankY}, width, rankOptions]
 	}
@@ -1192,7 +1223,7 @@ sheetVowsPanel[characterData_Association, backgroundTopY_:704, vowsTopY_:574] :=
 	{vows, backgroundVow, currentVows, x, width, rowHeight, backgroundRowY, currentStartY, currentPitch, overflow},
 	vows = Values[Lookup[characterData, "vows", <||>]];
 	backgroundVow = If[vows === {}, None, First[vows]];
-	currentVows = PadRight[Take[Rest[vows], UpTo[4]], 4, None];
+	currentVows = PadRight[Take[If[Length[vows] > 1, Rest[vows], {}], UpTo[4]], 4, None];
 	x = sheetMiddleX;
 	width = sheetMiddleWidth;
 	rowHeight = 58;
@@ -1311,8 +1342,8 @@ sheetDebilitiesPanel[characterData_Association, topY_:950] := Module[
 	Join[
 		sheetLabelBand["Debilities", {x, topY - 24}, {width, 24}],
 		sheetDebilityColumn["Conditions", {Wounded, Shaken, Unprepared, Encumbered}, active, {x, topY - 52}, colWidth],
-		sheetDebilityColumn["Banes", {Maimed, Corrupted}, active, {x + colWidth + gap, topY - 52}, colWidth],
-		sheetDebilityColumn["Burdens", {Cursed, Tormented}, active, {x + 2 (colWidth + gap), topY - 52}, colWidth]
+		sheetDebilityColumn["Burdens", {Cursed, Tormented}, active, {x + colWidth + gap, topY - 52}, colWidth],
+		sheetDebilityColumn["Banes", {Maimed, Corrupted}, active, {x + 2 (colWidth + gap), topY - 52}, colWidth]
 	]
 ];
 
