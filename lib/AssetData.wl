@@ -12,7 +12,15 @@
 (*Package header*)
 
 
-BeginPackage["AssetData`"];
+If[
+	!MemberQ[$Packages, "IronLibrary`TextHelpers`"],
+	With[
+		{dir = If[StringQ[$InputFileName] && $InputFileName =!= "", DirectoryName[$InputFileName], Directory[]]},
+		Get[FileNameJoin[{dir, "TextHelpers.wl"}]]
+	]
+];
+
+BeginPackage["AssetData`", {"IronLibrary`TextHelpers`"}];
 
 
 (* ::Section::Closed:: *)
@@ -22,7 +30,7 @@ BeginPackage["AssetData`"];
 assetData::usage = "Association of Ironsworn asset card data.";
 
 
-(* ::Section::Closed:: *)
+(* ::Section:: *)
 (*Implementation details*)
 
 
@@ -34,2875 +42,1896 @@ Begin["`Private`"];
 
 
 (* ::Subsection::Closed:: *)
+(*Asset constructors*)
+
+
+assetField[key_String, label_String, type_String, extra_Association : <||>] :=
+	Join[
+		<|
+			"Key" -> key,
+			"Label" -> label,
+			"Type" -> type
+		|>,
+		extra
+	];
+
+assetTrack[key_String, label_String, min_Integer, max_Integer, default_Integer] := <|
+	"Key" -> key,
+	"Label" -> label,
+	"Min" -> min,
+	"Max" -> max,
+	"Default" -> default
+|>;
+
+assetAbility[index_Integer, name_String, text_, defaultSelected_:False, fields_Association:<||>] := <|
+	"Index" -> index,
+	"Name" -> name,
+	"Text" -> text,
+	"DefaultSelected" -> defaultSelected,
+	"Fields" -> fields
+|>;
+
+assetRecord[name_String, category_String, requirement_, fields_Association, abilities_List, defaultAbilities_List, tracks_Association, sourcePage_Integer] := <|
+	"Name" -> name,
+	"Category" -> category,
+	"Requirement" -> requirement,
+	"Fields" -> fields,
+	"Abilities" -> abilities,
+	"DefaultAbilities" -> defaultAbilities,
+	"Tracks" -> tracks,
+	"SourcePage" -> sourcePage
+|>;
+
+
+(* ::Subsection:: *)
 (*Asset association*)
 
 
-assetData = <|
-	"Cave Lion" -> <|
-		"Name" -> "Cave Lion",
-		"Category" -> "Companion",
-		"Requirement" -> "Your cat takes down its prey.",
-		"Fields" -> <|
-			"Name" -> <|
-				"Key" -> "name",
-				"Label" -> "Name",
-				"Type" -> "text"
-			|>
-		|>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "Eager",
-				"Text" -> "When your cat chases down big game, you may Resupply with +edge (instead of +wits). If you do, take +1 supply or +1 momentum on a strong hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "Inescapable",
-				"Text" -> "When you Enter the Fray or Strike by sending your cat to attack, roll +edge. On a hit, take +2 momentum.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "Protective",
-				"Text" -> "When you Make Camp, your cat is alert to trouble. If you or an ally choose to relax, take +1 spirit. If you focus, take +1 momentum.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {},
-		"Tracks" -> <|
-			"health" -> <|
-				"Key" -> "health",
-				"Label" -> "Health",
-				"Min" -> 0,
-				"Max" -> 4,
-				"Default" -> 4
-			|>
-		|>,
-		"SourcePage" -> 2
-	|>,
-	"Giant Spider" -> <|
-		"Name" -> "Giant Spider",
-		"Category" -> "Companion",
-		"Requirement" -> "Your spider uncovers secrets.",
-		"Fields" -> <|
-			"Name" -> <|
-				"Key" -> "name",
-				"Label" -> "Name",
-				"Type" -> "text"
-			|>
-		|>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "Discreet",
-				"Text" -> "When you Secure an Advantage by sending your spider to scout a place, add +1 and take +1 momentum on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "Soul-Piercing",
-				"Text" -> "You may Face Danger +shadow by sending your spider to secretly study someone. On a hit, the spider returns to reveal the target’s deepest fears through a reflection in its glassy eyes. Use this to Gather Information and reroll any dice.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "Ensnaring",
-				"Text" -> "When your spider sets a trap, add +1 as you Enter the Fray +shadow. On a strong hit, also inflict 2 harm.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {},
-		"Tracks" -> <|
-			"health" -> <|
-				"Key" -> "health",
-				"Label" -> "Health",
-				"Min" -> 0,
-				"Max" -> 4,
-				"Default" -> 4
-			|>
-		|>,
-		"SourcePage" -> 2
-	|>,
-	"Hawk" -> <|
-		"Name" -> "Hawk",
-		"Category" -> "Companion",
-		"Requirement" -> "Your hawk can aid you while it is aloft.",
-		"Fields" -> <|
-			"Name" -> <|
-				"Key" -> "name",
-				"Label" -> "Name",
-				"Type" -> "text"
-			|>
-		|>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "Far-seeing",
-				"Text" -> "When you Undertake a Journey, or when you Resupply by hunting for small game, add +1.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "Fierce",
-				"Text" -> "When you Secure an Advantage +edge using your hawk to harass and distract your foes, add +1 and take +1 momentum on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "Vigilant",
-				"Text" -> "When you Face Danger +wits to detect an approaching threat, or when you Enter the Fray +wits against an ambush, add +2.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {},
-		"Tracks" -> <|
-			"health" -> <|
-				"Key" -> "health",
-				"Label" -> "Health",
-				"Min" -> 0,
-				"Max" -> 3,
-				"Default" -> 3
-			|>
-		|>,
-		"SourcePage" -> 2
-	|>,
-	"Horse" -> <|
-		"Name" -> "Horse",
-		"Category" -> "Companion",
-		"Requirement" -> "You and your horse ride as one.",
-		"Fields" -> <|
-			"Name" -> <|
-				"Key" -> "name",
-				"Label" -> "Name",
-				"Type" -> "text"
-			|>
-		|>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "Swift",
-				"Text" -> "When you Face Danger +edge using your horse’s speed and grace, or when you Undertake a Journey, add +1.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "Fearless",
-				"Text" -> "When you Enter the Fray or Secure an Advantage +heart by charging into combat, add +1 and take +1 momentum on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "Mighty",
-				"Text" -> "When you Strike or Clash at close range while mounted, add +1 and inflict +1 harm on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {},
-		"Tracks" -> <|
-			"health" -> <|
-				"Key" -> "health",
-				"Label" -> "Health",
-				"Min" -> 0,
-				"Max" -> 5,
-				"Default" -> 5
-			|>
-		|>,
-		"SourcePage" -> 2
-	|>,
-	"Hound" -> <|
-		"Name" -> "Hound",
-		"Category" -> "Companion",
-		"Requirement" -> "Your hound is your steadfast companion.",
-		"Fields" -> <|
-			"Name" -> <|
-				"Key" -> "name",
-				"Label" -> "Name",
-				"Type" -> "text"
-			|>
-		|>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "Sharp",
-				"Text" -> "When you Gather Information using your hound’s keen senses to track your quarry or investigate a scene, add +1 and take +1 momentum on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "Ferocious",
-				"Text" -> "When you Strike or Clash alongside your hound and score a hit, inflict +1 harm or take +1 momentum.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "Loyal",
-				"Text" -> "When you Endure Stress in the company of your hound, add +1.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {},
-		"Tracks" -> <|
-			"health" -> <|
-				"Key" -> "health",
-				"Label" -> "Health",
-				"Min" -> 0,
-				"Max" -> 4,
-				"Default" -> 4
-			|>
-		|>,
-		"SourcePage" -> 2
-	|>,
-	"Kindred" -> <|
-		"Name" -> "Kindred",
-		"Category" -> "Companion",
-		"Requirement" -> "Your friend stands by you.",
-		"Fields" -> <|
-			"Name" -> <|
-				"Key" -> "name",
-				"Label" -> "Name",
-				"Type" -> "text"
-			|>,
-			"Expertise" -> <|
-				"Key" -> "expertise",
-				"Label" -> "Expertise",
-				"Type" -> "text"
-			|>
-		|>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "Skilled",
-				"Text" -> "When you make a move outside of combat aided by your companion’s expertise, add +1.",
-				"DefaultSelected" -> False,
-				"Fields" -> <|
-					"Expertise" -> <|
-						"Key" -> "expertise",
-						"Label" -> "Expertise",
-						"Type" -> "text"
-					|>
-				|>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "Shield-Kin",
-				"Text" -> "When you Clash or Battle alongside your companion, or when you Face Danger against an attack by standing together, add +1.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "Bonded",
-				"Text" -> "Once you mark a bond with your companion, add +1 when you Face Desolation in their presence.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {},
-		"Tracks" -> <|
-			"health" -> <|
-				"Key" -> "health",
-				"Label" -> "Health",
-				"Min" -> 0,
-				"Max" -> 4,
-				"Default" -> 4
-			|>
-		|>,
-		"SourcePage" -> 2
-	|>,
-	"Mammoth" -> <|
-		"Name" -> "Mammoth",
-		"Category" -> "Companion",
-		"Requirement" -> "Your mammoth walks a resolute path.",
-		"Fields" -> <|
-			"Name" -> <|
-				"Key" -> "name",
-				"Label" -> "Name",
-				"Type" -> "text"
-			|>
-		|>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "Lumbering",
-				"Text" -> "When your mammoth travels with you as you Undertake a Journey, you may add +2 but suffer -1 momentum (decide before rolling).",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "Beast of burden",
-				"Text" -> "When you make a move which requires you to roll +supply, you may instead roll +your mammoth’s health.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "Overpowering",
-				"Text" -> "When you Strike or Clash by riding your mammoth against a pack of foes, add +1 and inflict +1 harm on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {},
-		"Tracks" -> <|
-			"health" -> <|
-				"Key" -> "health",
-				"Label" -> "Health",
-				"Min" -> 0,
-				"Max" -> 5,
-				"Default" -> 5
-			|>
-		|>,
-		"SourcePage" -> 2
-	|>,
-	"Owl" -> <|
-		"Name" -> "Owl",
-		"Category" -> "Companion",
-		"Requirement" -> "Your owl soars through the darkness.",
-		"Fields" -> <|
-			"Name" -> <|
-				"Key" -> "name",
-				"Label" -> "Name",
-				"Type" -> "text"
-			|>
-		|>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "Nocturnal",
-				"Text" -> "If you Resupply at night by sending your owl to hunt, take +2 momentum on a hit. When you Enter the Fray +wits against an ambush in darkness, add +1 and take +1 momentum on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "Sage",
-				"Text" -> "When you leverage your owl’s secret knowledge to perform a ritual, add +1 or take +1 momentum on a hit (decide before rolling).",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "Embodying",
-				"Text" -> "When you Face Death, take your owl’s health as +momentum before you roll.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {},
-		"Tracks" -> <|
-			"health" -> <|
-				"Key" -> "health",
-				"Label" -> "Health",
-				"Min" -> 0,
-				"Max" -> 3,
-				"Default" -> 3
-			|>
-		|>,
-		"SourcePage" -> 2
-	|>,
-	"Raven" -> <|
-		"Name" -> "Raven",
-		"Category" -> "Companion",
-		"Requirement" -> "Your raven heeds your call.",
-		"Fields" -> <|
-			"Name" -> <|
-				"Key" -> "name",
-				"Label" -> "Name",
-				"Type" -> "text"
-			|>
-		|>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "Sly",
-				"Text" -> "When you Secure an Advantage or Face Danger +shadow using your raven to perform trickery (such as creating a distraction or stealing a small object) add +1 and take +1 momentum on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "Knowing",
-				"Text" -> "When you Face Death, add +2 and take +1 momentum on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "Diligent",
-				"Text" -> "When your raven carries messages for you, you may Secure an Advantage, Gather Information, or Compel from a distance.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {},
-		"Tracks" -> <|
-			"health" -> <|
-				"Key" -> "health",
-				"Label" -> "Health",
-				"Min" -> 0,
-				"Max" -> 2,
-				"Default" -> 2
-			|>
-		|>,
-		"SourcePage" -> 2
-	|>,
-	"Young Wyvern" -> <|
-		"Name" -> "Young Wyvern",
-		"Category" -> "Companion",
-		"Requirement" -> "Your wyvern won’t devour you. For now.",
-		"Fields" -> <|
-			"Name" -> <|
-				"Key" -> "name",
-				"Label" -> "Name",
-				"Type" -> "text"
-			|>
-		|>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "Insatiable",
-				"Text" -> "When you Undertake a Journey and score a hit, you may suffer -1 supply in exchange for +2 momentum.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "Indomitable",
-				"Text" -> "When you make the Companion Endure Harm move for your wyvern, add +2 and take +1 momentum on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "Savage",
-				"Text" -> "When you Strike by commanding your wyvern to attack, roll +heart. Your wyvern inflicts 3 harm on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {},
-		"Tracks" -> <|
-			"health" -> <|
-				"Key" -> "health",
-				"Label" -> "Health",
-				"Min" -> 0,
-				"Max" -> 5,
-				"Default" -> 5
-			|>
-		|>,
-		"SourcePage" -> 4
-	|>,
-	"Alchemist" -> <|
-		"Name" -> "Alchemist",
-		"Category" -> "Path",
-		"Requirement" -> "",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you create an elixir, choose an effect: Deftness (edge), audacity (heart), vigor (iron), slyness (shadow), or clarity (wits). Then, suffer -1 supply and roll +wits. On a strong hit, you create a single dose. The character who consumes the elixir must Face Danger +iron and score a hit, after which they add +1 when making moves with the related stat until their health, spirit, or momentum fall below +1. On a weak hit, as above, but suffer an additional -1 supply to create it.",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "As above, and you may choose two effects for a single dose, or create two doses of the same effect.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you prepare an elixir, add +1 and take +1 momentum on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 4
-	|>,
-	"Animal Kin" -> <|
-		"Name" -> "Animal Kin",
-		"Category" -> "Path",
-		"Requirement" -> "",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you make a move to pacify, calm, control, aid, or fend off an animal (or an animal or beast companion), add +1 and take +1 momentum on a hit.",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "You may add or upgrade an animal or beast companion asset for 1 fewer experience. Once you mark all their abilities, you may Forge a Bond with them and take an automatic strong hit. When you do, mark a bond twice and take 1 experience.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "Once per fight, when you leverage your animal or beast companion to make a move, reroll any dice. On a hit, take +1 momentum.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 4
-	|>,
-	"Banner-sworn" -> <|
-		"Name" -> "Banner-sworn",
-		"Category" -> "Path",
-		"Requirement" -> "Once you mark a bond with a leader or faction...",
-		"Fields" -> <|
-			"Name" -> <|
-				"Key" -> "name",
-				"Label" -> "Name",
-				"Type" -> "text"
-			|>
-		|>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you Swear an Iron Vow to serve your leader or faction on a mission, you may reroll any dice. When you Fulfill Your Vow and mark experience, take +1 experience.",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "When you Sojourn or Make Camp in the company of your banner-kin, add +1 and take +1 momentum on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you Enter the Fray bearing your banner, add +1 and take +1 momentum on a hit. When you burn momentum while carrying your banner in combat, take +1 momentum after you reset.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 4
-	|>,
-	"Battle-scarred" -> <|
-		"Name" -> "Battle-scarred",
-		"Category" -> "Path",
-		"Requirement" -> "Once you become maimed...",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "You focus your energies: Reduce your edge or iron by 1 and add +2 to wits or heart, or +1 to each (to a maximum of +4).",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "You overcome your limitations: Reduce your maximum health by 1. Maimed no longer counts as a debility, and does not reduce your maximum momentum or reset value. When you Endure Stress +heart, take +1 momentum on a strong hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "You have stared down death before: When you are at 0 health and Endure Harm, you may roll +wits or +heart (instead of +health or +iron). If you do, take +1 momentum on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {},
-		"Tracks" -> <||>,
-		"SourcePage" -> 4
-	|>,
-	"Blade-bound" -> <|
-		"Name" -> "Blade-bound",
-		"Category" -> "Path",
-		"Requirement" -> "Once you mark a bond with a kin-blade, a sentient weapon imbued with the spirit of your ancestor...",
-		"Fields" -> <|
-			"Name" -> <|
-				"Key" -> "name",
-				"Label" -> "Name",
-				"Type" -> "text"
-			|>
-		|>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you Enter the Fray or Draw the Circle while wielding your kin-blade, add +1 and take +1 momentum on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "When you Gather Information by listening to the whispers of your kin-blade, add +1 and take +2 momentum on a hit. Then, Endure Stress (2 stress).",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you Strike with your kin-blade to inflict savage harm (decide before rolling), add +1 and inflict +2 harm on a hit. Then, Endure Stress (2 stress).",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {},
-		"Tracks" -> <||>,
-		"SourcePage" -> 4
-	|>,
-	"Bonded" -> <|
-		"Name" -> "Bonded",
-		"Category" -> "Path",
-		"Requirement" -> "",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you make a move which gives you an add for sharing a bond, add +1 more.",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "When you completely fill a box on your bonds progress track, envision what your relationships have taught you. Then, take 1 experience and +2 momentum.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you make a move in a crucial moment and score a miss, you may cling to thoughts of your bond-kin for courage or encouragement. If you do, reroll any dice. On another miss, in addition to the outcome of the move, you must mark shaken or corrupted. If both debilities are already marked, Face Desolation.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 4
-	|>,
-	"Commander" -> <|
-		"Name" -> "Commander",
-		"Category" -> "Path",
-		"Requirement" -> "",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "You lead a warband with +4 strength. Roll +strength when you command your warband to Face Danger, Secure an Advantage, Compel, or Battle. When you face the negative outcome of any move, you may suffer -1 strength as the cost. When you Make Camp or Sojourn and score a hit, take +1 strength. While at 0 strength, this asset counts as a debility.",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "You may dispatch scouts from your warband to Gather Information or Resupply; if you do, roll +strength.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "Once you Forge a Bond with your warband, take +1 momentum on a hit when you leverage a warband ability.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <|
-			"strength" -> <|
-				"Key" -> "strength",
-				"Label" -> "Strength",
-				"Min" -> 0,
-				"Max" -> 4,
-				"Default" -> 4
-			|>
-		|>,
-		"SourcePage" -> 4
-	|>,
-	"Dancer" -> <|
-		"Name" -> "Dancer",
-		"Category" -> "Path",
-		"Requirement" -> "",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you Secure an Advantage +edge by dancing for an audience, add +1 and take +2 momentum on a hit. On a strong hit, also add +2 (one time only) if you make a move to interact with someone in the audience.",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "When you Face Danger +edge in a fight by nimbly avoiding your foe’s attacks, add +1 and take +1 momentum on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you or an ally make a progress move and score a hit, you may perform a dance to commemorate the event. If you do, roll +edge. On a strong hit, you and each of your allies take +2 momentum and +1 spirit. On a weak hit, you take +1 momentum or +1 spirit, but your allies are unmoved.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 4
-	|>,
-	"Devotant" -> <|
-		"Name" -> "Devotant",
-		"Category" -> "Path",
-		"Requirement" -> "",
-		"Fields" -> <|
-			"God's Name" -> <|
-				"Key" -> "gods_name",
-				"Label" -> "God's Name",
-				"Type" -> "text"
-			|>,
-			"Stat" -> <|
-				"Key" -> "stat",
-				"Label" -> "Stat",
-				"Type" -> "select_value"
-			|>
-		|>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you say your daily prayers, you may Secure an Advantage by asking your god to grant a blessing. If you do, roll +your god’s stat. On a hit, take +2 momentum.",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "When you Swear an Iron Vow to serve your god on a divine quest, you may roll +your god’s stat and reroll any dice. When you Fulfill Your Vow and mark experience, take +1 experience.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you Sojourn by sharing the word of your god, you may roll +your god’s stat. If you do, take +1 momentum on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 6
-	|>,
-	"Empowered" -> <|
-		"Name" -> "Empowered",
-		"Category" -> "Path",
-		"Requirement" -> "",
-		"Fields" -> <|
-			"Title/Lineage" -> <|
-				"Key" -> "title_lineage",
-				"Label" -> "Title/Lineage",
-				"Type" -> "text"
-			|>
-		|>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you Sojourn and score a weak hit or miss, you may claim the rights of hospitality warranted by your title or lineage. If you do, roll all dice again and add +1. On a miss, you are refused, and your presumption causes significant new trouble.",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "When you exert your title or lineage to Compel, add +1 and take +1 momentum on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you forgo your title or lineage and Forge a Bond as an equal, or when you Swear an Iron Vow to serve someone of a lower station, add +1 and take +1 momentum or +1 spirit on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 6
-	|>,
-	"Fated" -> <|
-		"Name" -> "Fated",
-		"Category" -> "Path",
-		"Requirement" -> "",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you Face Death or Face Desolation while your epic background vow is unfulfilled, it is not yet your time. Instead of rolling, you may take an automatic strong hit. If you do, this asset counts as a debility (and you no longer have this protection) until you next Reach a Milestone on the background vow.",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "When you Reach a Milestone on your background vow, take +2 momentum or +1 spirit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "For every two boxes filled on your background vow progress track, take 1 experience. When you Fulfill Your Vow, your fate is at hand. Envision your final sacrifice and reroll any dice.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 6
-	|>,
-	"Fortune Hunter" -> <|
-		"Name" -> "Fortune Hunter",
-		"Category" -> "Path",
-		"Requirement" -> "",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you Swear an Iron Vow to someone under the promise of payment, add +1 and give the quest a special mark. When you successfully Fulfill Your Vow to them, take +wealth equal to the rank of the quest. If you leverage wealth when making a move where resources are a factor, add +wealth and suffer -1 wealth.",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "When in a community or trading, you may suffer -1 wealth and take +2 supply.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you Resupply by scavenging or looting, and score a strong hit with a match, you may envision finding an object of value. If you do, take +1 supply (instead of +2) and +1 wealth.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <|
-			"wealth" -> <|
-				"Key" -> "wealth",
-				"Label" -> "Wealth",
-				"Min" -> 0,
-				"Max" -> 5,
-				"Default" -> 0
-			|>
-		|>,
-		"SourcePage" -> 6
-	|>,
-	"Herbalist" -> <|
-		"Name" -> "Herbalist",
-		"Category" -> "Path",
-		"Requirement" -> "",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you attempt to Heal using herbal remedies, and you have at least +1 supply, choose one (decide before rolling).\n• Add +2.\n• On a hit, take or give an additional +1 health.",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "When you Heal a companion, ally, or other character, and score a hit, take +1 spirit or +1 momentum.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you Make Camp and choose the option to partake, you can create a restorative meal. If you do, you and your companions take +1 health. Any allies who choose to partake also take +1 health, and do not suffer -supply.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 6
-	|>,
-	"Honorbound" -> <|
-		"Name" -> "Honorbound",
-		"Category" -> "Path",
-		"Requirement" -> "",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you Turn the Tide, envision how your vows give you strength in this moment. Then, when you make your move, add +2 (instead of +1) and take +1 momentum on a hit.",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "When you Secure an Advantage or Compel by telling a hard truth, add +1 and take +1 momentum on a hit. On a weak hit or miss, envision how this truth complicates your current situation.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you Fulfill Your Vow and score a miss, you may reroll one challenge die. If you score a miss again, reduce your maximum spirit by 1. You may recover this lost spirit when you next Fulfill Your Vow and score a strong hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 6
-	|>,
-	"Improviser" -> <|
-		"Name" -> "Improviser",
-		"Category" -> "Path",
-		"Requirement" -> "",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you Check Your Gear, you may roll +wits (instead of +supply). If you do, envision how you make do with a clever solution, and take +1 momentum on a hit.",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "When you Secure an Advantage or Face Danger by cobbling together an ad hoc tool or apparatus, add +1 and take +1 momentum on a hit. After rolling, you may also suffer -1 supply and add +1 more.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you throw caution to the wind and make an impulsive move in a risky situation, you may add +2. If you do, take +1 momentum on a strong hit, but count a weak hit as a miss.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 6
-	|>,
-	"Infiltrator" -> <|
-		"Name" -> "Infiltrator",
-		"Category" -> "Path",
-		"Requirement" -> "",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you make a move to breach, traverse, or hide within an area held by an enemy, add +1 and take +1 momentum on a hit.",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "When you Gather Information within an enemy area to discover their positions, plans, or methods, or when you Secure an Advantage within that area through observation, you may roll +shadow (instead of +wits). If you do, take +1 momentum on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you Resupply within an enemy area by scavenging or looting, you may roll +shadow (instead of +wits). If you do, take +1 momentum or +1 supply on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 6
-	|>,
-	"Lorekeeper" -> <|
-		"Name" -> "Lorekeeper",
-		"Category" -> "Path",
-		"Requirement" -> "",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "You are the bearer of a mystical archive. When you Secure an Advantage or Gather Information using lore recalled from your studies, add +1. If you have a few hours to search the archive, add +2. On a hit, envision the obscure but helpful knowledge you put to use (Ask the Oracle if unsure), and take +1 momentum.",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "When you learn of a site or object holding lost knowledge, and Swear an Iron Vow to recover it for the archive, reroll any dice. When you Fulfill Your Vow and mark experience, take +1 experience.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "One time only, you may browse the archive’s forbidden depths. If you do, raise your wits by 1 and roll an action die. On 1-3, you must also mark corrupted or Face Desolation (ignoring momentum).",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 6
-	|>,
-	"Loyalist" -> <|
-		"Name" -> "Loyalist",
-		"Category" -> "Path",
-		"Requirement" -> "",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you Aid Your Ally, add +1 and take +1 momentum on a hit. This is in addition to the benefits taken by your ally.",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "When an ally makes the Endure Stress move in your company, they add +1 and you take +1 momentum on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you stand with your ally as they make a progress move, envision how you support them. Then, roll one challenge die. On a 1-9, your ally may replace one of their challenge dice with yours. On a 10, envision how you inadvertently undermine their action; your ally must replace their lowest challenge die with yours.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 8
-	|>,
-	"Masked" -> <|
-		"Name" -> "Masked",
-		"Category" -> "Path",
-		"Requirement" -> "Once you mark a bond with elves, and are gifted a mask of precious elderwood...",
-		"Fields" -> <|
-			"Material" -> <|
-				"Key" -> "material",
-				"Label" -> "Material",
-				"Type" -> "select_value"
-			|>
-		|>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "Choose your mask’s material.\n• Thunderwood: Edge / Health\n• Bloodwood: Iron / Health\n• Ghostwood: Shadow / Spirit\n• Whisperwood: Wits / Spirit\n\nWhen you wear the mask and make a move which uses its stat, add +1. If you roll a 1 on your action die, suffer -1 to the associated track (in addition to any other outcome of the move).",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "As above, and you may instead add +2 and suffer -2 (decide before rolling).",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you Face Death or Face Desolation while wearing the mask, you may roll +its stat (instead of +heart).",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 8
-	|>,
-	"Oathbreaker" -> <|
-		"Name" -> "Oathbreaker",
-		"Category" -> "Path",
-		"Requirement" -> "Once you Forsake Your Vow...",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "This asset counts as a debility. One time only, when you Swear an Iron Vow to redeem yourself (extreme or greater), give that vow a special mark. When you Reach a Milestone on the marked vow, take +2 momentum.",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "When you Secure an Advantage or Compel by reaffirming your commitment to your marked vow, add +1 and take +1 momentum on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you Fulfill Your Vow on your marked quest and score a hit, you find redemption and automatically activate this ability at no cost. You may then improve one of your stats by +1 and discard this asset.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 8
-	|>,
-	"Outcast" -> <|
-		"Name" -> "Outcast",
-		"Category" -> "Path",
-		"Requirement" -> "",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When your supply is reduced to 0, suffer any remaining -supply as -momentum. Then, roll +wits. On a strong hit, you manage to scrape by and take +1 supply. On a weak hit, you may suffer -2 momentum in exchange for +1 supply. On a miss, you are Out of Supply.",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "When you Sojourn, you may reroll any dice. If you do (decide before your first roll), your needs are few, but your isolation sets you apart from others. A strong hit counts as a weak hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you Reach Your Destination and score a strong hit, you recall or recognize something helpful about this place. Envision what it is, and take +2 momentum.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 8
-	|>,
-	"Pretender" -> <|
-		"Name" -> "Pretender",
-		"Category" -> "Path",
-		"Requirement" -> "",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you establish a false identity, roll +shadow. On a strong hit, you may add +2 when you make moves using this identity to deceive or influence others. If you roll a 1 on your action die when using your false identity, someone doubts you. Make appropriate moves to reassure them or prevent them from revealing the truth. On a weak hit, as above, but add +1 (instead of +2).",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "As above, and you may roll +shadow (instead of +heart) when you Sojourn under your false identity. If you do, take +1 momentum on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you Secure an Advantage by revealing your true identity in a dramatic moment, reroll any dice.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 8
-	|>,
-	"Revenant" -> <|
-		"Name" -> "Revenant",
-		"Category" -> "Path",
-		"Requirement" -> "Once you Face Death and return to the world of the living...",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you are at 0 health, and Endure Harm or Face Death, add +1. If you then burn momentum to improve your result, envision what bond or vow binds you to this world, and take +2 momentum after you reset.",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "When you make a move to investigate, oppose, or interact with a horror, spirit, or other undead being, add +1.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you bring death to your foe to End the Fight, you may burn momentum to cancel one (not both) of the challenge dice if your momentum is greater than the value of that die. If you do, Endure Stress (2 stress).",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 8
-	|>,
-	"Rider" -> <|
-		"Name" -> "Rider",
-		"Category" -> "Path",
-		"Requirement" -> "If you are with your horse companion...",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you Heal your horse, or when you Face Danger to calm or encourage it, add +1 and take +1 momentum on a hit.",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "When you Undertake a Journey, you may push your horse harder and add +1 (after rolling). If you do, make the Companion Endure Harm move (1 harm).",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you Secure an Advantage +wits by sizing up a perilous situation from the saddle, you are one with your horse’s instincts. Add +1 and take +1 momentum on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 8
-	|>,
-	"Ritualist" -> <|
-		"Name" -> "Ritualist",
-		"Category" -> "Path",
-		"Requirement" -> "Once you Fulfill Your Vow (formidable or greater) in service to an elder mystic, and Forge a Bond to train with them...",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you Secure an Advantage to ready yourself for a ritual, envision how you prepare. Then, add +1 and take +1 momentum on a hit.",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "When you perform a ritual, you may suffer -1 supply and add +1 (decide before rolling).",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you tattoo the essence of a new ritual onto your skin, envision the mark you create. You may then purchase and upgrade that ritual asset for 1 fewer experience.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 8
-	|>,
-	"Shadow-kin" -> <|
-		"Name" -> "Shadow-kin",
-		"Category" -> "Path",
-		"Requirement" -> "Once you become corrupted...",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "You harden your heart: Reduce your heart stat by 1 and add up to +2 to shadow (to a maximum of +4).",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "You are attuned to the realms of shadow: When you perform a ritual, add +1.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "You know the sly ways of death: When you Face Death, you may roll +shadow (instead of +heart). On a weak hit, if you choose to undertake a deathbound quest, you may roll +shadow (instead of +heart) and reroll any dice as you Swear an Iron Vow. When you Fulfill Your Vow on that quest and and mark experience, take +2 experience.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {},
-		"Tracks" -> <||>,
-		"SourcePage" -> 8
-	|>,
-	"Sighted" -> <|
-		"Name" -> "Sighted",
-		"Category" -> "Path",
-		"Requirement" -> "",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you Face Danger or Gather Information to identify or detect mystic forces, add +1 and take +1 momentum on a hit.",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "When you Compel, Forge a Bond, or Test Your Bond with a fellow mystic or mystical being, add +1 and take +1 momentum on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you Secure an Advantage by studying someone or something in a charged situation, add +1 and take +1 momentum on a hit. When you also pierce the veil to explore deeper truths (decide before rolling), you may reroll any dice. If you do, count a weak hit as a miss.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 10
-	|>,
-	"Slayer" -> <|
-		"Name" -> "Slayer",
-		"Category" -> "Path",
-		"Requirement" -> "",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you Gather Information by tracking a beast or horror, or when you Secure an Advantage by readying yourself for a fight against them, add +1 and take +1 momentum on a hit.",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "When you Swear an Iron Vow to slay a beast or horror, you may reroll any dice. When you Fulfill Your Vow and mark experience, take +1 experience.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you slay a beast or horror (at least formidable), you may take a trophy and choose one.\n• Power a ritual: When you or an ally make a ritual move, reroll any dice (one time only).\n• Prove your worth: When you Sojourn, reroll any dice (one time only).",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 10
-	|>,
-	"Spirit-bound" -> <|
-		"Name" -> "Spirit-bound",
-		"Category" -> "Path",
-		"Requirement" -> "",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "You are haunted by someone whose death you caused through your actions or failures. When you consult with their spirit to Secure an Advantage or Gather Information, add +1 and take +2 momentum on a hit. On a weak hit, also Endure Stress (1 stress).",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "When you Face Death guided by the spirit, add +1. On a strong hit, envision what you learn and take 1 experience.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "One time only, when you successfully Fulfill Your Vow (formidable or greater) in service to the spirit, choose one.\n• Let them go: Take 2 experience for each marked ability and discard this asset.\n• Deepen your connection: Add +1 more when you leverage this asset.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 10
-	|>,
-	"Storyweaver" -> <|
-		"Name" -> "Storyweaver",
-		"Category" -> "Path",
-		"Requirement" -> "",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you Secure an Advantage, Compel, or Forge a Bond by sharing an inspiring or enlightening song, poem, or tale, envision the story you tell. Then, add +1 and take +1 momentum on a hit.",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "When you Make Camp and choose the option to relax, you may share a story with your allies or compose a new story if alone. If you do, envision the story you tell and take +1 spirit or +1 momentum. Any allies who choose to relax in your company may also take +1 spirit or +1 momentum.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you Sojourn within a community with which you share a bond, add +2 (instead of +1).",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 10
-	|>,
-	"Trickster" -> <|
-		"Name" -> "Trickster",
-		"Category" -> "Path",
-		"Requirement" -> "",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you Face Danger, Secure an Advantage, or Compel by lying, bluffing, stealing, or cheating, add +1.",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "When you Gather Information by investigating a devious scheme, you may roll +shadow (instead of +wits). If you do, take +2 momentum on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you Forge a Bond for a relationship founded on a lie, choose one.\n• Keep your secret: Roll +shadow (instead of +heart).\n• Reveal the truth: Roll +heart. On a strong hit, mark a bond twice and take 1 experience. A weak hit counts as a miss.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 10
-	|>,
-	"Veteran" -> <|
-		"Name" -> "Veteran",
-		"Category" -> "Path",
-		"Requirement" -> "",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you burn momentum to improve your result in combat, envision how your hard-won fighting experience gives you the upper hand. Then, take +1 momentum after you reset, and add +1 when you make your next move. Once per fight, you also take initiative when burning momentum to improve a miss to a weak hit.",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "When you Swear an Iron Vow to someone who fought beside you, or Forge a Bond with them, add +2 and take +2 momentum on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you Resupply by looting the dead on a field of battle, add +1 and take +1 momentum on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 10
-	|>,
-	"Waterborn" -> <|
-		"Name" -> "Waterborn",
-		"Category" -> "Path",
-		"Requirement" -> "",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you Face Danger, Gather Information, or Secure an Advantage related to your knowledge of watercraft, water travel, or aquatic environments or creatures, add +1 and take +1 momentum on a hit.",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "When you Undertake a Journey by boat or ship, add +1. On a strong hit, also choose one.\n• The wind is at your back: Mark progress twice.\n• Find safe anchor: Make Camp now and reroll any dice.\n• Reap the bounty: Resupply now and reroll any dice.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you Enter the Fray aboard a boat or ship, reroll any dice.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 10
-	|>,
-	"Wayfinder" -> <|
-		"Name" -> "Wayfinder",
-		"Category" -> "Path",
-		"Requirement" -> "",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you Undertake a Journey, take +1 momentum on a strong hit. If you burn momentum to improve your result, also take +1 momentum after you reset.",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "When you Secure an Advantage or Gather Information by carefully surveying the landscape or scouting ahead, add +1 and take +1 momentum on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you Swear an Iron Vow to safely guide someone on a perilous journey, you may reroll any dice. When you Fulfill Your Vow and mark experience, take +1 experience.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 10
-	|>,
-	"Weaponmaster" -> <|
-		"Name" -> "Weaponmaster",
-		"Category" -> "Path",
-		"Requirement" -> "Once you Fulfill Your Vow (formidable or greater) in service to a seasoned warrior, and Forge a Bond to train with them...",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you Secure an Advantage by sizing up your foe in a fight, or in a charged situation which may lead to a fight, add +1 and take +1 momentum on a hit.",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "When you study or train in a new weapon or technique, you may obtain and upgrade that combat talent for 1 fewer experience.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you Turn the Tide with a sudden change of weapon or technique, and your next move is a Strike, add +1 and inflict +2 harm on a strong hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 10
-	|>,
-	"Wildblood" -> <|
-		"Name" -> "Wildblood",
-		"Category" -> "Path",
-		"Requirement" -> "",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you Face Danger, Secure an Advantage, or Gather Information using your knowledge of tracking, woodcraft, or woodland creatures, add +1.",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "When you Face Danger or Secure an Advantage by hiding or sneaking in the woodlands, add +1 and take +1 momentum on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you Make Camp in the woodlands, you may roll +wits (instead of +supply). If you do, you and your allies each choose 1 more option on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 12
-	|>,
-	"Wright" -> <|
-		"Name" -> "Wright",
-		"Category" -> "Path",
-		"Requirement" -> "",
-		"Fields" -> <|
-			"Specialty" -> <|
-				"Key" -> "specialty",
-				"Label" -> "Specialty",
-				"Type" -> "text"
-			|>
-		|>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you Secure an Advantage by crafting a useful item using your specialty, or when you Face Danger to create or repair an item in a perilous situation, add +1 and take +1 momentum on a hit.",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "As above, and you may suffer -1 supply (after rolling) to add an additional +1.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you give the item you create as a gift to commemorate an important event or relationship, you may (one time only) reroll any dice when you Compel, Forge a Bond, or Test Your Bond.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 12
-	|>,
-	"Archer" -> <|
-		"Name" -> "Archer",
-		"Category" -> "Combat Talent",
-		"Requirement" -> "If you wield a bow...",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you Secure an Advantage by taking a moment to aim, choose your approach and add +1.\n• Trust your instincts: Roll +wits, and take +2 momentum on a strong hit.\n• Line up your shot: Roll +edge, and take +1 momentum on a hit.",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "Once per fight, when you Strike or Clash, you may take extra shots and suffer -1 supply (decide before rolling). When you do, reroll any dice. On a hit, inflict +2 harm and take +1 momentum.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you Resupply by hunting, add +1 and take +1 momentum on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 12
-	|>,
-	"Berserker" -> <|
-		"Name" -> "Berserker",
-		"Category" -> "Combat Talent",
-		"Requirement" -> "If you are clad only in animal pelts...",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you Secure an Advantage or Compel by embodying your wild nature, add +1 and take +1 momentum on a hit.",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "When you Strike or Clash by unleashing your rage (decide before rolling), inflict +1 harm on a hit. Then, choose one.\n• Push yourself: Endure Harm (1 harm).\n• Lose yourself: Endure Stress (1 stress).",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you Endure Harm in a fight, and your health is above 0, you may let the pain inflame your wildness (decide before rolling). If you then score a strong hit and choose to embrace the pain, take +momentum equal to your remaining health. A weak hit counts as a miss.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 12
-	|>,
-	"Brawler" -> <|
-		"Name" -> "Brawler",
-		"Category" -> "Combat Talent",
-		"Requirement" -> "If you are unarmed or fighting with a non-deadly weapon...",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you Secure an Advantage +iron by engaging in close-quarters brawling (such as punching, tripping, or grappling), add +1. If you score a hit, you may also inflict 1 harm.",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "When you use an unarmed attack or simple weapon to Strike with deadly intent, add +2 and inflict 2 harm on a hit (instead of 1). On a weak hit or miss, suffer -1 momentum (in addition to any other outcome of the move).",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you Face Danger or Clash against a brawling attack, add +1 and take +1 momentum on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 12
-	|>,
-	"Cutthroat" -> <|
-		"Name" -> "Cutthroat",
-		"Category" -> "Combat Talent",
-		"Requirement" -> "If you wield a dagger or knife...",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you are in position to Strike at an unsuspecting foe, choose one (before rolling).\n• Add +2 and take +1 momentum on a hit.\n• Inflict +2 harm on a hit.",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "When you Compel someone at the point of your blade, or when you rely on your blade to Face Danger, add +1.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "Once per fight, when you Secure an Advantage +shadow by performing a feint or misdirection, reroll any dice and take +1 momentum on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 12
-	|>,
-	"Duelist" -> <|
-		"Name" -> "Duelist",
-		"Category" -> "Combat Talent",
-		"Requirement" -> "If you wield a bladed weapon in each hand...",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you Strike or Clash, you may add +2. If you do (decide before rolling), inflict +1 harm on a strong hit and count a weak hit as a miss.",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "Once per fight, when you Secure an Advantage +edge by making a bold display of your combat prowess, you may reroll any dice.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you Draw the Circle, choose one (before rolling).\n• Add +2.\n• Take +2 momentum on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 12
-	|>,
-	"Fletcher" -> <|
-		"Name" -> "Fletcher",
-		"Category" -> "Combat Talent",
-		"Requirement" -> "",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you Secure an Advantage by crafting arrows of fine quality, add +1. Then, take +1 supply or +1 momentum on a hit.",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "When you Resupply by recovering or gathering arrows after a battle, add +2.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you craft a single arrow designated for a specific foe, envision the process and materials, and roll +wits. On a strong hit, take both. On a weak hit, choose one.\n• Seeker: When a shooter uses the arrow to Strike or Clash against this foe, reroll any dice (one time only).\n• Ravager: When a shooter uses the arrow to inflict harm against this foe, inflict +1d6 harm (one time only).",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 12
-	|>,
-	"Ironclad" -> <|
-		"Name" -> "Ironclad",
-		"Category" -> "Combat Talent",
-		"Requirement" -> "If you wear armor...",
-		"Fields" -> <|
-			"Equipped" -> <|
-				"Key" -> "equipped",
-				"Label" -> "Equipped",
-				"Type" -> "select_enhancement"
-			|>
-		|>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you equip or adjust your armor, choose one.\n• Lightly armored: When you Endure Harm in a fight, add +1 and take +1 momentum on a hit.\n• Geared for war: Mark encumbered. When you Endure Harm in a fight, add +2 and take +1 momentum on a hit.",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "When you Clash while you are geared for war, add +1.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you Compel in a situation where strength of arms is a factor, add +2.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 12
-	|>,
-	"Long-arm" -> <|
-		"Name" -> "Long-arm",
-		"Category" -> "Combat Talent",
-		"Requirement" -> "If you wield a staff...",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "In your hands, a humble staff is a deadly weapon (2 harm). When you instead use it as a simple weapon (1 harm), you may Strike or Clash +edge (instead of iron). If you do, add +1 and take +1 momentum on a hit.",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "When you Secure an Advantage +edge using your staff to disarm, trip, shove, or stun your foe, add +1 and take +1 momentum on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you Undertake a Journey and score a strong hit, or if you accompany an ally who scores a strong hit on that move, your staff provides support and comfort in your travels; take +1 momentum.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 14
-	|>,
-	"Shield-bearer" -> <|
-		"Name" -> "Shield-bearer",
-		"Category" -> "Combat Talent",
-		"Requirement" -> "If you wield a shield...",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you Face Danger using your shield as cover, add +1. When you Clash in close quarters, take +1 momentum on a strong hit.",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "When you paint your shield with a meaningful symbol, envision what you create. Then, if you Endure Stress as you face off against a fearsome foe, add +1 and take +1 momentum on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When forced to Endure Harm in a fight, you may instead sacrifice your shield and ignore all harm. If you do, the shield is destroyed. Once per fight, you also take initiative when you sacrifice your shield to avoid harm.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 14
-	|>,
-	"Skirmisher" -> <|
-		"Name" -> "Skirmisher",
-		"Category" -> "Combat Talent",
-		"Requirement" -> "If you wield a spear...",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you Face Danger by holding a foe at bay using your spear’s reach, roll +iron or +edge. If you score a hit, you may...\n• Iron: Strike (if you have initiative) or Clash now, and add +1.\n• Edge: Take +1 momentum.",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "When you Strike in close combat, you may attempt to drive your spear home (decide before rolling). If you do, add +1 and inflict +2 harm on a hit. If you score a hit and the fight continues, Face Danger +iron to recover your spear.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you Secure an Advantage by bracing your spear against a charging foe, add +1 and take +1 momentum on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 14
-	|>,
-	"Slinger" -> <|
-		"Name" -> "Slinger",
-		"Category" -> "Combat Talent",
-		"Requirement" -> "If you wield a sling...",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When launched from a sling, a simple stone inflicts deadly harm (2 harm). When you Enter the Fray by barraging your foe with sling-bullets, inflict harm on a strong hit.",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "When you Strike by launching stones at an advancing foe, you may choose one (before rolling).\n• Hold them back: Retain initiative on a weak hit, but inflict only 1 harm.\n• Hit them hard: Inflict +1 harm on a hit, but suffer -1 momentum.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you Secure an Advantage by preparing stones of a special quality or material, add +1. Then, take +1 momentum or +1 supply on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 14
-	|>,
-	"Sunderer" -> <|
-		"Name" -> "Sunderer",
-		"Category" -> "Combat Talent",
-		"Requirement" -> "If you wield an axe...",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you Strike or Clash in close quarters, you may suffer -1 momentum and inflict +1 harm on a hit (decide before rolling).",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "When you have your axe in hand, and use the promise of violence to Compel or Secure an Advantage, add +1 and take +1 momentum on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you make a tribute to a fallen foe (formidable or greater) by carving a rune in the haft of your axe, roll +heart. On a strong hit, inflict +1d6 harm (one time only) when you Strike or Clash. On a weak hit, as above, but this death weighs on you; Endure Stress (2 stress).",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 14
-	|>,
-	"Swordmaster" -> <|
-		"Name" -> "Swordmaster",
-		"Category" -> "Combat Talent",
-		"Requirement" -> "If you wield a sword...",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you Strike or Clash and burn momentum to improve your result, inflict +2 harm. If the fight continues, add +1 on your next move.",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "When you Clash and score a strong hit, add +1 if you immediately follow with a Strike.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you Swear an Iron Vow by kneeling and grasping your sword’s blade, add +1 and take +1 momentum on a hit. If you let the edge draw blood from your hands, Endure Harm (1 harm) in exchange for an additional +1 momentum on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 14
-	|>,
-	"Thunder-bringer" -> <|
-		"Name" -> "Thunder-bringer",
-		"Category" -> "Combat Talent",
-		"Requirement" -> "If you wield a mighty hammer...",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you Face Danger, Secure an Advantage, or Compel by hitting or breaking an inanimate object, add +1 and take +1 momentum on a hit.",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "When you Strike a foe to knock them back, stun them, or put them off balance, inflict 1 harm (instead of 2) and take +2 momentum on a hit. On a strong hit, you also create an opening and add +1 on your next move.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you Turn the Tide, you may Strike with all the fury and power you can muster. If you do (decide before rolling), you may reroll any dice and inflict +2 harm on a strong hit, but count a weak hit as a miss.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 14
-	|>,
-	"Augur" -> <|
-		"Name" -> "Augur",
-		"Category" -> "Ritual",
-		"Requirement" -> "",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you summon a flock of crows and ask a single question, roll +wits. On a strong hit, you interpret their calls as a helpful omen. Envision the response (Ask the Oracle if unsure) and take +2 momentum. On a weak hit, the crows ignore your question and offer a clue to an unrelated problem or opportunity in this area. Envision what you learn (Ask the Oracle if unsure), and take +1 momentum.",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "As above, and the crows will also help guide you on the proper path. On a hit, add +1 on the next segment when you Undertake a Journey.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you perform this ritual, add +1 and take +1 momentum on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 14
-	|>,
-	"Awakening" -> <|
-		"Name" -> "Awakening",
-		"Category" -> "Ritual",
-		"Requirement" -> "",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you create a simulacrum, roll +heart. On a strong hit, your creation is given unnatural life. If it aids you as you make a move to assault or overcome an obstacle through strength, add +2. It has 3 health and suffers harm as appropriate, but is not a companion and may not be healed. At 0 health, it is dead. On a weak hit, as above, but if you roll a 1 on your action die when aided by your creation, you must Face Danger +heart to keep it from turning on you (as a formidable foe).",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "Your simulacrum has 6 health.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you perform this ritual, add +1 and take +1 momentum on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <|
-			"health" -> <|
-				"Key" -> "health",
-				"Label" -> "Health",
-				"Min" -> 0,
-				"Max" -> 3,
-				"Default" -> 3
-			|>
-		|>,
-		"SourcePage" -> 14
-	|>,
-	"Bind" -> <|
-		"Name" -> "Bind",
-		"Category" -> "Ritual",
-		"Requirement" -> "",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you wear an animal pelt and dance in moonlight, roll +wits. On a strong hit, you or an ally may wear the pelt and add +1 when making moves with the related stat (wolf-edge; bear-iron; deer-heart; fox-shadow; boar-wits). If the wearer rolls a 1 on their action die while making a move using the pelt, the magic is spent. On a weak hit, as above, but the wilds call as you dance; Endure Stress (2 stress).",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "As above, and you may instead perform this ritual wearing the pelt of a beast. If you do, name the related stat and add +2 (instead of +1).",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you perform this ritual, add +1 and take +1 momentum on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 16
-	|>,
-	"Communion" -> <|
-		"Name" -> "Communion",
-		"Category" -> "Ritual",
-		"Requirement" -> "",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you surround the remains of a recently deceased intelligent creature with lit candles, and summon its spirit, roll +heart. Add +1 if you share a bond. On a strong hit, the spirit appears and you may converse for a few minutes. Make moves as appropriate (add +1). On a weak hit, as above, but the spirit also delivers troubling news unrelated to your purpose. Envision what it tells you (Ask the Oracle if unsure) and Endure Stress (1 stress).",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "As above, and you may also commune with the long-dead.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you perform this ritual, add +1 and take +1 momentum on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 16
-	|>,
-	"Divination" -> <|
-		"Name" -> "Divination",
-		"Category" -> "Ritual",
-		"Requirement" -> "",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you take a drop of blood from a willing subject (not yourself) and cast the rune-carved stones, roll +heart. On a strong hit, you may read the runes to gain insight about the subject and people close to them, including information you and the subject have no knowledge of. If you use the reading to Gather Information, Compel, or Forge a Bond, add +1. On a weak hit, as above, but the runes reveal their secrets only with extra time and focus; suffer -2 momentum.",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "As above, and your divination can also reveal information about the subject’s future.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you perform this ritual, add +1 and take +1 momentum on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 16
-	|>,
-	"Invoke" -> <|
-		"Name" -> "Invoke",
-		"Category" -> "Ritual",
-		"Requirement" -> "",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you consume the mystical essence of your surroundings, roll +wits. On a strong hit, add the value of your action die to your essence track (max 6). You may then Secure an Advantage or Face Danger +essence to create minor mystical effects or illusions. If you do, suffer -1 essence and take +1 momentum on a hit. On a weak hit, as above, but capturing these energies is harrowing; Endure Stress (2 stress).",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "You may Compel +essence (and suffer -1 essence) through a show of power.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you perform this ritual, add +1 and take +1 essence on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <|
-			"essence" -> <|
-				"Key" -> "essence",
-				"Label" -> "Essence",
-				"Min" -> 0,
-				"Max" -> 6,
-				"Default" -> 0
-			|>
-		|>,
-		"SourcePage" -> 16
-	|>,
-	"Keen" -> <|
-		"Name" -> "Keen",
-		"Category" -> "Ritual",
-		"Requirement" -> "",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you hold a weapon and sing a keen for those it has killed, roll +heart. On a strong hit, the wielder inflicts +1 harm when they Strike or Clash. If they roll a 1 on their action die when making a move to inflict harm, the magic is spent. On a weak hit, as above, but the voices of those who were slain join in your song; Endure Stress (2 stress).",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "As above, and the wielder may also (one time only) add +1 and take +2 momentum on a hit when they Draw the Circle, Enter the Fray, or Battle.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you perform this ritual, add +1 and take +1 momentum on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 16
-	|>,
-	"Leech" -> <|
-		"Name" -> "Leech",
-		"Category" -> "Ritual",
-		"Requirement" -> "",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you mark your hands or weapon with an intricate blood rune, roll +iron. On a strong hit, the rune thirsts for fresh blood. One time only, when you make a move to inflict harm, reroll any dice and inflict +2 harm on a hit. Then, for each point of harm inflicted, take +1 and allocate it as +health or +momentum. On a weak hit, as above, but this asset counts as a debility until the rune’s thirst is quenched.",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "As above, and you may also touch an ally or companion and let them take any remaining points as +health or +momentum.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you perform this ritual, add +1 and take +1 momentum on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 16
-	|>,
-	"Lightbearer" -> <|
-		"Name" -> "Lightbearer",
-		"Category" -> "Ritual",
-		"Requirement" -> "",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you focus on a source of light and capture its essence, roll +wits. On a strong hit, set your light track to +6. On a weak hit, make it +3. Then, when you make a move to overcome or navigate darkness, you may add +2 and suffer -1 light.",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "You may use your light to Strike or Clash against a dark-dwelling foe. Choose the amount of light to unleash, and roll +light (instead of +iron or +edge). Suffer -light equal to that amount. On a hit, your harm is 1+your unleashed light.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you perform this ritual, add +1 and take +1 momentum on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <|
-			"light" -> <|
-				"Key" -> "light",
-				"Label" -> "Light",
-				"Min" -> 0,
-				"Max" -> 6,
-				"Default" -> 0
-			|>
-		|>,
-		"SourcePage" -> 16
-	|>,
-	"Scry" -> <|
-		"Name" -> "Scry",
-		"Category" -> "Ritual",
-		"Requirement" -> "",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you look into flames to study a remote person or location, roll +shadow. You or someone with you must have knowledge of the target. On a strong hit, you may Gather Information through observation using +shadow or +wits. On a weak hit, as above, but the flames are hungry; choose one to sacrifice.\n• Your blood: Endure Harm (2 harm).\n• Something precious: Endure Stress (2 stress).\n• Provisions: Suffer -2 supply.",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "As above, and you may instead study a past event.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you perform this ritual, add +1 and take +1 momentum on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 16
-	|>,
-	"Shadow-walk" -> <|
-		"Name" -> "Shadow-walk",
-		"Category" -> "Ritual",
-		"Requirement" -> "",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you cloak yourself with the gossamer veil of the shadow realms, roll +shadow. On a strong hit, take +1 momentum. Then, reroll any dice (one time only) when you make a move by ambushing, hiding, or sneaking. On a weak hit, as above, but the shadows try to lead you astray. You must first Face Danger to find your way.",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "As above, and you may also travel along the hidden paths of the shadow realms to Undertake a Journey using +shadow (instead of +wits). If you do, Endure Stress (1 stress) and mark progress twice on a strong hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you perform this ritual, add +1 and take +1 momentum on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 16
-	|>,
-	"Sway" -> <|
-		"Name" -> "Sway",
-		"Category" -> "Ritual",
-		"Requirement" -> "",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you speak a person’s name three times to the wind, roll +wits. On a strong hit, the wind whispers of this person’s need. Envision what you hear (Ask the Oracle if unsure). If you use this information or fulfill this need when you Compel them, you may reroll any dice (one time only). On a weak hit, as above, but this person’s need creates a troubling dilemma or complication; Endure Stress (1 stress).",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "As above, and if you score a strong hit when you Compel, you may also reroll any dice (one time only) when you Gather Information from this person.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you perform this ritual, add +1 and take +1 momentum on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 18
-	|>,
-	"Talisman" -> <|
-		"Name" -> "Talisman",
-		"Category" -> "Ritual",
-		"Requirement" -> "",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you fashion a charm, envision it and name the specific person or creature it protects against. Then roll +wits. On a strong hit, when the wearer opposes the target through a move, add +2. If a 1 is rolled on the action die while making a move using the charm, the magic is spent. On a weak hit, as above, but the wearer adds +1 when making a move (instead of +2).",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "As above, and you may instead fashion a charm which aids the wearer against all supernatural threats, such as mystic rituals or horrors.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you perform this ritual, add +1 and take +1 momentum on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 18
-	|>,
-	"Tether" -> <|
-		"Name" -> "Tether",
-		"Category" -> "Ritual",
-		"Requirement" -> "",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you commune with the spirits of a place, roll +heart. If you share a bond with someone there, add +1. On a strong hit, you are tethered. When you Undertake a Journey to return, you may roll +spirit or +heart (instead of +wits), and take +1 momentum on a hit. When you Reach Your Destination, take +2 momentum on a strong hit. The tether is lost if you perform this ritual elsewhere, or when you Face Desolation. On a weak hit, as above, but the spirits reveal a disturbing aspect of the place; Endure Stress (2 stress).",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "As above, and you may also reroll any dice when you Sojourn in the tethered place.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you perform this ritual, add +1 and take +1 momentum on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 18
-	|>,
-	"Totem" -> <|
-		"Name" -> "Totem",
-		"Category" -> "Ritual",
-		"Requirement" -> "",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you hold a totem of your animal or beast companion and focus on it, roll +heart. On a strong hit, you are bound together. Add +1 and take +1 momentum on a hit when you use a companion ability. If you roll a 1 on your action die when using a companion ability, the magic is spent. On a weak hit, as above, but creating this connection is unsettling; Endure Stress (1 stress).",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "As above, and you may also perceive the world through your companion’s senses while you make moves aided by them (even when you are apart).",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you perform this ritual, add +1 and take +1 momentum on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 18
-	|>,
-	"Visage" -> <|
-		"Name" -> "Visage",
-		"Category" -> "Ritual",
-		"Requirement" -> "",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you paint yourself in blood and ash, roll +wits. On a strong hit, you may add +2 and take +1 momentum on a hit when you Secure an Advantage or Compel using fear or intimidation. If you roll a 1 on your action die when making a move aided by your visage, the magic is spent. On a weak hit, as above, but the blood must be your own; Endure Harm (2 harm).",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "As above, and you may also add +1 when you Strike, Clash, or Battle.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you perform this ritual, add +1 and take +1 momentum on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 18
-	|>,
-	"Ward" -> <|
-		"Name" -> "Ward",
-		"Category" -> "Ritual",
-		"Requirement" -> "",
-		"Fields" -> <||>,
-		"Abilities" -> {
-			<|
-				"Index" -> 1,
-				"Name" -> "",
-				"Text" -> "When you walk a wide circle, sprinkling the ground with salt, roll +wits. On a strong hit, choose two. On a weak hit, choose one.\n• When a foe first crosses the boundary, take +1 momentum.\n• When you first inflict harm against a foe within the boundary, inflict +1 harm.\n• Your ward is ‘likely’ (Ask the Oracle) to trap a foe within the boundary.",
-				"DefaultSelected" -> True,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 2,
-				"Name" -> "",
-				"Text" -> "As above, and improve the effect of your ward (+2 momentum, +2 harm, and ‘almost certain’).",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>,
-			<|
-				"Index" -> 3,
-				"Name" -> "",
-				"Text" -> "When you perform this ritual, add +1 and take +1 momentum on a hit.",
-				"DefaultSelected" -> False,
-				"Fields" -> <||>
-			|>
-		},
-		"DefaultAbilities" -> {
-			1
-		},
-		"Tracks" -> <||>,
-		"SourcePage" -> 18
-	|>
-	|>;
+assetData = Association[];
+
+
+(* ::Subsection::Closed:: *)
+(*Companion assets*)
+
+
+assetData["Cave Lion"] = assetRecord[
+	"Cave Lion",
+	"Companion",
+	p["Your cat takes down its prey."],
+	<|
+		"Name" -> assetField["name", "Name", "text"]
+	|>,
+	{
+		assetAbility[1, "Eager", p["When your cat chases down big game, you may Resupply with +edge (instead of +wits). If you do, take +1 supply or +1 momentum on a strong hit."]],
+		assetAbility[2, "Inescapable", p["When you Enter the Fray or Strike by sending your cat to attack, roll +edge. On a hit, take +2 momentum."]],
+		assetAbility[3, "Protective", p["When you Make Camp, your cat is alert to trouble. If you or an ally choose to relax, take +1 spirit. If you focus, take +1 momentum."]]
+	},
+	{},
+	<|
+		"health" -> assetTrack["health", "Health", 0, 4, 4]
+	|>,
+	2
+];
+
+assetData["Giant Spider"] = assetRecord[
+	"Giant Spider",
+	"Companion",
+	p["Your spider uncovers secrets."],
+	<|
+		"Name" -> assetField["name", "Name", "text"]
+	|>,
+	{
+		assetAbility[1, "Discreet", p["When you Secure an Advantage by sending your spider to scout a place, add +1 and take +1 momentum on a hit."]],
+		assetAbility[2, "Soul-Piercing", p["You may Face Danger +shadow by sending your spider to secretly study someone. On a hit, the spider returns to reveal the target\[CloseCurlyQuote]s deepest fears through a reflection in its glassy eyes. Use this to Gather Information and reroll any dice."]],
+		assetAbility[3, "Ensnaring", p["When your spider sets a trap, add +1 as you Enter the Fray +shadow. On a strong hit, also inflict 2 harm."]]
+	},
+	{},
+	<|
+		"health" -> assetTrack["health", "Health", 0, 4, 4]
+	|>,
+	2
+];
+
+assetData["Hawk"] = assetRecord[
+	"Hawk",
+	"Companion",
+	p["Your hawk can aid you while it is aloft."],
+	<|
+		"Name" -> assetField["name", "Name", "text"]
+	|>,
+	{
+		assetAbility[1, "Far-seeing", p["When you Undertake a Journey, or when you Resupply by hunting for small game, add +1."]],
+		assetAbility[2, "Fierce", p["When you Secure an Advantage +edge using your hawk to harass and distract your foes, add +1 and take +1 momentum on a hit."]],
+		assetAbility[3, "Vigilant", p["When you Face Danger +wits to detect an approaching threat, or when you Enter the Fray +wits against an ambush, add +2."]]
+	},
+	{},
+	<|
+		"health" -> assetTrack["health", "Health", 0, 3, 3]
+	|>,
+	2
+];
+
+assetData["Horse"] = assetRecord[
+	"Horse",
+	"Companion",
+	p["You and your horse ride as one."],
+	<|
+		"Name" -> assetField["name", "Name", "text"]
+	|>,
+	{
+		assetAbility[1, "Swift", p["When you Face Danger +edge using your horse\[CloseCurlyQuote]s speed and grace, or when you Undertake a Journey, add +1."]],
+		assetAbility[2, "Fearless", p["When you Enter the Fray or Secure an Advantage +heart by charging into combat, add +1 and take +1 momentum on a hit."]],
+		assetAbility[3, "Mighty", p["When you Strike or Clash at close range while mounted, add +1 and inflict +1 harm on a hit."]]
+	},
+	{},
+	<|
+		"health" -> assetTrack["health", "Health", 0, 5, 5]
+	|>,
+	2
+];
+
+assetData["Hound"] = assetRecord[
+	"Hound",
+	"Companion",
+	p["Your hound is your steadfast companion."],
+	<|
+		"Name" -> assetField["name", "Name", "text"]
+	|>,
+	{
+		assetAbility[1, "Sharp", p["When you Gather Information using your hound\[CloseCurlyQuote]s keen senses to track your quarry or investigate a scene, add +1 and take +1 momentum on a hit."]],
+		assetAbility[2, "Ferocious", p["When you Strike or Clash alongside your hound and score a hit, inflict +1 harm or take +1 momentum."]],
+		assetAbility[3, "Loyal", p["When you Endure Stress in the company of your hound, add +1."]]
+	},
+	{},
+	<|
+		"health" -> assetTrack["health", "Health", 0, 4, 4]
+	|>,
+	2
+];
+
+assetData["Kindred"] = assetRecord[
+	"Kindred",
+	"Companion",
+	p["Your friend stands by you."],
+	<|
+		"Name" -> assetField["name", "Name", "text"],
+		"Expertise" -> assetField["expertise", "Expertise", "text"]
+	|>,
+	{
+		assetAbility[
+			1,
+			"Skilled",
+			p["When you make a move outside of combat aided by your companion\[CloseCurlyQuote]s expertise, add +1."],
+			False,
+			<|
+			"Expertise" -> assetField["expertise", "Expertise", "text"]
+		|>
+		],
+		assetAbility[2, "Shield-Kin", p["When you Clash or Battle alongside your companion, or when you Face Danger against an attack by standing together, add +1."]],
+		assetAbility[3, "Bonded", p["Once you mark a bond with your companion, add +1 when you Face Desolation in their presence."]]
+	},
+	{},
+	<|
+		"health" -> assetTrack["health", "Health", 0, 4, 4]
+	|>,
+	2
+];
+
+assetData["Mammoth"] = assetRecord[
+	"Mammoth",
+	"Companion",
+	p["Your mammoth walks a resolute path."],
+	<|
+		"Name" -> assetField["name", "Name", "text"]
+	|>,
+	{
+		assetAbility[1, "Lumbering", p["When your mammoth travels with you as you Undertake a Journey, you may add +2 but suffer -1 momentum (decide before rolling)."]],
+		assetAbility[2, "Beast of burden", p["When you make a move which requires you to roll +supply, you may instead roll +your mammoth\[CloseCurlyQuote]s health."]],
+		assetAbility[3, "Overpowering", p["When you Strike or Clash by riding your mammoth against a pack of foes, add +1 and inflict +1 harm on a hit."]]
+	},
+	{},
+	<|
+		"health" -> assetTrack["health", "Health", 0, 5, 5]
+	|>,
+	2
+];
+
+assetData["Owl"] = assetRecord[
+	"Owl",
+	"Companion",
+	p["Your owl soars through the darkness."],
+	<|
+		"Name" -> assetField["name", "Name", "text"]
+	|>,
+	{
+		assetAbility[1, "Nocturnal", p["If you Resupply at night by sending your owl to hunt, take +2 momentum on a hit. When you Enter the Fray +wits against an ambush in darkness, add +1 and take +1 momentum on a hit."]],
+		assetAbility[2, "Sage", p["When you leverage your owl\[CloseCurlyQuote]s secret knowledge to perform a ritual, add +1 or take +1 momentum on a hit (decide before rolling)."]],
+		assetAbility[3, "Embodying", p["When you Face Death, take your owl\[CloseCurlyQuote]s health as +momentum before you roll."]]
+	},
+	{},
+	<|
+		"health" -> assetTrack["health", "Health", 0, 3, 3]
+	|>,
+	2
+];
+
+assetData["Raven"] = assetRecord[
+	"Raven",
+	"Companion",
+	p["Your raven heeds your call."],
+	<|
+		"Name" -> assetField["name", "Name", "text"]
+	|>,
+	{
+		assetAbility[1, "Sly", p["When you Secure an Advantage or Face Danger +shadow using your raven to perform trickery (such as creating a distraction or stealing a small object) add +1 and take +1 momentum on a hit."]],
+		assetAbility[2, "Knowing", p["When you Face Death, add +2 and take +1 momentum on a hit."]],
+		assetAbility[3, "Diligent", p["When your raven carries messages for you, you may Secure an Advantage, Gather Information, or Compel from a distance."]]
+	},
+	{},
+	<|
+		"health" -> assetTrack["health", "Health", 0, 2, 2]
+	|>,
+	2
+];
+
+assetData["Young Wyvern"] = assetRecord[
+	"Young Wyvern",
+	"Companion",
+	p["Your wyvern won\[CloseCurlyQuote]t devour you. For now."],
+	<|
+		"Name" -> assetField["name", "Name", "text"]
+	|>,
+	{
+		assetAbility[1, "Insatiable", p["When you Undertake a Journey and score a hit, you may suffer -1 supply in exchange for +2 momentum."]],
+		assetAbility[2, "Indomitable", p["When you make the Companion Endure Harm move for your wyvern, add +2 and take +1 momentum on a hit."]],
+		assetAbility[3, "Savage", p["When you Strike by commanding your wyvern to attack, roll +heart. Your wyvern inflicts 3 harm on a hit."]]
+	},
+	{},
+	<|
+		"health" -> assetTrack["health", "Health", 0, 5, 5]
+	|>,
+	4
+];
+
+
+
+(* ::Subsection::Closed:: *)
+(*Path assets*)
+
+
+assetData["Alchemist"] = assetRecord[
+	"Alchemist",
+	"Path",
+	None,
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			p["When you create an elixir, choose an effect: Deftness (edge), audacity (heart), vigor (iron), slyness (shadow), or clarity (wits). Then, suffer -1 supply and roll +wits. On a strong hit, you create a single dose. The character who consumes the elixir must Face Danger +iron and score a hit, after which they add +1 when making moves with the related stat until their health, spirit, or momentum fall below +1. On a weak hit, as above, but suffer an additional -1 supply to create it."],
+			True
+		],
+		assetAbility[2, "", p["As above, and you may choose two effects for a single dose, or create two doses of the same effect."]],
+		assetAbility[3, "", p["When you prepare an elixir, add +1 and take +1 momentum on a hit."]]
+	},
+	{
+		1
+	},
+	<||>,
+	4
+];
+
+assetData["Animal Kin"] = assetRecord[
+	"Animal Kin",
+	"Path",
+	None,
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			p["When you make a move to pacify, calm, control, aid, or fend off an animal (or an animal or beast companion), add +1 and take +1 momentum on a hit."],
+			True
+		],
+		assetAbility[2, "", p["You may add or upgrade an animal or beast companion asset for 1 fewer experience. Once you mark all their abilities, you may Forge a Bond with them and take an automatic strong hit. When you do, mark a bond twice and take 1 experience."]],
+		assetAbility[3, "", p["Once per fight, when you leverage your animal or beast companion to make a move, reroll any dice. On a hit, take +1 momentum."]]
+	},
+	{
+		1
+	},
+	<||>,
+	4
+];
+
+assetData["Banner-sworn"] = assetRecord[
+	"Banner-sworn",
+	"Path",
+	p["Once you mark a bond with a leader or faction..."],
+	<|
+		"Name" -> assetField["name", "Name", "text"]
+	|>,
+	{
+		assetAbility[
+			1,
+			"",
+			p["When you Swear an Iron Vow to serve your leader or faction on a mission, you may reroll any dice. When you Fulfill Your Vow and mark experience, take +1 experience."],
+			True
+		],
+		assetAbility[2, "", p["When you Sojourn or Make Camp in the company of your banner-kin, add +1 and take +1 momentum on a hit."]],
+		assetAbility[3, "", p["When you Enter the Fray bearing your banner, add +1 and take +1 momentum on a hit. When you burn momentum while carrying your banner in combat, take +1 momentum after you reset."]]
+	},
+	{
+		1
+	},
+	<||>,
+	4
+];
+
+assetData["Battle-scarred"] = assetRecord[
+	"Battle-scarred",
+	"Path",
+	p["Once you become maimed..."],
+	<||>,
+	{
+		assetAbility[1, "", p["You focus your energies: Reduce your edge or iron by 1 and add +2 to wits or heart, or +1 to each (to a maximum of +4)."]],
+		assetAbility[2, "", p["You overcome your limitations: Reduce your maximum health by 1. Maimed no longer counts as a debility, and does not reduce your maximum momentum or reset value. When you Endure Stress +heart, take +1 momentum on a strong hit."]],
+		assetAbility[3, "", p["You have stared down death before: When you are at 0 health and Endure Harm, you may roll +wits or +heart (instead of +health or +iron). If you do, take +1 momentum on a hit."]]
+	},
+	{},
+	<||>,
+	4
+];
+
+assetData["Blade-bound"] = assetRecord[
+	"Blade-bound",
+	"Path",
+	p["Once you mark a bond with a kin-blade, a sentient weapon imbued with the spirit of your ancestor..."],
+	<|
+		"Name" -> assetField["name", "Name", "text"]
+	|>,
+	{
+		assetAbility[1, "", p["When you Enter the Fray or Draw the Circle while wielding your kin-blade, add +1 and take +1 momentum on a hit."]],
+		assetAbility[2, "", p["When you Gather Information by listening to the whispers of your kin-blade, add +1 and take +2 momentum on a hit. Then, Endure Stress (2 stress)."]],
+		assetAbility[3, "", p["When you Strike with your kin-blade to inflict savage harm (decide before rolling), add +1 and inflict +2 harm on a hit. Then, Endure Stress (2 stress)."]]
+	},
+	{},
+	<||>,
+	4
+];
+
+assetData["Bonded"] = assetRecord[
+	"Bonded",
+	"Path",
+	None,
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			p["When you make a move which gives you an add for sharing a bond, add +1 more."],
+			True
+		],
+		assetAbility[2, "", p["When you completely fill a box on your bonds progress track, envision what your relationships have taught you. Then, take 1 experience and +2 momentum."]],
+		assetAbility[3, "", p["When you make a move in a crucial moment and score a miss, you may cling to thoughts of your bond-kin for courage or encouragement. If you do, reroll any dice. On another miss, in addition to the outcome of the move, you must mark shaken or corrupted. If both debilities are already marked, Face Desolation."]]
+	},
+	{
+		1
+	},
+	<||>,
+	4
+];
+
+assetData["Commander"] = assetRecord[
+	"Commander",
+	"Path",
+	None,
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			p["You lead a warband with +4 strength. Roll +strength when you command your warband to Face Danger, Secure an Advantage, Compel, or Battle. When you face the negative outcome of any move, you may suffer -1 strength as the cost. When you Make Camp or Sojourn and score a hit, take +1 strength. While at 0 strength, this asset counts as a debility."],
+			True
+		],
+		assetAbility[2, "", p["You may dispatch scouts from your warband to Gather Information or Resupply; if you do, roll +strength."]],
+		assetAbility[3, "", p["Once you Forge a Bond with your warband, take +1 momentum on a hit when you leverage a warband ability."]]
+	},
+	{
+		1
+	},
+	<|
+		"strength" -> assetTrack["strength", "Strength", 0, 4, 4]
+	|>,
+	4
+];
+
+assetData["Dancer"] = assetRecord[
+	"Dancer",
+	"Path",
+	None,
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			p["When you Secure an Advantage +edge by dancing for an audience, add +1 and take +2 momentum on a hit. On a strong hit, also add +2 (one time only) if you make a move to interact with someone in the audience."],
+			True
+		],
+		assetAbility[2, "", p["When you Face Danger +edge in a fight by nimbly avoiding your foe\[CloseCurlyQuote]s attacks, add +1 and take +1 momentum on a hit."]],
+		assetAbility[3, "", p["When you or an ally make a progress move and score a hit, you may perform a dance to commemorate the event. If you do, roll +edge. On a strong hit, you and each of your allies take +2 momentum and +1 spirit. On a weak hit, you take +1 momentum or +1 spirit, but your allies are unmoved."]]
+	},
+	{
+		1
+	},
+	<||>,
+	4
+];
+
+assetData["Devotant"] = assetRecord[
+	"Devotant",
+	"Path",
+	None,
+	<|
+		"God's Name" -> assetField["gods_name", "God's Name", "text"],
+		"Stat" -> assetField["stat", "Stat", "select_value"]
+	|>,
+	{
+		assetAbility[
+			1,
+			"",
+			p["When you say your daily prayers, you may Secure an Advantage by asking your god to grant a blessing. If you do, roll +your god\[CloseCurlyQuote]s stat. On a hit, take +2 momentum."],
+			True
+		],
+		assetAbility[2, "", p["When you Swear an Iron Vow to serve your god on a divine quest, you may roll +your god\[CloseCurlyQuote]s stat and reroll any dice. When you Fulfill Your Vow and mark experience, take +1 experience."]],
+		assetAbility[3, "", p["When you Sojourn by sharing the word of your god, you may roll +your god\[CloseCurlyQuote]s stat. If you do, take +1 momentum on a hit."]]
+	},
+	{
+		1
+	},
+	<||>,
+	6
+];
+
+assetData["Empowered"] = assetRecord[
+	"Empowered",
+	"Path",
+	None,
+	<|
+		"Title/Lineage" -> assetField["title_lineage", "Title/Lineage", "text"]
+	|>,
+	{
+		assetAbility[
+			1,
+			"",
+			p["When you Sojourn and score a weak hit or miss, you may claim the rights of hospitality warranted by your title or lineage. If you do, roll all dice again and add +1. On a miss, you are refused, and your presumption causes significant new trouble."],
+			True
+		],
+		assetAbility[2, "", p["When you exert your title or lineage to Compel, add +1 and take +1 momentum on a hit."]],
+		assetAbility[3, "", p["When you forgo your title or lineage and Forge a Bond as an equal, or when you Swear an Iron Vow to serve someone of a lower station, add +1 and take +1 momentum or +1 spirit on a hit."]]
+	},
+	{
+		1
+	},
+	<||>,
+	6
+];
+
+assetData["Fated"] = assetRecord[
+	"Fated",
+	"Path",
+	None,
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			p["When you Face Death or Face Desolation while your epic background vow is unfulfilled, it is not yet your time. Instead of rolling, you may take an automatic strong hit. If you do, this asset counts as a debility (and you no longer have this protection) until you next Reach a Milestone on the background vow."],
+			True
+		],
+		assetAbility[2, "", p["When you Reach a Milestone on your background vow, take +2 momentum or +1 spirit."]],
+		assetAbility[3, "", p["For every two boxes filled on your background vow progress track, take 1 experience. When you Fulfill Your Vow, your fate is at hand. Envision your final sacrifice and reroll any dice."]]
+	},
+	{
+		1
+	},
+	<||>,
+	6
+];
+
+assetData["Fortune Hunter"] = assetRecord[
+	"Fortune Hunter",
+	"Path",
+	None,
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			p["When you Swear an Iron Vow to someone under the promise of payment, add +1 and give the quest a special mark. When you successfully Fulfill Your Vow to them, take +wealth equal to the rank of the quest. If you leverage wealth when making a move where resources are a factor, add +wealth and suffer -1 wealth."],
+			True
+		],
+		assetAbility[2, "", p["When in a community or trading, you may suffer -1 wealth and take +2 supply."]],
+		assetAbility[3, "", p["When you Resupply by scavenging or looting, and score a strong hit with a match, you may envision finding an object of value. If you do, take +1 supply (instead of +2) and +1 wealth."]]
+	},
+	{
+		1
+	},
+	<|
+		"wealth" -> assetTrack["wealth", "Wealth", 0, 5, 0]
+	|>,
+	6
+];
+
+assetData["Herbalist"] = assetRecord[
+	"Herbalist",
+	"Path",
+	None,
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			choiceSection[
+			{p["When you attempt to Heal using herbal remedies, and you have at least +1 supply, choose one (decide before rolling)."]},
+			{
+				choice["add-2", p["Add +2."]],
+				choice["on-a-hit-take-or-give-an-additional-1-health", p["On a hit, take or give an additional +1 health."]]
+			},
+			{}
+		],
+			True
+		],
+		assetAbility[2, "", p["When you Heal a companion, ally, or other character, and score a hit, take +1 spirit or +1 momentum."]],
+		assetAbility[3, "", p["When you Make Camp and choose the option to partake, you can create a restorative meal. If you do, you and your companions take +1 health. Any allies who choose to partake also take +1 health, and do not suffer -supply."]]
+	},
+	{
+		1
+	},
+	<||>,
+	6
+];
+
+assetData["Honorbound"] = assetRecord[
+	"Honorbound",
+	"Path",
+	None,
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			p["When you Turn the Tide, envision how your vows give you strength in this moment. Then, when you make your move, add +2 (instead of +1) and take +1 momentum on a hit."],
+			True
+		],
+		assetAbility[2, "", p["When you Secure an Advantage or Compel by telling a hard truth, add +1 and take +1 momentum on a hit. On a weak hit or miss, envision how this truth complicates your current situation."]],
+		assetAbility[3, "", p["When you Fulfill Your Vow and score a miss, you may reroll one challenge die. If you score a miss again, reduce your maximum spirit by 1. You may recover this lost spirit when you next Fulfill Your Vow and score a strong hit."]]
+	},
+	{
+		1
+	},
+	<||>,
+	6
+];
+
+assetData["Improviser"] = assetRecord[
+	"Improviser",
+	"Path",
+	None,
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			p["When you Check Your Gear, you may roll +wits (instead of +supply). If you do, envision how you make do with a clever solution, and take +1 momentum on a hit."],
+			True
+		],
+		assetAbility[2, "", p["When you Secure an Advantage or Face Danger by cobbling together an ad hoc tool or apparatus, add +1 and take +1 momentum on a hit. After rolling, you may also suffer -1 supply and add +1 more."]],
+		assetAbility[3, "", p["When you throw caution to the wind and make an impulsive move in a risky situation, you may add +2. If you do, take +1 momentum on a strong hit, but count a weak hit as a miss."]]
+	},
+	{
+		1
+	},
+	<||>,
+	6
+];
+
+assetData["Infiltrator"] = assetRecord[
+	"Infiltrator",
+	"Path",
+	None,
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			p["When you make a move to breach, traverse, or hide within an area held by an enemy, add +1 and take +1 momentum on a hit."],
+			True
+		],
+		assetAbility[2, "", p["When you Gather Information within an enemy area to discover their positions, plans, or methods, or when you Secure an Advantage within that area through observation, you may roll +shadow (instead of +wits). If you do, take +1 momentum on a hit."]],
+		assetAbility[3, "", p["When you Resupply within an enemy area by scavenging or looting, you may roll +shadow (instead of +wits). If you do, take +1 momentum or +1 supply on a hit."]]
+	},
+	{
+		1
+	},
+	<||>,
+	6
+];
+
+assetData["Lorekeeper"] = assetRecord[
+	"Lorekeeper",
+	"Path",
+	None,
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			p["You are the bearer of a mystical archive. When you Secure an Advantage or Gather Information using lore recalled from your studies, add +1. If you have a few hours to search the archive, add +2. On a hit, envision the obscure but helpful knowledge you put to use (Ask the Oracle if unsure), and take +1 momentum."],
+			True
+		],
+		assetAbility[2, "", p["When you learn of a site or object holding lost knowledge, and Swear an Iron Vow to recover it for the archive, reroll any dice. When you Fulfill Your Vow and mark experience, take +1 experience."]],
+		assetAbility[3, "", p["One time only, you may browse the archive\[CloseCurlyQuote]s forbidden depths. If you do, raise your wits by 1 and roll an action die. On 1-3, you must also mark corrupted or Face Desolation (ignoring momentum)."]]
+	},
+	{
+		1
+	},
+	<||>,
+	6
+];
+
+assetData["Loyalist"] = assetRecord[
+	"Loyalist",
+	"Path",
+	None,
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			p["When you Aid Your Ally, add +1 and take +1 momentum on a hit. This is in addition to the benefits taken by your ally."],
+			True
+		],
+		assetAbility[2, "", p["When an ally makes the Endure Stress move in your company, they add +1 and you take +1 momentum on a hit."]],
+		assetAbility[3, "", p["When you stand with your ally as they make a progress move, envision how you support them. Then, roll one challenge die. On a 1-9, your ally may replace one of their challenge dice with yours. On a 10, envision how you inadvertently undermine their action; your ally must replace their lowest challenge die with yours."]]
+	},
+	{
+		1
+	},
+	<||>,
+	8
+];
+
+assetData["Masked"] = assetRecord[
+	"Masked",
+	"Path",
+	p["Once you mark a bond with elves, and are gifted a mask of precious elderwood..."],
+	<|
+		"Material" -> assetField["material", "Material", "select_value"]
+	|>,
+	{
+		assetAbility[
+			1,
+			"",
+			choiceSection[
+			{p["Choose your mask\[CloseCurlyQuote]s material."]},
+			{
+				choice["thunderwood", p["Thunderwood: Edge / Health"]],
+				choice["bloodwood", p["Bloodwood: Iron / Health"]],
+				choice["ghostwood", p["Ghostwood: Shadow / Spirit"]],
+				choice["whisperwood", p["Whisperwood: Wits / Spirit"]]
+			},
+			{p["When you wear the mask and make a move which uses its stat, add +1. If you roll a 1 on your action die, suffer -1 to the associated track (in addition to any other outcome of the move)."]}
+		],
+			True
+		],
+		assetAbility[2, "", p["As above, and you may instead add +2 and suffer -2 (decide before rolling)."]],
+		assetAbility[3, "", p["When you Face Death or Face Desolation while wearing the mask, you may roll +its stat (instead of +heart)."]]
+	},
+	{
+		1
+	},
+	<||>,
+	8
+];
+
+assetData["Oathbreaker"] = assetRecord[
+	"Oathbreaker",
+	"Path",
+	p["Once you Forsake Your Vow..."],
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			p["This asset counts as a debility. One time only, when you Swear an Iron Vow to redeem yourself (extreme or greater), give that vow a special mark. When you Reach a Milestone on the marked vow, take +2 momentum."],
+			True
+		],
+		assetAbility[2, "", p["When you Secure an Advantage or Compel by reaffirming your commitment to your marked vow, add +1 and take +1 momentum on a hit."]],
+		assetAbility[3, "", p["When you Fulfill Your Vow on your marked quest and score a hit, you find redemption and automatically activate this ability at no cost. You may then improve one of your stats by +1 and discard this asset."]]
+	},
+	{
+		1
+	},
+	<||>,
+	8
+];
+
+assetData["Outcast"] = assetRecord[
+	"Outcast",
+	"Path",
+	None,
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			p["When your supply is reduced to 0, suffer any remaining -supply as -momentum. Then, roll +wits. On a strong hit, you manage to scrape by and take +1 supply. On a weak hit, you may suffer -2 momentum in exchange for +1 supply. On a miss, you are Out of Supply."],
+			True
+		],
+		assetAbility[2, "", p["When you Sojourn, you may reroll any dice. If you do (decide before your first roll), your needs are few, but your isolation sets you apart from others. A strong hit counts as a weak hit."]],
+		assetAbility[3, "", p["When you Reach Your Destination and score a strong hit, you recall or recognize something helpful about this place. Envision what it is, and take +2 momentum."]]
+	},
+	{
+		1
+	},
+	<||>,
+	8
+];
+
+assetData["Pretender"] = assetRecord[
+	"Pretender",
+	"Path",
+	None,
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			p["When you establish a false identity, roll +shadow. On a strong hit, you may add +2 when you make moves using this identity to deceive or influence others. If you roll a 1 on your action die when using your false identity, someone doubts you. Make appropriate moves to reassure them or prevent them from revealing the truth. On a weak hit, as above, but add +1 (instead of +2)."],
+			True
+		],
+		assetAbility[2, "", p["As above, and you may roll +shadow (instead of +heart) when you Sojourn under your false identity. If you do, take +1 momentum on a hit."]],
+		assetAbility[3, "", p["When you Secure an Advantage by revealing your true identity in a dramatic moment, reroll any dice."]]
+	},
+	{
+		1
+	},
+	<||>,
+	8
+];
+
+assetData["Revenant"] = assetRecord[
+	"Revenant",
+	"Path",
+	p["Once you Face Death and return to the world of the living..."],
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			p["When you are at 0 health, and Endure Harm or Face Death, add +1. If you then burn momentum to improve your result, envision what bond or vow binds you to this world, and take +2 momentum after you reset."],
+			True
+		],
+		assetAbility[2, "", p["When you make a move to investigate, oppose, or interact with a horror, spirit, or other undead being, add +1."]],
+		assetAbility[3, "", p["When you bring death to your foe to End the Fight, you may burn momentum to cancel one (not both) of the challenge dice if your momentum is greater than the value of that die. If you do, Endure Stress (2 stress)."]]
+	},
+	{
+		1
+	},
+	<||>,
+	8
+];
+
+assetData["Rider"] = assetRecord[
+	"Rider",
+	"Path",
+	p["If you are with your horse companion..."],
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			p["When you Heal your horse, or when you Face Danger to calm or encourage it, add +1 and take +1 momentum on a hit."],
+			True
+		],
+		assetAbility[2, "", p["When you Undertake a Journey, you may push your horse harder and add +1 (after rolling). If you do, make the Companion Endure Harm move (1 harm)."]],
+		assetAbility[3, "", p["When you Secure an Advantage +wits by sizing up a perilous situation from the saddle, you are one with your horse\[CloseCurlyQuote]s instincts. Add +1 and take +1 momentum on a hit."]]
+	},
+	{
+		1
+	},
+	<||>,
+	8
+];
+
+assetData["Ritualist"] = assetRecord[
+	"Ritualist",
+	"Path",
+	p["Once you Fulfill Your Vow (formidable or greater) in service to an elder mystic, and Forge a Bond to train with them..."],
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			p["When you Secure an Advantage to ready yourself for a ritual, envision how you prepare. Then, add +1 and take +1 momentum on a hit."],
+			True
+		],
+		assetAbility[2, "", p["When you perform a ritual, you may suffer -1 supply and add +1 (decide before rolling)."]],
+		assetAbility[3, "", p["When you tattoo the essence of a new ritual onto your skin, envision the mark you create. You may then purchase and upgrade that ritual asset for 1 fewer experience."]]
+	},
+	{
+		1
+	},
+	<||>,
+	8
+];
+
+assetData["Shadow-kin"] = assetRecord[
+	"Shadow-kin",
+	"Path",
+	p["Once you become corrupted..."],
+	<||>,
+	{
+		assetAbility[1, "", p["You harden your heart: Reduce your heart stat by 1 and add up to +2 to shadow (to a maximum of +4)."]],
+		assetAbility[2, "", p["You are attuned to the realms of shadow: When you perform a ritual, add +1."]],
+		assetAbility[3, "", p["You know the sly ways of death: When you Face Death, you may roll +shadow (instead of +heart). On a weak hit, if you choose to undertake a deathbound quest, you may roll +shadow (instead of +heart) and reroll any dice as you Swear an Iron Vow. When you Fulfill Your Vow on that quest and and mark experience, take +2 experience."]]
+	},
+	{},
+	<||>,
+	8
+];
+
+assetData["Sighted"] = assetRecord[
+	"Sighted",
+	"Path",
+	None,
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			p["When you Face Danger or Gather Information to identify or detect mystic forces, add +1 and take +1 momentum on a hit."],
+			True
+		],
+		assetAbility[2, "", p["When you Compel, Forge a Bond, or Test Your Bond with a fellow mystic or mystical being, add +1 and take +1 momentum on a hit."]],
+		assetAbility[3, "", p["When you Secure an Advantage by studying someone or something in a charged situation, add +1 and take +1 momentum on a hit. When you also pierce the veil to explore deeper truths (decide before rolling), you may reroll any dice. If you do, count a weak hit as a miss."]]
+	},
+	{
+		1
+	},
+	<||>,
+	10
+];
+
+assetData["Slayer"] = assetRecord[
+	"Slayer",
+	"Path",
+	None,
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			p["When you Gather Information by tracking a beast or horror, or when you Secure an Advantage by readying yourself for a fight against them, add +1 and take +1 momentum on a hit."],
+			True
+		],
+		assetAbility[2, "", p["When you Swear an Iron Vow to slay a beast or horror, you may reroll any dice. When you Fulfill Your Vow and mark experience, take +1 experience."]],
+		assetAbility[3, "", choiceSection[
+			{p["When you slay a beast or horror (at least formidable), you may take a trophy and choose one."]},
+			{
+				choice["power-a-ritual", p["Power a ritual: When you or an ally make a ritual move, reroll any dice (one time only)."]],
+				choice["prove-your-worth", p["Prove your worth: When you Sojourn, reroll any dice (one time only)."]]
+			},
+			{}
+		]]
+	},
+	{
+		1
+	},
+	<||>,
+	10
+];
+
+assetData["Spirit-bound"] = assetRecord[
+	"Spirit-bound",
+	"Path",
+	None,
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			p["You are haunted by someone whose death you caused through your actions or failures. When you consult with their spirit to Secure an Advantage or Gather Information, add +1 and take +2 momentum on a hit. On a weak hit, also Endure Stress (1 stress)."],
+			True
+		],
+		assetAbility[2, "", p["When you Face Death guided by the spirit, add +1. On a strong hit, envision what you learn and take 1 experience."]],
+		assetAbility[3, "", choiceSection[
+			{p["One time only, when you successfully Fulfill Your Vow (formidable or greater) in service to the spirit, choose one."]},
+			{
+				choice["let-them-go", p["Let them go: Take 2 experience for each marked ability and discard this asset."]],
+				choice["deepen-your-connection", p["Deepen your connection: Add +1 more when you leverage this asset."]]
+			},
+			{}
+		]]
+	},
+	{
+		1
+	},
+	<||>,
+	10
+];
+
+assetData["Storyweaver"] = assetRecord[
+	"Storyweaver",
+	"Path",
+	None,
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			p["When you Secure an Advantage, Compel, or Forge a Bond by sharing an inspiring or enlightening song, poem, or tale, envision the story you tell. Then, add +1 and take +1 momentum on a hit."],
+			True
+		],
+		assetAbility[2, "", p["When you Make Camp and choose the option to relax, you may share a story with your allies or compose a new story if alone. If you do, envision the story you tell and take +1 spirit or +1 momentum. Any allies who choose to relax in your company may also take +1 spirit or +1 momentum."]],
+		assetAbility[3, "", p["When you Sojourn within a community with which you share a bond, add +2 (instead of +1)."]]
+	},
+	{
+		1
+	},
+	<||>,
+	10
+];
+
+assetData["Trickster"] = assetRecord[
+	"Trickster",
+	"Path",
+	None,
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			p["When you Face Danger, Secure an Advantage, or Compel by lying, bluffing, stealing, or cheating, add +1."],
+			True
+		],
+		assetAbility[2, "", p["When you Gather Information by investigating a devious scheme, you may roll +shadow (instead of +wits). If you do, take +2 momentum on a hit."]],
+		assetAbility[3, "", choiceSection[
+			{p["When you Forge a Bond for a relationship founded on a lie, choose one."]},
+			{
+				choice["keep-your-secret", p["Keep your secret: Roll +shadow (instead of +heart)."]],
+				choice["reveal-the-truth", p["Reveal the truth: Roll +heart. On a strong hit, mark a bond twice and take 1 experience. A weak hit counts as a miss."]]
+			},
+			{}
+		]]
+	},
+	{
+		1
+	},
+	<||>,
+	10
+];
+
+assetData["Veteran"] = assetRecord[
+	"Veteran",
+	"Path",
+	None,
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			p["When you burn momentum to improve your result in combat, envision how your hard-won fighting experience gives you the upper hand. Then, take +1 momentum after you reset, and add +1 when you make your next move. Once per fight, you also take initiative when burning momentum to improve a miss to a weak hit."],
+			True
+		],
+		assetAbility[2, "", p["When you Swear an Iron Vow to someone who fought beside you, or Forge a Bond with them, add +2 and take +2 momentum on a hit."]],
+		assetAbility[3, "", p["When you Resupply by looting the dead on a field of battle, add +1 and take +1 momentum on a hit."]]
+	},
+	{
+		1
+	},
+	<||>,
+	10
+];
+
+assetData["Waterborn"] = assetRecord[
+	"Waterborn",
+	"Path",
+	None,
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			p["When you Face Danger, Gather Information, or Secure an Advantage related to your knowledge of watercraft, water travel, or aquatic environments or creatures, add +1 and take +1 momentum on a hit."],
+			True
+		],
+		assetAbility[2, "", choiceSection[
+			{p["When you Undertake a Journey by boat or ship, add +1. On a strong hit, also choose one."]},
+			{
+				choice["the-wind-is-at-your-back", p["The wind is at your back: Mark progress twice."]],
+				choice["find-safe-anchor", p["Find safe anchor: Make Camp now and reroll any dice."]],
+				choice["reap-the-bounty", p["Reap the bounty: Resupply now and reroll any dice."]]
+			},
+			{}
+		]],
+		assetAbility[3, "", p["When you Enter the Fray aboard a boat or ship, reroll any dice."]]
+	},
+	{
+		1
+	},
+	<||>,
+	10
+];
+
+assetData["Wayfinder"] = assetRecord[
+	"Wayfinder",
+	"Path",
+	None,
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			p["When you Undertake a Journey, take +1 momentum on a strong hit. If you burn momentum to improve your result, also take +1 momentum after you reset."],
+			True
+		],
+		assetAbility[2, "", p["When you Secure an Advantage or Gather Information by carefully surveying the landscape or scouting ahead, add +1 and take +1 momentum on a hit."]],
+		assetAbility[3, "", p["When you Swear an Iron Vow to safely guide someone on a perilous journey, you may reroll any dice. When you Fulfill Your Vow and mark experience, take +1 experience."]]
+	},
+	{
+		1
+	},
+	<||>,
+	10
+];
+
+assetData["Weaponmaster"] = assetRecord[
+	"Weaponmaster",
+	"Path",
+	p["Once you Fulfill Your Vow (formidable or greater) in service to a seasoned warrior, and Forge a Bond to train with them..."],
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			p["When you Secure an Advantage by sizing up your foe in a fight, or in a charged situation which may lead to a fight, add +1 and take +1 momentum on a hit."],
+			True
+		],
+		assetAbility[2, "", p["When you study or train in a new weapon or technique, you may obtain and upgrade that combat talent for 1 fewer experience."]],
+		assetAbility[3, "", p["When you Turn the Tide with a sudden change of weapon or technique, and your next move is a Strike, add +1 and inflict +2 harm on a strong hit."]]
+	},
+	{
+		1
+	},
+	<||>,
+	10
+];
+
+assetData["Wildblood"] = assetRecord[
+	"Wildblood",
+	"Path",
+	None,
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			p["When you Face Danger, Secure an Advantage, or Gather Information using your knowledge of tracking, woodcraft, or woodland creatures, add +1."],
+			True
+		],
+		assetAbility[2, "", p["When you Face Danger or Secure an Advantage by hiding or sneaking in the woodlands, add +1 and take +1 momentum on a hit."]],
+		assetAbility[3, "", p["When you Make Camp in the woodlands, you may roll +wits (instead of +supply). If you do, you and your allies each choose 1 more option on a hit."]]
+	},
+	{
+		1
+	},
+	<||>,
+	12
+];
+
+assetData["Wright"] = assetRecord[
+	"Wright",
+	"Path",
+	None,
+	<|
+		"Specialty" -> assetField["specialty", "Specialty", "text"]
+	|>,
+	{
+		assetAbility[
+			1,
+			"",
+			p["When you Secure an Advantage by crafting a useful item using your specialty, or when you Face Danger to create or repair an item in a perilous situation, add +1 and take +1 momentum on a hit."],
+			True
+		],
+		assetAbility[2, "", p["As above, and you may suffer -1 supply (after rolling) to add an additional +1."]],
+		assetAbility[3, "", p["When you give the item you create as a gift to commemorate an important event or relationship, you may (one time only) reroll any dice when you Compel, Forge a Bond, or Test Your Bond."]]
+	},
+	{
+		1
+	},
+	<||>,
+	12
+];
+
+
+
+(* ::Subsection::Closed:: *)
+(*Combat talent assets*)
+
+
+assetData["Archer"] = assetRecord[
+	"Archer",
+	"Combat Talent",
+	p["If you wield a bow..."],
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			choiceSection[
+			{p["When you Secure an Advantage by taking a moment to aim, choose your approach and add +1."]},
+			{
+				choice["trust-your-instincts", p["Trust your instincts: Roll +wits, and take +2 momentum on a strong hit."]],
+				choice["line-up-your-shot", p["Line up your shot: Roll +edge, and take +1 momentum on a hit."]]
+			},
+			{}
+		],
+			True
+		],
+		assetAbility[2, "", p["Once per fight, when you Strike or Clash, you may take extra shots and suffer -1 supply (decide before rolling). When you do, reroll any dice. On a hit, inflict +2 harm and take +1 momentum."]],
+		assetAbility[3, "", p["When you Resupply by hunting, add +1 and take +1 momentum on a hit."]]
+	},
+	{
+		1
+	},
+	<||>,
+	12
+];
+
+assetData["Berserker"] = assetRecord[
+	"Berserker",
+	"Combat Talent",
+	p["If you are clad only in animal pelts..."],
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			p["When you Secure an Advantage or Compel by embodying your wild nature, add +1 and take +1 momentum on a hit."],
+			True
+		],
+		assetAbility[2, "", choiceSection[
+			{p["When you Strike or Clash by unleashing your rage (decide before rolling), inflict +1 harm on a hit. Then, choose one."]},
+			{
+				choice["push-yourself", p["Push yourself: Endure Harm (1 harm)."]],
+				choice["lose-yourself", p["Lose yourself: Endure Stress (1 stress)."]]
+			},
+			{}
+		]],
+		assetAbility[3, "", p["When you Endure Harm in a fight, and your health is above 0, you may let the pain inflame your wildness (decide before rolling). If you then score a strong hit and choose to embrace the pain, take +momentum equal to your remaining health. A weak hit counts as a miss."]]
+	},
+	{
+		1
+	},
+	<||>,
+	12
+];
+
+assetData["Brawler"] = assetRecord[
+	"Brawler",
+	"Combat Talent",
+	p["If you are unarmed or fighting with a non-deadly weapon..."],
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			p["When you Secure an Advantage +iron by engaging in close-quarters brawling (such as punching, tripping, or grappling), add +1. If you score a hit, you may also inflict 1 harm."],
+			True
+		],
+		assetAbility[2, "", p["When you use an unarmed attack or simple weapon to Strike with deadly intent, add +2 and inflict 2 harm on a hit (instead of 1). On a weak hit or miss, suffer -1 momentum (in addition to any other outcome of the move)."]],
+		assetAbility[3, "", p["When you Face Danger or Clash against a brawling attack, add +1 and take +1 momentum on a hit."]]
+	},
+	{
+		1
+	},
+	<||>,
+	12
+];
+
+assetData["Cutthroat"] = assetRecord[
+	"Cutthroat",
+	"Combat Talent",
+	p["If you wield a dagger or knife..."],
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			choiceSection[
+			{p["When you are in position to Strike at an unsuspecting foe, choose one (before rolling)."]},
+			{
+				choice["add-2-and-take-1-momentum-on-a-hit", p["Add +2 and take +1 momentum on a hit."]],
+				choice["inflict-2-harm-on-a-hit", p["Inflict +2 harm on a hit."]]
+			},
+			{}
+		],
+			True
+		],
+		assetAbility[2, "", p["When you Compel someone at the point of your blade, or when you rely on your blade to Face Danger, add +1."]],
+		assetAbility[3, "", p["Once per fight, when you Secure an Advantage +shadow by performing a feint or misdirection, reroll any dice and take +1 momentum on a hit."]]
+	},
+	{
+		1
+	},
+	<||>,
+	12
+];
+
+assetData["Duelist"] = assetRecord[
+	"Duelist",
+	"Combat Talent",
+	p["If you wield a bladed weapon in each hand..."],
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			p["When you Strike or Clash, you may add +2. If you do (decide before rolling), inflict +1 harm on a strong hit and count a weak hit as a miss."],
+			True
+		],
+		assetAbility[2, "", p["Once per fight, when you Secure an Advantage +edge by making a bold display of your combat prowess, you may reroll any dice."]],
+		assetAbility[3, "", choiceSection[
+			{p["When you Draw the Circle, choose one (before rolling)."]},
+			{
+				choice["add-2", p["Add +2."]],
+				choice["take-2-momentum-on-a-hit", p["Take +2 momentum on a hit."]]
+			},
+			{}
+		]]
+	},
+	{
+		1
+	},
+	<||>,
+	12
+];
+
+assetData["Fletcher"] = assetRecord[
+	"Fletcher",
+	"Combat Talent",
+	None,
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			p["When you Secure an Advantage by crafting arrows of fine quality, add +1. Then, take +1 supply or +1 momentum on a hit."],
+			True
+		],
+		assetAbility[2, "", p["When you Resupply by recovering or gathering arrows after a battle, add +2."]],
+		assetAbility[3, "", choiceSection[
+			{p["When you craft a single arrow designated for a specific foe, envision the process and materials, and roll +wits. On a strong hit, take both. On a weak hit, choose one."]},
+			{
+				choice["seeker", p["Seeker: When a shooter uses the arrow to Strike or Clash against this foe, reroll any dice (one time only)."]],
+				choice["ravager", p["Ravager: When a shooter uses the arrow to inflict harm against this foe, inflict +1d6 harm (one time only)."]]
+			},
+			{}
+		]]
+	},
+	{
+		1
+	},
+	<||>,
+	12
+];
+
+assetData["Ironclad"] = assetRecord[
+	"Ironclad",
+	"Combat Talent",
+	p["If you wear armor..."],
+	<|
+		"Equipped" -> assetField["equipped", "Equipped", "select_enhancement"]
+	|>,
+	{
+		assetAbility[
+			1,
+			"",
+			choiceSection[
+			{p["When you equip or adjust your armor, choose one."]},
+			{
+				choice["lightly-armored", p["Lightly armored: When you Endure Harm in a fight, add +1 and take +1 momentum on a hit."]],
+				choice["geared-for-war", p["Geared for war: Mark encumbered. When you Endure Harm in a fight, add +2 and take +1 momentum on a hit."]]
+			},
+			{}
+		],
+			True
+		],
+		assetAbility[2, "", p["When you Clash while you are geared for war, add +1."]],
+		assetAbility[3, "", p["When you Compel in a situation where strength of arms is a factor, add +2."]]
+	},
+	{
+		1
+	},
+	<||>,
+	12
+];
+
+assetData["Long-arm"] = assetRecord[
+	"Long-arm",
+	"Combat Talent",
+	p["If you wield a staff..."],
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			p["In your hands, a humble staff is a deadly weapon (2 harm). When you instead use it as a simple weapon (1 harm), you may Strike or Clash +edge (instead of iron). If you do, add +1 and take +1 momentum on a hit."],
+			True
+		],
+		assetAbility[2, "", p["When you Secure an Advantage +edge using your staff to disarm, trip, shove, or stun your foe, add +1 and take +1 momentum on a hit."]],
+		assetAbility[3, "", p["When you Undertake a Journey and score a strong hit, or if you accompany an ally who scores a strong hit on that move, your staff provides support and comfort in your travels; take +1 momentum."]]
+	},
+	{
+		1
+	},
+	<||>,
+	14
+];
+
+assetData["Shield-bearer"] = assetRecord[
+	"Shield-bearer",
+	"Combat Talent",
+	p["If you wield a shield..."],
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			p["When you Face Danger using your shield as cover, add +1. When you Clash in close quarters, take +1 momentum on a strong hit."],
+			True
+		],
+		assetAbility[2, "", p["When you paint your shield with a meaningful symbol, envision what you create. Then, if you Endure Stress as you face off against a fearsome foe, add +1 and take +1 momentum on a hit."]],
+		assetAbility[3, "", p["When forced to Endure Harm in a fight, you may instead sacrifice your shield and ignore all harm. If you do, the shield is destroyed. Once per fight, you also take initiative when you sacrifice your shield to avoid harm."]]
+	},
+	{
+		1
+	},
+	<||>,
+	14
+];
+
+assetData["Skirmisher"] = assetRecord[
+	"Skirmisher",
+	"Combat Talent",
+	p["If you wield a spear..."],
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			choiceSection[
+			{p["When you Face Danger by holding a foe at bay using your spear\[CloseCurlyQuote]s reach, roll +iron or +edge. If you score a hit, you may..."]},
+			{
+				choice["iron", p["Iron: Strike (if you have initiative) or Clash now, and add +1."]],
+				choice["edge", p["Edge: Take +1 momentum."]]
+			},
+			{}
+		],
+			True
+		],
+		assetAbility[2, "", p["When you Strike in close combat, you may attempt to drive your spear home (decide before rolling). If you do, add +1 and inflict +2 harm on a hit. If you score a hit and the fight continues, Face Danger +iron to recover your spear."]],
+		assetAbility[3, "", p["When you Secure an Advantage by bracing your spear against a charging foe, add +1 and take +1 momentum on a hit."]]
+	},
+	{
+		1
+	},
+	<||>,
+	14
+];
+
+assetData["Slinger"] = assetRecord[
+	"Slinger",
+	"Combat Talent",
+	p["If you wield a sling..."],
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			p["When launched from a sling, a simple stone inflicts deadly harm (2 harm). When you Enter the Fray by barraging your foe with sling-bullets, inflict harm on a strong hit."],
+			True
+		],
+		assetAbility[2, "", choiceSection[
+			{p["When you Strike by launching stones at an advancing foe, you may choose one (before rolling)."]},
+			{
+				choice["hold-them-back", p["Hold them back: Retain initiative on a weak hit, but inflict only 1 harm."]],
+				choice["hit-them-hard", p["Hit them hard: Inflict +1 harm on a hit, but suffer -1 momentum."]]
+			},
+			{}
+		]],
+		assetAbility[3, "", p["When you Secure an Advantage by preparing stones of a special quality or material, add +1. Then, take +1 momentum or +1 supply on a hit."]]
+	},
+	{
+		1
+	},
+	<||>,
+	14
+];
+
+assetData["Sunderer"] = assetRecord[
+	"Sunderer",
+	"Combat Talent",
+	p["If you wield an axe..."],
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			p["When you Strike or Clash in close quarters, you may suffer -1 momentum and inflict +1 harm on a hit (decide before rolling)."],
+			True
+		],
+		assetAbility[2, "", p["When you have your axe in hand, and use the promise of violence to Compel or Secure an Advantage, add +1 and take +1 momentum on a hit."]],
+		assetAbility[3, "", p["When you make a tribute to a fallen foe (formidable or greater) by carving a rune in the haft of your axe, roll +heart. On a strong hit, inflict +1d6 harm (one time only) when you Strike or Clash. On a weak hit, as above, but this death weighs on you; Endure Stress (2 stress)."]]
+	},
+	{
+		1
+	},
+	<||>,
+	14
+];
+
+assetData["Swordmaster"] = assetRecord[
+	"Swordmaster",
+	"Combat Talent",
+	p["If you wield a sword..."],
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			p["When you Strike or Clash and burn momentum to improve your result, inflict +2 harm. If the fight continues, add +1 on your next move."],
+			True
+		],
+		assetAbility[2, "", p["When you Clash and score a strong hit, add +1 if you immediately follow with a Strike."]],
+		assetAbility[3, "", p["When you Swear an Iron Vow by kneeling and grasping your sword\[CloseCurlyQuote]s blade, add +1 and take +1 momentum on a hit. If you let the edge draw blood from your hands, Endure Harm (1 harm) in exchange for an additional +1 momentum on a hit."]]
+	},
+	{
+		1
+	},
+	<||>,
+	14
+];
+
+assetData["Thunder-bringer"] = assetRecord[
+	"Thunder-bringer",
+	"Combat Talent",
+	p["If you wield a mighty hammer..."],
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			p["When you Face Danger, Secure an Advantage, or Compel by hitting or breaking an inanimate object, add +1 and take +1 momentum on a hit."],
+			True
+		],
+		assetAbility[2, "", p["When you Strike a foe to knock them back, stun them, or put them off balance, inflict 1 harm (instead of 2) and take +2 momentum on a hit. On a strong hit, you also create an opening and add +1 on your next move."]],
+		assetAbility[3, "", p["When you Turn the Tide, you may Strike with all the fury and power you can muster. If you do (decide before rolling), you may reroll any dice and inflict +2 harm on a strong hit, but count a weak hit as a miss."]]
+	},
+	{
+		1
+	},
+	<||>,
+	14
+];
+
+
+
+(* ::Subsection::Closed:: *)
+(*Ritual assets*)
+
+
+assetData["Augur"] = assetRecord[
+	"Augur",
+	"Ritual",
+	None,
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			p["When you summon a flock of crows and ask a single question, roll +wits. On a strong hit, you interpret their calls as a helpful omen. Envision the response (Ask the Oracle if unsure) and take +2 momentum. On a weak hit, the crows ignore your question and offer a clue to an unrelated problem or opportunity in this area. Envision what you learn (Ask the Oracle if unsure), and take +1 momentum."],
+			True
+		],
+		assetAbility[2, "", p["As above, and the crows will also help guide you on the proper path. On a hit, add +1 on the next segment when you Undertake a Journey."]],
+		assetAbility[3, "", p["When you perform this ritual, add +1 and take +1 momentum on a hit."]]
+	},
+	{
+		1
+	},
+	<||>,
+	14
+];
+
+assetData["Awakening"] = assetRecord[
+	"Awakening",
+	"Ritual",
+	None,
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			p["When you create a simulacrum, roll +heart. On a strong hit, your creation is given unnatural life. If it aids you as you make a move to assault or overcome an obstacle through strength, add +2. It has 3 health and suffers harm as appropriate, but is not a companion and may not be healed. At 0 health, it is dead. On a weak hit, as above, but if you roll a 1 on your action die when aided by your creation, you must Face Danger +heart to keep it from turning on you (as a formidable foe)."],
+			True
+		],
+		assetAbility[2, "", p["Your simulacrum has 6 health."]],
+		assetAbility[3, "", p["When you perform this ritual, add +1 and take +1 momentum on a hit."]]
+	},
+	{
+		1
+	},
+	<|
+		"health" -> assetTrack["health", "Health", 0, 3, 3]
+	|>,
+	14
+];
+
+assetData["Bind"] = assetRecord[
+	"Bind",
+	"Ritual",
+	None,
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			p["When you wear an animal pelt and dance in moonlight, roll +wits. On a strong hit, you or an ally may wear the pelt and add +1 when making moves with the related stat (wolf-edge; bear-iron; deer-heart; fox-shadow; boar-wits). If the wearer rolls a 1 on their action die while making a move using the pelt, the magic is spent. On a weak hit, as above, but the wilds call as you dance; Endure Stress (2 stress)."],
+			True
+		],
+		assetAbility[2, "", p["As above, and you may instead perform this ritual wearing the pelt of a beast. If you do, name the related stat and add +2 (instead of +1)."]],
+		assetAbility[3, "", p["When you perform this ritual, add +1 and take +1 momentum on a hit."]]
+	},
+	{
+		1
+	},
+	<||>,
+	16
+];
+
+assetData["Communion"] = assetRecord[
+	"Communion",
+	"Ritual",
+	None,
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			p["When you surround the remains of a recently deceased intelligent creature with lit candles, and summon its spirit, roll +heart. Add +1 if you share a bond. On a strong hit, the spirit appears and you may converse for a few minutes. Make moves as appropriate (add +1). On a weak hit, as above, but the spirit also delivers troubling news unrelated to your purpose. Envision what it tells you (Ask the Oracle if unsure) and Endure Stress (1 stress)."],
+			True
+		],
+		assetAbility[2, "", p["As above, and you may also commune with the long-dead."]],
+		assetAbility[3, "", p["When you perform this ritual, add +1 and take +1 momentum on a hit."]]
+	},
+	{
+		1
+	},
+	<||>,
+	16
+];
+
+assetData["Divination"] = assetRecord[
+	"Divination",
+	"Ritual",
+	None,
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			p["When you take a drop of blood from a willing subject (not yourself) and cast the rune-carved stones, roll +heart. On a strong hit, you may read the runes to gain insight about the subject and people close to them, including information you and the subject have no knowledge of. If you use the reading to Gather Information, Compel, or Forge a Bond, add +1. On a weak hit, as above, but the runes reveal their secrets only with extra time and focus; suffer -2 momentum."],
+			True
+		],
+		assetAbility[2, "", p["As above, and your divination can also reveal information about the subject\[CloseCurlyQuote]s future."]],
+		assetAbility[3, "", p["When you perform this ritual, add +1 and take +1 momentum on a hit."]]
+	},
+	{
+		1
+	},
+	<||>,
+	16
+];
+
+assetData["Invoke"] = assetRecord[
+	"Invoke",
+	"Ritual",
+	None,
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			p["When you consume the mystical essence of your surroundings, roll +wits. On a strong hit, add the value of your action die to your essence track (max 6). You may then Secure an Advantage or Face Danger +essence to create minor mystical effects or illusions. If you do, suffer -1 essence and take +1 momentum on a hit. On a weak hit, as above, but capturing these energies is harrowing; Endure Stress (2 stress)."],
+			True
+		],
+		assetAbility[2, "", p["You may Compel +essence (and suffer -1 essence) through a show of power."]],
+		assetAbility[3, "", p["When you perform this ritual, add +1 and take +1 essence on a hit."]]
+	},
+	{
+		1
+	},
+	<|
+		"essence" -> assetTrack["essence", "Essence", 0, 6, 0]
+	|>,
+	16
+];
+
+assetData["Keen"] = assetRecord[
+	"Keen",
+	"Ritual",
+	None,
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			p["When you hold a weapon and sing a keen for those it has killed, roll +heart. On a strong hit, the wielder inflicts +1 harm when they Strike or Clash. If they roll a 1 on their action die when making a move to inflict harm, the magic is spent. On a weak hit, as above, but the voices of those who were slain join in your song; Endure Stress (2 stress)."],
+			True
+		],
+		assetAbility[2, "", p["As above, and the wielder may also (one time only) add +1 and take +2 momentum on a hit when they Draw the Circle, Enter the Fray, or Battle."]],
+		assetAbility[3, "", p["When you perform this ritual, add +1 and take +1 momentum on a hit."]]
+	},
+	{
+		1
+	},
+	<||>,
+	16
+];
+
+assetData["Leech"] = assetRecord[
+	"Leech",
+	"Ritual",
+	None,
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			p["When you mark your hands or weapon with an intricate blood rune, roll +iron. On a strong hit, the rune thirsts for fresh blood. One time only, when you make a move to inflict harm, reroll any dice and inflict +2 harm on a hit. Then, for each point of harm inflicted, take +1 and allocate it as +health or +momentum. On a weak hit, as above, but this asset counts as a debility until the rune\[CloseCurlyQuote]s thirst is quenched."],
+			True
+		],
+		assetAbility[2, "", p["As above, and you may also touch an ally or companion and let them take any remaining points as +health or +momentum."]],
+		assetAbility[3, "", p["When you perform this ritual, add +1 and take +1 momentum on a hit."]]
+	},
+	{
+		1
+	},
+	<||>,
+	16
+];
+
+assetData["Lightbearer"] = assetRecord[
+	"Lightbearer",
+	"Ritual",
+	None,
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			p["When you focus on a source of light and capture its essence, roll +wits. On a strong hit, set your light track to +6. On a weak hit, make it +3. Then, when you make a move to overcome or navigate darkness, you may add +2 and suffer -1 light."],
+			True
+		],
+		assetAbility[2, "", p["You may use your light to Strike or Clash against a dark-dwelling foe. Choose the amount of light to unleash, and roll +light (instead of +iron or +edge). Suffer -light equal to that amount. On a hit, your harm is 1+your unleashed light."]],
+		assetAbility[3, "", p["When you perform this ritual, add +1 and take +1 momentum on a hit."]]
+	},
+	{
+		1
+	},
+	<|
+		"light" -> assetTrack["light", "Light", 0, 6, 0]
+	|>,
+	16
+];
+
+assetData["Scry"] = assetRecord[
+	"Scry",
+	"Ritual",
+	None,
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			choiceSection[
+			{p["When you look into flames to study a remote person or location, roll +shadow. You or someone with you must have knowledge of the target. On a strong hit, you may Gather Information through observation using +shadow or +wits. On a weak hit, as above, but the flames are hungry; choose one to sacrifice."]},
+			{
+				choice["your-blood", p["Your blood: Endure Harm (2 harm)."]],
+				choice["something-precious", p["Something precious: Endure Stress (2 stress)."]],
+				choice["provisions", p["Provisions: Suffer -2 supply."]]
+			},
+			{}
+		],
+			True
+		],
+		assetAbility[2, "", p["As above, and you may instead study a past event."]],
+		assetAbility[3, "", p["When you perform this ritual, add +1 and take +1 momentum on a hit."]]
+	},
+	{
+		1
+	},
+	<||>,
+	16
+];
+
+assetData["Shadow-walk"] = assetRecord[
+	"Shadow-walk",
+	"Ritual",
+	None,
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			p["When you cloak yourself with the gossamer veil of the shadow realms, roll +shadow. On a strong hit, take +1 momentum. Then, reroll any dice (one time only) when you make a move by ambushing, hiding, or sneaking. On a weak hit, as above, but the shadows try to lead you astray. You must first Face Danger to find your way."],
+			True
+		],
+		assetAbility[2, "", p["As above, and you may also travel along the hidden paths of the shadow realms to Undertake a Journey using +shadow (instead of +wits). If you do, Endure Stress (1 stress) and mark progress twice on a strong hit."]],
+		assetAbility[3, "", p["When you perform this ritual, add +1 and take +1 momentum on a hit."]]
+	},
+	{
+		1
+	},
+	<||>,
+	16
+];
+
+assetData["Sway"] = assetRecord[
+	"Sway",
+	"Ritual",
+	None,
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			p["When you speak a person\[CloseCurlyQuote]s name three times to the wind, roll +wits. On a strong hit, the wind whispers of this person\[CloseCurlyQuote]s need. Envision what you hear (Ask the Oracle if unsure). If you use this information or fulfill this need when you Compel them, you may reroll any dice (one time only). On a weak hit, as above, but this person\[CloseCurlyQuote]s need creates a troubling dilemma or complication; Endure Stress (1 stress)."],
+			True
+		],
+		assetAbility[2, "", p["As above, and if you score a strong hit when you Compel, you may also reroll any dice (one time only) when you Gather Information from this person."]],
+		assetAbility[3, "", p["When you perform this ritual, add +1 and take +1 momentum on a hit."]]
+	},
+	{
+		1
+	},
+	<||>,
+	18
+];
+
+assetData["Talisman"] = assetRecord[
+	"Talisman",
+	"Ritual",
+	None,
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			p["When you fashion a charm, envision it and name the specific person or creature it protects against. Then roll +wits. On a strong hit, when the wearer opposes the target through a move, add +2. If a 1 is rolled on the action die while making a move using the charm, the magic is spent. On a weak hit, as above, but the wearer adds +1 when making a move (instead of +2)."],
+			True
+		],
+		assetAbility[2, "", p["As above, and you may instead fashion a charm which aids the wearer against all supernatural threats, such as mystic rituals or horrors."]],
+		assetAbility[3, "", p["When you perform this ritual, add +1 and take +1 momentum on a hit."]]
+	},
+	{
+		1
+	},
+	<||>,
+	18
+];
+
+assetData["Tether"] = assetRecord[
+	"Tether",
+	"Ritual",
+	None,
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			p["When you commune with the spirits of a place, roll +heart. If you share a bond with someone there, add +1. On a strong hit, you are tethered. When you Undertake a Journey to return, you may roll +spirit or +heart (instead of +wits), and take +1 momentum on a hit. When you Reach Your Destination, take +2 momentum on a strong hit. The tether is lost if you perform this ritual elsewhere, or when you Face Desolation. On a weak hit, as above, but the spirits reveal a disturbing aspect of the place; Endure Stress (2 stress)."],
+			True
+		],
+		assetAbility[2, "", p["As above, and you may also reroll any dice when you Sojourn in the tethered place."]],
+		assetAbility[3, "", p["When you perform this ritual, add +1 and take +1 momentum on a hit."]]
+	},
+	{
+		1
+	},
+	<||>,
+	18
+];
+
+assetData["Totem"] = assetRecord[
+	"Totem",
+	"Ritual",
+	None,
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			p["When you hold a totem of your animal or beast companion and focus on it, roll +heart. On a strong hit, you are bound together. Add +1 and take +1 momentum on a hit when you use a companion ability. If you roll a 1 on your action die when using a companion ability, the magic is spent. On a weak hit, as above, but creating this connection is unsettling; Endure Stress (1 stress)."],
+			True
+		],
+		assetAbility[2, "", p["As above, and you may also perceive the world through your companion\[CloseCurlyQuote]s senses while you make moves aided by them (even when you are apart)."]],
+		assetAbility[3, "", p["When you perform this ritual, add +1 and take +1 momentum on a hit."]]
+	},
+	{
+		1
+	},
+	<||>,
+	18
+];
+
+assetData["Visage"] = assetRecord[
+	"Visage",
+	"Ritual",
+	None,
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			p["When you paint yourself in blood and ash, roll +wits. On a strong hit, you may add +2 and take +1 momentum on a hit when you Secure an Advantage or Compel using fear or intimidation. If you roll a 1 on your action die when making a move aided by your visage, the magic is spent. On a weak hit, as above, but the blood must be your own; Endure Harm (2 harm)."],
+			True
+		],
+		assetAbility[2, "", p["As above, and you may also add +1 when you Strike, Clash, or Battle."]],
+		assetAbility[3, "", p["When you perform this ritual, add +1 and take +1 momentum on a hit."]]
+	},
+	{
+		1
+	},
+	<||>,
+	18
+];
+
+assetData["Ward"] = assetRecord[
+	"Ward",
+	"Ritual",
+	None,
+	<||>,
+	{
+		assetAbility[
+			1,
+			"",
+			choiceSection[
+			{p["When you walk a wide circle, sprinkling the ground with salt, roll +wits. On a strong hit, choose two. On a weak hit, choose one."]},
+			{
+				choice["when-a-foe-first-crosses-the-boundary-take-1-momentum", p["When a foe first crosses the boundary, take +1 momentum."]],
+				choice["when-you-first-inflict-harm-against-a-foe-within-the-boundary-inflict-1-harm", p["When you first inflict harm against a foe within the boundary, inflict +1 harm."]],
+				choice["your-ward-is-likely-ask-the-oracle-to-trap-a-foe-within-the-boundary", p["Your ward is \[OpenCurlyQuote]likely\[CloseCurlyQuote] (Ask the Oracle) to trap a foe within the boundary."]]
+			},
+			{}
+		],
+			True
+		],
+		assetAbility[2, "", p["As above, and improve the effect of your ward (+2 momentum, +2 harm, and \[OpenCurlyQuote]almost certain\[CloseCurlyQuote])."]],
+		assetAbility[3, "", p["When you perform this ritual, add +1 and take +1 momentum on a hit."]]
+	},
+	{
+		1
+	},
+	<||>,
+	18
+];
+
+
+(* ::Subsection::Closed:: *)
+(*Rarity costs*)
+
 
 assetRarityCosts = <|
 	"Alchemist" -> 5,
@@ -2972,13 +2001,9 @@ assetRarityCosts = <|
 	"Ward" -> 3
 |>;
 
-assetData = Association @ KeyValueMap[
-	#1 -> If[
-		KeyExistsQ[assetRarityCosts, #1],
-		Join[#2, <|"RarityCost" -> assetRarityCosts[#1]|>],
-		#2
-	] &,
-	assetData
+KeyValueMap[
+	If[KeyExistsQ[assetData, #1], assetData[#1] = Join[assetData[#1], <|"RarityCost" -> #2|>]] &,
+	assetRarityCosts
 ];
 
 

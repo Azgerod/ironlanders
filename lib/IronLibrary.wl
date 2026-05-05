@@ -58,11 +58,13 @@ beginStory::usage =
 "beginStory[name] starts a new story using name as the story name. Call beginStory[name] before createCharacter to establish the reproducible seed for character creation draws.";
 
 beginChapter::usage =
-"beginChapter[] loads the state for the current chapter and seeds the random number generator.
+"beginChapter[] loads the state for the current chapter, seeds the random number generator, and displays the solo character sheet.
+beginChapter[Display -> False] suppresses the character sheet display.
 beginChapter[ArcName -> arc] renames the current chapter as the first chapter of arc after loading its state.";
 
 endChapter::usage =
-"endChapter[] saves the state for the next chapter and creates the next chapter notebook.";
+"endChapter[] saves the state for the next chapter, creates the next chapter notebook, and displays the solo character sheet.
+endChapter[Display -> False] suppresses the character sheet display.";
 
 
 (* ::Subsection::Closed:: *)
@@ -73,7 +75,8 @@ setSoloCharacter::usage =
 "setSoloCharacter[character] sets the solo character to character.";
 
 createCharacter::usage =
-"createCharacter[name, {a1, a2, a3}, edge, heart, iron, shadow, wits, makeVow[...] | {vowName, Extreme | Epic}, {b1, b2, b3}] creates a character and sets it as the solo character. Starting assets may be asset name strings when the card has a printed default selected ability, or makeAsset[...] specs.";
+"createCharacter[name, {a1, a2, a3}, edge, heart, iron, shadow, wits, vow[...] | {vowName, Extreme | Epic}, {b1, b2, b3}] creates a character, sets it as the solo character, and displays the character sheet. Starting assets may be asset name strings when the card has a printed default selected ability, or asset[...] specs.
+createCharacter[..., Display -> False] suppresses the character sheet display.";
 
 characterSheet::usage =
 "characterSheet[] displays a Lodestar-style character sheet for the solo character.
@@ -84,22 +87,22 @@ characterSheet[character] displays a Lodestar-style character sheet for the name
 (*Vow management*)
 
 
-makeVow::usage =
-"makeVow[name, Extreme | Epic] creates a quiet starting vow spec.
-makeVow[name, Extreme | Epic, Threat -> {threatName, threatGoal}] creates a quiet starting vow spec with one attached threat.";
+vow::usage =
+"vow[name, Extreme | Epic] creates a quiet starting vow spec.
+vow[name, Extreme | Epic, Threat -> {threatName, threatGoal}] creates a quiet starting vow spec with one attached threat.";
 
 addVow::usage =
 "addVow[name, rank] adds a vow to the solo character.
 addVow[name, rank, character] adds a vow to character.
 addVow[..., Threat -> {threatName, threatGoal}] adds a vow with one attached threat.";
 
-vow::usage =
-"vow[name] displays the vow named name for the solo character.
-vow[name, character] displays the vow named name for character.";
+getVow::usage =
+"getVow[name] displays the vow named name for the solo character.
+getVow[name, character] displays the vow named name for character.";
 
-vows::usage =
-"vows[] displays all vows for the solo character.
-vows[character] displays all vows for character.";
+getVows::usage =
+"getVows[] displays all vows for the solo character.
+getVows[character] displays all vows for character.";
 
 removeVow::usage =
 "removeVow[name] removes the named vow from the solo character.
@@ -183,19 +186,19 @@ clearTormented[character] clears Tormented for character.";
 (*Asset management*)
 
 
-makeAsset::usage =
-"makeAsset[name] creates a quiet starting asset spec using the asset's printed default selected abilities.
-makeAsset[name, ability] creates a quiet starting asset spec with the selected ability index.
-makeAsset[name, {ability1, ability2, ...}] creates a quiet starting asset spec with multiple selected abilities.
-makeAsset[name, abilityOrAbilities, fields] includes custom field values such as <|\"Name\" -> \"Asha\"|>.";
-
 asset::usage =
-"asset[name] displays the owned asset named name for the solo character.
-asset[name, character] displays the owned asset named name for character.";
+"asset[name] creates a quiet starting asset spec using the asset's printed default selected abilities.
+asset[name, ability] creates a quiet starting asset spec with the selected ability index.
+asset[name, {ability1, ability2, ...}] creates a quiet starting asset spec with multiple selected abilities.
+asset[name, abilityOrAbilities, fields] includes custom field values such as <|\"Name\" -> \"Asha\"|>.";
 
-assets::usage =
-"assets[] displays all owned assets for the solo character.
-assets[character] displays all owned assets for character.";
+getAsset::usage =
+"getAsset[name] displays the owned asset named name for the solo character, or the default reference card if the solo character does not own it.
+getAsset[name, character] displays the owned asset named name for character.";
+
+getAssets::usage =
+"getAssets[] displays all owned assets for the solo character.
+getAssets[character] displays all owned assets for character.";
 
 drawAssets::usage =
 "drawAssets[] displays three random reference asset cards and returns their canonical names.
@@ -205,7 +208,7 @@ drawAssets[n, category] draws from category, one of \"Path\", \"Companion\", \"C
 addAsset::usage =
 "addAsset[assetSpec] spends 5 experience to add an asset to the solo character and displays the updated card.
 addAsset[assetSpec, character] spends 5 experience to add an asset to character.
-assetSpec may be an asset name string with printed default selected abilities, or a makeAsset[...] spec.
+assetSpec may be an asset name string with printed default selected abilities, or an asset[...] spec.
 addAsset[..., Display -> False] suppresses display.";
 
 upgradeAsset::usage =
@@ -226,13 +229,13 @@ removeAsset::usage =
 removeAsset[name, character] removes an owned asset from character without awarding experience.
 removeAsset[..., Display -> False] suppresses display.";
 
-companion::usage =
-"companion[name] displays the owned companion asset named name for the solo character.
-companion[name, character] displays the owned companion asset named name for character.";
+getCompanion::usage =
+"getCompanion[name] displays the owned companion asset named name for the solo character.
+getCompanion[name, character] displays the owned companion asset named name for character.";
 
-companions::usage =
-"companions[] displays all owned companion assets for the solo character.
-companions[character] displays all owned companion assets for character.";
+getCompanions::usage =
+"getCompanions[] displays all owned companion assets for the solo character.
+getCompanions[character] displays all owned companion assets for character.";
 
 setCompanionHealth::usage =
 "setCompanionHealth[name, value] sets an owned companion's health track for the solo character.
@@ -292,10 +295,10 @@ reroll[..., Display -> False] suppresses display.";
 
 
 choose::usage =
-"choose[moveOutput, n] displays the nth choice from a previous move header or outcome output.
-choose[moveOutput, {n1, n2, ...}] displays multiple choices from a previous move header or outcome output.
+"choose[displayOutput, n] displays the nth choice from a previous move, outcome, or asset display output.
+choose[displayOutput, {n1, n2, ...}] displays multiple choices from a previous move, outcome, or asset display output.
 
-Typical usage is moveFunction[]; choose[%, n].";
+Typical usage is moveFunction[]; choose[%, n], or getAsset[name]; choose[%, n].";
 
 
 (* ::Subsection::Closed:: *)
@@ -331,14 +334,14 @@ setCurrentJourney::usage =
 "setCurrentJourney[name] sets the current journey for the solo character.
 setCurrentJourney[name, character] sets the current journey for character.";
 
-journey::usage =
-"journey[] displays the current journey for the solo character.
-journey[name] displays the named journey for the solo character.
-journey[name, character] displays the named journey for character.";
+getJourney::usage =
+"getJourney[] displays the current journey for the solo character.
+getJourney[name] displays the named journey for the solo character.
+getJourney[name, character] displays the named journey for character.";
 
-journeys::usage =
-"journeys[] displays all journeys for the solo character.
-journeys[character] displays all journeys for character.";
+getJourneys::usage =
+"getJourneys[] displays all journeys for the solo character.
+getJourneys[character] displays all journeys for character.";
 
 removeJourney::usage =
 "removeJourney[name] removes the named journey from the solo character.
@@ -348,25 +351,25 @@ addFoe::usage =
 "addFoe[name, rank] adds a foe progress track for the solo character.
 addFoe[name, rank, character] adds a foe progress track for character.";
 
-foe::usage =
-"foe[name] displays the named foe for the solo character.
-foe[name, character] displays the named foe for character.";
+getFoe::usage =
+"getFoe[name] displays the named foe for the solo character.
+getFoe[name, character] displays the named foe for character.";
 
-foes::usage =
-"foes[] displays all foes for the solo character.
-foes[character] displays all foes for character.";
+getFoes::usage =
+"getFoes[] displays all foes for the solo character.
+getFoes[character] displays all foes for character.";
 
 removeFoe::usage =
 "removeFoe[name] removes the named foe from the solo character.
 removeFoe[name, character] removes the named foe from character.";
 
-failures::usage =
-"failures[] displays the failure progress track for the solo character.
-failures[character] displays the failure progress track for character.";
+getFailures::usage =
+"getFailures[] displays the failure progress track for the solo character.
+getFailures[character] displays the failure progress track for character.";
 
-bondProgress::usage =
-"bondProgress[] displays the bonds progress track for the solo character.
-bondProgress[character] displays the bonds progress track for character.";
+getBondProgress::usage =
+"getBondProgress[] displays the bonds progress track for the solo character.
+getBondProgress[character] displays the bonds progress track for character.";
 
 
 (* ::Subsection::Closed:: *)
@@ -418,13 +421,9 @@ addBond::usage =
 "addBond[bond] adds bond to the solo character and marks progress on the bonds track.
 addBond[bond, character] adds bond to character and marks progress on the bonds track.";
 
-bond::usage =
-"bond[name] displays the named bond for the solo character.
-bond[name, character] displays the named bond for character.";
-
-bonds::usage =
-"bonds[] displays all bonds for the solo character.
-bonds[character] displays all bonds for character.";
+getBonds::usage =
+"getBonds[] displays all bonds and the bonds progress track for the solo character.
+getBonds[character] displays all bonds and the bonds progress track for character.";
 
 removeBond::usage =
 "removeBond[name] removes the named bond from the solo character and clears one tick on the bonds track.
@@ -505,9 +504,9 @@ beginScene::usage =
 "beginScene[name, rank] creates the active scene challenge for the solo character.
 beginScene[name, rank, character] creates the active scene challenge for character.";
 
-scene::usage =
-"scene[] displays the active scene challenge for the solo character.
-scene[character] displays the active scene challenge for character.";
+getScene::usage =
+"getScene[] displays the active scene challenge for the solo character.
+getScene[character] displays the active scene challenge for character.";
 
 removeScene::usage =
 "removeScene[] removes the active scene challenge for the solo character.
@@ -691,14 +690,14 @@ setCurrentDelve::usage =
 "setCurrentDelve[name] sets the current delve for the solo character.
 setCurrentDelve[name, character] sets the current delve for character.";
 
-delve::usage =
-"delve[] displays the current delve for the solo character.
-delve[name] displays the named delve for the solo character.
-delve[name, character] displays the named delve for character.";
+getDelve::usage =
+"getDelve[] displays the current delve for the solo character.
+getDelve[name] displays the named delve for the solo character.
+getDelve[name, character] displays the named delve for character.";
 
-delves::usage =
-"delves[] displays all delves for the solo character.
-delves[character] displays all delves for character.";
+getDelves::usage =
+"getDelves[] displays all delves for the solo character.
+getDelves[character] displays all delves for character.";
 
 removeDelve::usage =
 "removeDelve[name] removes the named delve for the solo character.
@@ -719,15 +718,15 @@ returnToSite::usage =
 returnToSite[delveName] rolls for the named delve for the solo character.
 returnToSite[delveName, character] rolls for the named delve for character.";
 
-riskZone::usage =
-"riskZone[] displays the current delve's risk zone and returns its default rank.
-riskZone[delveName] displays the named delve's risk zone and returns its default rank for the solo character.
-riskZone[delveName, character] displays the named delve's risk zone and returns its default rank for character.";
+getRiskZone::usage =
+"getRiskZone[] displays the current delve's risk zone and returns its default rank.
+getRiskZone[delveName] displays the named delve's risk zone and returns its default rank for the solo character.
+getRiskZone[delveName, character] displays the named delve's risk zone and returns its default rank for character.";
 
-denizens::usage =
-"denizens[] displays the current delve's denizens matrix.
-denizens[delveName] displays the named delve's denizens matrix for the solo character.
-denizens[delveName, character] displays the named delve's denizens matrix for character.";
+getDenizens::usage =
+"getDenizens[] displays the current delve's denizens matrix.
+getDenizens[delveName] displays the named delve's denizens matrix for the solo character.
+getDenizens[delveName, character] displays the named delve's denizens matrix for character.";
 
 rollDenizen::usage =
 "rollDenizen[] rolls on the current delve's denizens matrix.
@@ -865,7 +864,7 @@ Display::usage =
 "Display is an option that specifies whether a function should display its result.";
 
 Threat::usage =
-"Threat is an option for makeVow and addVow that specifies an attached threat as {threatName, threatGoal}.";
+"Threat is an option for vow and addVow that specifies an attached threat as {threatName, threatGoal}.";
 
 Objective::usage =
 "Objective is an option for addDelve that specifies the site objective.";
@@ -957,6 +956,7 @@ If[!ValueQ[$IronLibraryPath], $IronLibraryPath = If[StringQ[$InputFileName] && $
 $ironLibraryHelperDirectory = DirectoryName[$IronLibraryPath];
 
 Quiet[
+	Get[FileNameJoin[{$ironLibraryHelperDirectory, "TextHelpers.wl"}]];
 	Get[FileNameJoin[{$ironLibraryHelperDirectory, "MoveData.wl"}]];
 	Get[FileNameJoin[{$ironLibraryHelperDirectory, "AssetData.wl"}]];
 	Get[FileNameJoin[{$ironLibraryHelperDirectory, "OracleData.wl"}]];
@@ -968,7 +968,8 @@ Quiet[
 
 $ContextPath = DeleteCases[
 	$ContextPath,
-	"IronLibrary`FileHelpers`" | "IronLibrary`MechanicsHelpers`" | "IronLibrary`DisplayHelpers`"
+	"IronLibrary`FileHelpers`" | "IronLibrary`MechanicsHelpers`" | "IronLibrary`DisplayHelpers`" |
+		"IronLibrary`TextHelpers`"
 ];
 $ContextPath = DeleteDuplicates[Prepend[$ContextPath, "IronLibrary`"]];
 
@@ -995,6 +996,33 @@ optionValueFromArgs[option_, default_, args___] := Module[{rules},
 
 displayRequested[default_, args___] :=
 	TrueQ[optionValueFromArgs[Display, default, args]];
+
+withoutDisplayOption[args___] :=
+	DeleteCases[{args}, (Display -> _) | (Display :> _), {1}];
+
+characterStateQ[data_] :=
+	AssociationQ[data] &&
+	AllTrue[{"assets", "edge", "heart", "iron", "shadow", "wits", "vows"}, KeyExistsQ[data, #] &];
+
+stateCharacterNames[state_Association] :=
+	Select[Keys[state], StringQ[#] && characterStateQ[state[#]] &];
+
+soloCharacterForDisplay[] := Module[
+	{state, character, characters},
+	state = IronLibrary`MechanicsHelpers`getIronState[];
+	If[!AssociationQ[state], Return[$Failed]];
+	character = IronLibrary`MechanicsHelpers`soloCharacter[];
+	If[StringQ[character] && KeyExistsQ[state, character], Return[character]];
+	characters = stateCharacterNames[state];
+	If[Length[characters] =!= 1, Return[$Failed]];
+	IronLibrary`MechanicsHelpers`setSoloCharacter[First[characters]];
+	First[characters]
+];
+
+displaySoloCharacterSheet[] := Module[{character},
+	character = soloCharacterForDisplay[];
+	If[StringQ[character], characterSheet[character], $Failed]
+];
 
 stateForFileHelpers[] := Module[{state},
 	state = IronLibrary`MechanicsHelpers`getIronState[];
@@ -1041,8 +1069,7 @@ displayDenizensFromDelve[delveData_] := Module[{denizenList},
 
 $mechanicsPassThroughAPI = {
 	"setSoloCharacter",
-	"createCharacter",
-	"makeVow",
+	"vow",
 	"addVow",
 	"removeVow",
 	"setThreat",
@@ -1062,7 +1089,7 @@ $mechanicsPassThroughAPI = {
 	"clearCursed",
 	"markTormented",
 	"clearTormented",
-	"makeAsset",
+	"asset",
 	"setAssetTrack",
 	"adjustAssetTrack",
 	"markProgress",
@@ -1247,21 +1274,29 @@ beginStory[name_String] :=
 beginStory[name_] :=
 	IronLibrary`FileHelpers`beginStory[name];
 
-Options[beginChapter] = Options[IronLibrary`FileHelpers`beginChapter];
+Options[beginChapter] =
+	Join[Options[IronLibrary`FileHelpers`beginChapter], {Display -> True}];
 
-beginChapter[args___] := Module[{state},
-	state = IronLibrary`FileHelpers`beginChapter[args];
-	If[AssociationQ[state], IronLibrary`MechanicsHelpers`setIronState[state]];
+beginChapter[opts : OptionsPattern[]] := Module[{state},
+	state = IronLibrary`FileHelpers`beginChapter @@ withoutDisplayOption[opts];
+	If[AssociationQ[state],
+		IronLibrary`MechanicsHelpers`setIronState[state];
+		If[TrueQ[OptionValue[Display]], displaySoloCharacterSheet[]]
+	];
 	state
 ];
 
-endChapter[] := Module[{state},
+Options[endChapter] = {Display -> True};
+
+endChapter[opts : OptionsPattern[]] := Module[{state, result},
 	state = IronLibrary`MechanicsHelpers`getIronState[];
 	If[!AssociationQ[state],
 		Message[endChapter::nostate];
 		Return[$Failed]
 	];
-	IronLibrary`FileHelpers`endChapter[state]
+	result = IronLibrary`FileHelpers`endChapter[state];
+	If[AssociationQ[result] && TrueQ[OptionValue[Display]], displaySoloCharacterSheet[]];
+	result
 ];
 
 endChapter::nostate = "No IronLibrary state is loaded.";
@@ -1283,31 +1318,76 @@ characterSheet[character_String] := Module[{characterData},
 	IronLibrary`DisplayHelpers`displayCharacterSheet[character, characterData]
 ];
 
+Options[createCharacter] = {Display -> True};
+
+createCharacter[args___] := Module[
+	{characterArgs, characterData, character},
+	characterArgs = withoutDisplayOption[args];
+	characterData = IronLibrary`MechanicsHelpers`createCharacter @@ characterArgs;
+	character = If[Length[characterArgs] > 0, First[characterArgs], None];
+	If[
+		AssociationQ[characterData] &&
+			StringQ[character] &&
+			displayRequested[True, args],
+		characterSheet[character]
+	];
+	characterData
+];
+
 
 (* ::Subsection::Closed:: *)
 (*Displayed mechanical objects*)
 
 
-vow[args___] := Module[{ownedVow},
-	ownedVow = IronLibrary`MechanicsHelpers`vow[args];
+getVow[args___] := Module[{ownedVow},
+	ownedVow = IronLibrary`MechanicsHelpers`getVow[args];
 	If[AssociationQ[ownedVow], Print[IronLibrary`DisplayHelpers`displayVowCard[ownedVow]]];
 	ownedVow
 ];
 
-vows[args___] := Module[{ownedVows},
-	ownedVows = IronLibrary`MechanicsHelpers`vows[args];
+getVows[args___] := Module[{ownedVows},
+	ownedVows = IronLibrary`MechanicsHelpers`getVows[args];
 	If[AssociationQ[ownedVows], IronLibrary`DisplayHelpers`displayVowCards[ownedVows]];
 	ownedVows
 ];
 
-asset[args___] := Module[{ownedAsset},
-	ownedAsset = IronLibrary`MechanicsHelpers`asset[args];
-	If[AssociationQ[ownedAsset], IronLibrary`DisplayHelpers`displayAssetCard[ownedAsset]];
-	ownedAsset
+getAsset[name_String] := Module[
+	{character, ownedAssets, ownedAsset},
+	character = soloCharacterForDisplay[];
+	If[StringQ[character],
+		ownedAssets = IronLibrary`MechanicsHelpers`getAssets[character];
+		If[ListQ[ownedAssets],
+			ownedAsset = FirstCase[
+				ownedAssets,
+				asset_Association /; Lookup[asset, "Name", ""] === name :> asset,
+				None
+			];
+			If[AssociationQ[ownedAsset],
+				Return[IronLibrary`DisplayHelpers`displayAssetCard[ownedAsset, character]]
+			]
+		]
+	];
+	IronLibrary`DisplayHelpers`displayAssetReference[name]
 ];
 
-assets[args___] := Module[{ownedAssets},
-	ownedAssets = IronLibrary`MechanicsHelpers`assets[args];
+getAsset[name_String, character_] := Module[{ownedAsset},
+	ownedAsset = IronLibrary`MechanicsHelpers`getAsset[name, character];
+	If[AssociationQ[ownedAsset],
+		IronLibrary`DisplayHelpers`displayAssetCard[ownedAsset, character],
+		ownedAsset
+	]
+];
+
+getAsset[args___] := Module[{ownedAsset},
+	ownedAsset = IronLibrary`MechanicsHelpers`getAsset[args];
+	If[AssociationQ[ownedAsset],
+		IronLibrary`DisplayHelpers`displayAssetCard[ownedAsset],
+		ownedAsset
+	]
+];
+
+getAssets[args___] := Module[{ownedAssets},
+	ownedAssets = IronLibrary`MechanicsHelpers`getAssets[args];
 	If[ListQ[ownedAssets], IronLibrary`DisplayHelpers`displayOwnedAssets[ownedAssets]];
 	ownedAssets
 ];
@@ -1318,63 +1398,60 @@ drawAssets[args___] := Module[{names},
 	names
 ];
 
-companion[args___] := Module[{ownedCompanion},
+getCompanion[args___] := Module[{ownedCompanion},
 	ownedCompanion = IronLibrary`MechanicsHelpers`companion[args];
 	If[AssociationQ[ownedCompanion], IronLibrary`DisplayHelpers`displayAssetCard[ownedCompanion]];
 	ownedCompanion
 ];
 
-companions[args___] := Module[{ownedCompanions},
+getCompanions[args___] := Module[{ownedCompanions},
 	ownedCompanions = IronLibrary`MechanicsHelpers`companions[args];
 	If[ListQ[ownedCompanions], IronLibrary`DisplayHelpers`displayOwnedAssets[ownedCompanions]];
 	ownedCompanions
 ];
 
-journey[args___] := Module[{ownedJourney},
+getJourney[args___] := Module[{ownedJourney},
 	ownedJourney = IronLibrary`MechanicsHelpers`journey[args];
 	If[AssociationQ[ownedJourney], IronLibrary`DisplayHelpers`displayProgressObjectCard["Journey", ownedJourney]];
 	ownedJourney
 ];
 
-journeys[args___] := Module[{ownedJourneys},
+getJourneys[args___] := Module[{ownedJourneys},
 	ownedJourneys = IronLibrary`MechanicsHelpers`journeys[args];
 	If[AssociationQ[ownedJourneys], IronLibrary`DisplayHelpers`displayProgressObjectCards["Journey", ownedJourneys]];
 	ownedJourneys
 ];
 
-foe[args___] := Module[{ownedFoe},
+getFoe[args___] := Module[{ownedFoe},
 	ownedFoe = IronLibrary`MechanicsHelpers`foe[args];
 	If[AssociationQ[ownedFoe], IronLibrary`DisplayHelpers`displayProgressObjectCard["Foe", ownedFoe]];
 	ownedFoe
 ];
 
-foes[args___] := Module[{ownedFoes},
+getFoes[args___] := Module[{ownedFoes},
 	ownedFoes = IronLibrary`MechanicsHelpers`foes[args];
 	If[AssociationQ[ownedFoes], IronLibrary`DisplayHelpers`displayProgressObjectCards["Foe", ownedFoes]];
 	ownedFoes
 ];
 
-failures[args___] := Module[{track},
+getFailures[args___] := Module[{track},
 	track = IronLibrary`MechanicsHelpers`failures[args];
 	If[AssociationQ[track], IronLibrary`DisplayHelpers`displayProgressObjectCard["Failures", track]];
 	track
 ];
 
-bondProgress[args___] := Module[{track},
+getBondProgress[args___] := Module[{track},
 	track = IronLibrary`MechanicsHelpers`bondProgress[args];
 	If[AssociationQ[track], IronLibrary`DisplayHelpers`displayProgressObjectCard["Bonds", track]];
 	track
 ];
 
-bond[args___] := Module[{ownedBond},
-	ownedBond = IronLibrary`MechanicsHelpers`bond[args];
-	If[StringQ[ownedBond], IronLibrary`DisplayHelpers`displayBondCards[{ownedBond}]];
-	ownedBond
-];
-
-bonds[args___] := Module[{ownedBonds},
+getBonds[args___] := Module[{ownedBonds, track},
 	ownedBonds = IronLibrary`MechanicsHelpers`bonds[args];
-	If[ListQ[ownedBonds], IronLibrary`DisplayHelpers`displayBondCards[ownedBonds]];
+	If[ListQ[ownedBonds],
+		track = IronLibrary`MechanicsHelpers`bondProgress[args];
+		IronLibrary`DisplayHelpers`displayBondList[ownedBonds, track]
+	];
 	ownedBonds
 ];
 
@@ -1384,7 +1461,7 @@ beginScene[args___] := Module[{sceneData},
 	sceneData
 ];
 
-scene[args___] := Module[{sceneData},
+getScene[args___] := Module[{sceneData},
 	sceneData = IronLibrary`MechanicsHelpers`scene[args];
 	If[AssociationQ[sceneData], IronLibrary`DisplayHelpers`displayScene[sceneData]];
 	sceneData
@@ -1417,25 +1494,25 @@ markSceneCountdown[n_Integer?NonNegative, character_] := Module[{result, sceneDa
 markSceneCountdown[args___] :=
 	IronLibrary`MechanicsHelpers`markSceneCountdown[args];
 
-delve[args___] := Module[{ownedDelve},
+getDelve[args___] := Module[{ownedDelve},
 	ownedDelve = IronLibrary`MechanicsHelpers`delve[args];
 	If[AssociationQ[ownedDelve], IronLibrary`DisplayHelpers`displayDelve[ownedDelve]];
 	ownedDelve
 ];
 
-delves[args___] := Module[{ownedDelves},
+getDelves[args___] := Module[{ownedDelves},
 	ownedDelves = IronLibrary`MechanicsHelpers`delves[args];
 	If[AssociationQ[ownedDelves], IronLibrary`DisplayHelpers`displayDelves[ownedDelves]];
 	ownedDelves
 ];
 
-riskZone[] :=
+getRiskZone[] :=
 	displayDelveRiskZone[IronLibrary`MechanicsHelpers`currentDelveData[]];
 
-riskZone[delveName_String] :=
+getRiskZone[delveName_String] :=
 	displayDelveRiskZone[IronLibrary`MechanicsHelpers`delve[delveName]];
 
-riskZone[delveName_String, character_] :=
+getRiskZone[delveName_String, character_] :=
 	displayDelveRiskZone[IronLibrary`MechanicsHelpers`delve[delveName, character]];
 
 returnToSite[args___] := Module[{roll},
@@ -1444,13 +1521,13 @@ returnToSite[args___] := Module[{roll},
 	roll
 ];
 
-denizens[] :=
+getDenizens[] :=
 	displayDenizensFromDelve[IronLibrary`MechanicsHelpers`currentDelveData[]];
 
-denizens[delveName_String] :=
+getDenizens[delveName_String] :=
 	displayDenizensFromDelve[IronLibrary`MechanicsHelpers`delve[delveName]];
 
-denizens[delveName_String, character_] :=
+getDenizens[delveName_String, character_] :=
 	displayDenizensFromDelve[IronLibrary`MechanicsHelpers`delve[delveName, character]];
 
 rollDenizen[args___] := Module[{roll},

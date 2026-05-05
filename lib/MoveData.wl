@@ -20,7 +20,15 @@
 (*Package header*)
 
 
-BeginPackage["MoveData`"];
+If[
+	!MemberQ[$Packages, "IronLibrary`TextHelpers`"],
+	With[
+		{dir = If[StringQ[$InputFileName] && $InputFileName =!= "", DirectoryName[$InputFileName], Directory[]]},
+		Get[FileNameJoin[{dir, "TextHelpers.wl"}]]
+	]
+];
+
+BeginPackage["MoveData`", {"IronLibrary`TextHelpers`"}];
 
 
 (* ::Section::Closed:: *)
@@ -52,73 +60,6 @@ move[name_String, header_, strongHit_, weakHit_, miss_] := <|
 	"weakHit" -> weakHit,
 	"miss" -> miss
 |>;
-
-b[text_] := Style[text, Bold];
-i[text_] := Style[text, Italic];
-bi[text_] := Style[text, Bold, Italic];
-
-p[parts___] := Row[{parts}];
-
-paras[items___] := Column[
-	{items},
-	Spacings -> 0.8,
-	Alignment -> Left
-];
-
-choice[key_String, text_] := <|
-	"Type" -> "Choice",
-	"Key" -> key,
-	"Text" -> text
-|>;
-
-choiceGroup[label_String, choices_List] := <|
-	"Type" -> "ChoiceGroup",
-	"Label" -> label,
-	"Choices" -> choices
-|>;
-
-choiceGroupQ[item_] :=
-	AssociationQ[item] && Lookup[item, "Type", None] === "ChoiceGroup";
-
-numberedChoiceRow[index_Integer, text_] :=
-	p[ToString[index], ". ", text];
-
-choiceDisplayRows[choices_List] := Module[
-	{index = 0, rows = {}, item, groupChoice},
-	Do[
-		If[choiceGroupQ[item],
-			AppendTo[rows, p[b[item["Label"]]]];
-			Do[
-				index++;
-				AppendTo[rows, numberedChoiceRow[index, groupChoice["Text"]]],
-				{groupChoice, item["Choices"]}
-			],
-			index++;
-			AppendTo[rows, numberedChoiceRow[index, item["Text"]]]
-		],
-		{item, choices}
-	];
-	rows
-];
-
-flattenChoices[choices_List] := Module[
-	{flat = {}, item, groupLabel},
-	Do[
-		If[choiceGroupQ[item],
-			groupLabel = item["Label"];
-			flat = Join[flat, (Join[#, <|"Group" -> groupLabel|>] &) /@ item["Choices"]],
-			AppendTo[flat, item]
-		],
-		{item, choices}
-	];
-	flat
-];
-
-choiceSection[pre_List, choices_List, post_List : {}] := <|
-	"Text" -> Apply[paras, Join[pre, choiceDisplayRows[choices], post]],
-	"Choices" -> flattenChoices[choices]
-|>;
-
 
 (* ::Subsection::Closed:: *)
 (*Move association*)
