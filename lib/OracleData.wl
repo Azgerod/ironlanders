@@ -20,7 +20,15 @@
 (*Package header*)
 
 
-BeginPackage["OracleTables`"];
+If[
+	!MemberQ[$Packages, "IronLibrary`TextHelpers`"],
+	With[
+		{dir = If[StringQ[$InputFileName] && $InputFileName =!= "", DirectoryName[$InputFileName], Directory[]]},
+		Get[FileNameJoin[{dir, "TextHelpers.wl"}]]
+	]
+];
+
+BeginPackage["OracleTables`", {"IronLibrary`TextHelpers`"}];
 
 
 (* ::Section::Closed:: *)
@@ -57,7 +65,7 @@ oracles = <||>;
 
 
 oracles["Pay the Price"] = <|
-	2 -> "Roll again and apply that result but make it worse. If you roll this result yet again, think of something dreadful that changes the course of your quest (Ask the Oracle if unsure).",
+	2 -> p["Roll again and apply that result but make it worse. If you roll this result yet again, think of something dreadful that changes the course of your quest (", i["Ask the Oracle "], "if unsure)."],
 	5 -> "A person or community you trusted loses faith in you, or acts against you.",
 	9 -> "A person or community you care about is exposed to danger.",
 	16 -> "You are separated from something or someone.",
@@ -175,9 +183,9 @@ oracles["Encounter Index"] = <|
 
 
 oracles["Harm Outcome"] = <|
-	10 -> "The harm is mortal. Face Death.",
-	20 -> "You are dying. You need to Heal within an hour or two, or Face Death.",
-	35 -> "You are unconscious and out of action. If left alone, you come back to your senses in an hour or two. If you are vulnerable to a foe not inclined to show mercy, Face Death.",
+	10 -> p["The harm is mortal. ", i["Face Death"], "."],
+	20 -> p["You are dying. You need to ", i["Heal "], "within an hour or two, or ", i["Face Death"], "."],
+	35 -> p["You are unconscious and out of action. If left alone, you come back to your senses in an hour or two. If you are vulnerable to a foe not inclined to show mercy, ", i["Face Death"], "."],
 	50 -> "You are reeling and fighting to stay conscious. If you engage in any vigorous activity (such as running or fighting) before taking a breather for a few minutes, roll on this table again (before resolving the other move).",
 	100 -> "You are battered but still standing."
 |>;
@@ -188,8 +196,8 @@ oracles["Harm Outcome"] = <|
 
 
 oracles["Stress Outcome"] = <|
-	10 -> "You are overwhelmed. Face Desolation.",
-	25 -> "You give up. Forsake Your Vow (if possible, one relevant to the current crisis).",
+	10 -> p["You are overwhelmed. ", i["Face Desolation"], "."],
+	25 -> p["You give up. ", i["Forsake Your Vow "], "(if possible, one relevant to the current crisis)."],
 	50 -> "You give in to a fear or compulsion, and act against your better instincts.",
 	100 -> "You persevere."
 |>;
@@ -886,11 +894,11 @@ delveSiteFeatureTable[theme_String, domain_String] :=
 
 
 oracles["Delve the Depths Weak Hit: Edge"] = <|
-	45 -> "Mark progress and Reveal a Danger.",
+	45 -> p["Mark progress and ", i["Reveal a Danger"], "."],
 	65 -> "Mark progress.",
-	75 -> "Choose one: Mark progress or Find an Opportunity.",
-	80 -> "Take both: Mark progress and Find an Opportunity.",
-	100 -> "Mark progress twice and Reveal a Danger."
+	75 -> p["Choose one: Mark progress or ", i["Find an Opportunity"], "."],
+	80 -> p["Take both: Mark progress and ", i["Find an Opportunity"], "."],
+	100 -> p["Mark progress twice and ", i["Reveal a Danger"], "."]
 |>;
 
 
@@ -899,11 +907,11 @@ oracles["Delve the Depths Weak Hit: Edge"] = <|
 
 
 oracles["Delve the Depths Weak Hit: Shadow"] = <|
-	30 -> "Mark progress and Reveal a Danger.",
+	30 -> p["Mark progress and ", i["Reveal a Danger"], "."],
 	65 -> "Mark progress.",
-	90 -> "Choose one: Mark progress or Find an Opportunity.",
-	99 -> "Take both: Mark progress and Find an Opportunity.",
-	100 -> "Mark progress twice and Reveal a Danger."
+	90 -> p["Choose one: Mark progress or ", i["Find an Opportunity"], "."],
+	99 -> p["Take both: Mark progress and ", i["Find an Opportunity"], "."],
+	100 -> p["Mark progress twice and ", i["Reveal a Danger"], "."]
 |>;
 
 
@@ -912,11 +920,11 @@ oracles["Delve the Depths Weak Hit: Shadow"] = <|
 
 
 oracles["Delve the Depths Weak Hit: Wits"] = <|
-	40 -> "Mark progress and Reveal a Danger.",
+	40 -> p["Mark progress and ", i["Reveal a Danger"], "."],
 	55 -> "Mark progress.",
-	80 -> "Choose one: Mark progress or Find an Opportunity.",
-	99 -> "Take both: Mark progress and Find an Opportunity.",
-	100 -> "Mark progress twice and Reveal a Danger."
+	80 -> p["Choose one: Mark progress or ", i["Find an Opportunity"], "."],
+	99 -> p["Take both: Mark progress and ", i["Find an Opportunity"], "."],
+	100 -> p["Mark progress twice and ", i["Reveal a Danger"], "."]
 |>;
 
 

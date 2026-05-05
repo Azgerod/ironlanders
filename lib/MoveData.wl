@@ -687,7 +687,7 @@ moves["sojourn"] = move[
 moves["sojournFocus"] = move[
 	"Sojourn: Focus",
 	paras[
-		p[b["On a hit on the "], bi["Sojourn"], b[" move,"], " you and your allies may each focus on one of your chosen recover actions and roll +heart again. If you share a bond, add +1."]
+		p[b["On a hit on the "], bi["Sojourn "], b["move,"], " you and your allies may each focus on one of your chosen recover actions and roll +heart again. If you share a bond, add +1."]
 	],
 	paras[
 		p["Take +2 more for your focused action."]

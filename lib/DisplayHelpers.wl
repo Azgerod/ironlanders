@@ -659,10 +659,13 @@ displayProgressRoll[roll_Association] :=
 (*Oracle roll display*)
 
 
-oracleOutcomeText[outcome_String, match_] :=
-	mainStyle[StringJoin[outcome, If[match, " (MATCH)", ""]]];
+oracleTextWithMatch[text_, match_] :=
+	If[TrueQ[match], IronLibrary`TextHelpers`p[text, " (MATCH)"], text];
 
-oracleRollCard[table_String, dice_List, match_, outcome_String] :=
+oracleOutcomeText[outcome_, match_] :=
+	mainStyle[oracleTextWithMatch[outcome, match]];
+
+oracleRollCard[table_String, dice_List, match_, outcome_] :=
 	ironFramed[
 		Grid[
 			{
@@ -676,7 +679,7 @@ oracleRollCard[table_String, dice_List, match_, outcome_String] :=
 		]
 	];
 
-displayOracleRoll[table_String, dice_List, match_, outcome_String] :=
+displayOracleRoll[table_String, dice_List, match_, outcome_] :=
 	Print[oracleRollCard[table, dice, match, outcome]];
 
 oracleDiceDisplay[{d1_, d2_}] :=
@@ -693,10 +696,10 @@ oracleComponentRow[component_Association] :=
 	{
 		displayText[component["label"], $displaySansFont, 14, Bold],
 		oracleDiceDisplay[component["oracleDice"]],
-		moveTextStyle[StringJoin[component["outcome"], If[component["match"], " (MATCH)", ""]]]
+		moveTextStyle[oracleTextWithMatch[component["outcome"], component["match"]]]
 	};
 
-displayCompositeOracleRoll[title_String, components_List, result_String] :=
+displayCompositeOracleRoll[title_String, components_List, result_] :=
 	Print[
 		displayColumn[
 			{

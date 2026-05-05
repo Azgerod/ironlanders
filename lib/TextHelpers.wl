@@ -53,17 +53,19 @@ attachedPunctuationQ[char_String] :=
 	MemberQ[$attachedPunctuationStartChars, char];
 
 attachedTextPrefix[text_String] := Module[
-	{chars, punctuationCount, whitespaceCount},
+	{chars, leadingWhitespaceCount, punctuationCount, trailingWhitespaceCount},
 	chars = Characters[text];
 	If[chars === {}, Return[""]];
 	If[attachedWhitespaceQ[First[chars]],
-		whitespaceCount = Length[TakeWhile[chars, attachedWhitespaceQ]];
-		Return[StringJoin[Take[chars, whitespaceCount]]]
+		leadingWhitespaceCount = Length[TakeWhile[chars, attachedWhitespaceQ]];
+		punctuationCount = Length[TakeWhile[Drop[chars, leadingWhitespaceCount], attachedPunctuationQ]];
+		trailingWhitespaceCount = Length[TakeWhile[Drop[chars, leadingWhitespaceCount + punctuationCount], attachedWhitespaceQ]];
+		Return[StringJoin[Take[chars, leadingWhitespaceCount + punctuationCount + trailingWhitespaceCount]]]
 	];
 	If[!attachedPunctuationQ[First[chars]], Return[""]];
 	punctuationCount = Length[TakeWhile[chars, attachedPunctuationQ]];
-	whitespaceCount = Length[TakeWhile[Drop[chars, punctuationCount], attachedWhitespaceQ]];
-	StringJoin[Take[chars, punctuationCount + whitespaceCount]]
+	trailingWhitespaceCount = Length[TakeWhile[Drop[chars, punctuationCount], attachedWhitespaceQ]];
+	StringJoin[Take[chars, punctuationCount + trailingWhitespaceCount]]
 ];
 
 attachPlainPrefixes[items_List] := Module[
