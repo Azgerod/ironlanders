@@ -198,9 +198,9 @@ $displayFrameRoundingRadius = 8;
 $displayTrackWidth = 496;
 $displayFrameTrackWidth = $displayFrameContentWidth - 2 $displayFrameMargin;
 $displayFrameTrackHeight = Automatic;
-$displayTrackBannerHeight = 24;
-$displayFrameBannerTextSize = 16;
-$displayHeaderBannerInset = 12;
+$displayTrackBannerHeight = 42;
+$displayFrameBannerTextSize = 22;
+$displayHeaderBannerInset = 16;
 $assetNameBoxHeight = 34;
 $assetNameBoxInset = 16;
 $assetHealthTrackGap = 14;
@@ -1014,7 +1014,7 @@ sheetLabelBand[label_String, {x_, y_}, {width_, height_}] := Module[
 	size = Which[
 		MemberQ[{"Health", "Spirit", "Supply", "Momentum"}, label], 14,
 		width <= 90, 10,
-		MemberQ[{"Stats", "Debilities", "Experience", "Bonds", "Background Vow", "Vows", "Failures"}, label], 14,
+		MemberQ[{"Stats", "Debilities", "Experience", "Bonds", "Background Vow", "Vows", "Journey", "Failures"}, label], 14,
 		MemberQ[{"Current Vow"}, label], 16,
 		StringLength[label] > 12, 13,
 		True, 16
@@ -1193,23 +1193,23 @@ sheetSignedNumberText[value_Integer, {x_, y_}, size_, weight_:Bold, color_:sheet
 sheetNameField[character_String] := Module[
 	{x, y, width, height},
 	x = 22;
-	y = 1098;
+	y = sheetCanvasHeight - 94;
 	width = 776;
 	height = 58;
 	{
 		sheetRect[{x, y}, {width, height}, sheetDark, sheetDark],
-		Text[sheetStyle[character, 28, Bold, White], {x + width/2, y + height/2}]
+		Text[sheetStyle[ToUpperCase[character], 28, Bold, White], {x + width/2, y + height/2}]
 	}
 ];
 
 sheetCanvasWidth = 820;
-sheetCanvasHeight = 1192;
+sheetCanvasHeight = 1252;
 sheetPlotHorizontalInset = 4;
 sheetPlotBottomInset = 6;
 sheetPlotTopInset = 18;
 sheetMiddleX = 162;
 sheetMiddleWidth = $displayTrackWidth;
-sheetMiddleTop = 1073;
+sheetMiddleTop := sheetCanvasHeight - 119;
 sheetMiddleBottom = 24;
 sheetSectionBannerHeight = 24;
 sheetBannerContentGap = 10;
@@ -1230,7 +1230,7 @@ sheetVowNameBaseMaxTextSize = 16;
 sheetVowRankCenterGap = 14;
 sheetRankDotRadius = 5;
 sheetVowRowGap = 14;
-sheetCurrentVowSlots = 4;
+sheetCurrentVowSlots = 3;
 
 sheetCharacterTextFitScale[] :=
 	$displayFrameContentWidth/(sheetCanvasWidth - 2 sheetPlotHorizontalInset);
@@ -1295,6 +1295,7 @@ sheetMiddleBlocks[] := {
 	"Experience" -> sheetSectionHeight[sheetExperienceGridHeight[]],
 	"BackgroundVow" -> sheetSectionHeight[sheetVowRowHeight[sheetMiddleWidth]],
 	"Vows" -> sheetVowsPanelHeight[sheetMiddleWidth],
+	"Journey" -> sheetSectionHeight[sheetVowRowHeight[sheetMiddleWidth]],
 	"Bonds" -> sheetFullWidthProgressPanelHeight[sheetMiddleWidth],
 	"Failures" -> sheetFullWidthProgressPanelHeight[sheetMiddleWidth]
 };
@@ -1348,9 +1349,12 @@ sheetStats[characterData_Association, topY_:sheetMiddleTop] := Module[
 
 sheetVerticalResourceLabelHeight = 24;
 sheetResourceColumnWidth = 124;
-sheetResourceColumnHeight = 1039/3;
 sheetResourceColumnGap = 5;
 sheetResourceMaxValue = 5;
+sheetResourceValueTextSize = 22;
+
+sheetResourceColumnHeight :=
+	(sheetMiddleTop - sheetMiddleBottom - 2 sheetResourceColumnGap)/3;
 
 sheetVerticalResourceValues[max_Integer] :=
 	Reverse[Range[0, max]];
@@ -1367,7 +1371,7 @@ sheetVerticalResourceCell[value_Integer, selected_Integer, {x_, y_}, {width_, he
 	textColor = sheetInk;
 	Join[
 		sheetTrackCell[{x, y}, {width, height}, fill],
-		sheetSignedNumberText[value, {x + width/2, y + height/2}, 20, Bold, textColor],
+		sheetSignedNumberText[value, {x + width/2, y + height/2}, sheetResourceValueTextSize, Bold, textColor],
 		{If[
 			value === selected,
 			sheetValueIndicator[{x, y}, {width, height}, indicatorSide, indicatorScale],
@@ -1406,9 +1410,9 @@ sheetMomentumColumn[character_String, characterData_Association] := Module[
 	{values, x, y, width, height, labelHeight, boxHeight, current, max, reset},
 	values = Range[10, -6, -1];
 	x = 22;
-	y = 24;
+	y = sheetMiddleBottom;
 	width = 124;
-	height = 1049;
+	height = sheetMiddleTop - sheetMiddleBottom;
 	labelHeight = 24;
 	boxHeight = (height - labelHeight)/Length[values];
 	current = characterData["momentum"];
@@ -1432,7 +1436,7 @@ sheetMomentumColumn[character_String, characterData_Association] := Module[
 					];
 					Join[
 						sheetTrackCell[{x, slotY}, {width, boxHeight}, fill],
-						sheetSignedNumberText[#1, {x + width/2, slotY + boxHeight/2}, 17, Bold, textColor],
+						sheetSignedNumberText[#1, {x + width/2, slotY + boxHeight/2}, sheetResourceValueTextSize, Bold, textColor],
 						{If[
 							#1 === current,
 							sheetValueIndicator[{x, slotY}, {width, boxHeight}, Left],
@@ -1450,7 +1454,7 @@ sheetMomentumColumn[character_String, characterData_Association] := Module[
 sheetResourceColumns[characterData_Association] :=
 	Module[{x, y, width, height, gap},
 		x = 674;
-		y = 24;
+		y = sheetMiddleBottom;
 		width = sheetResourceColumnWidth;
 		height = sheetResourceColumnHeight;
 		gap = sheetResourceColumnGap;
@@ -1541,7 +1545,7 @@ sheetVowRow[vowData_, label_String, {x_, y_}, {width_, height_}, rowOptions_:<||
 	progress = If[hasVow, vowData["Progress"], 0];
 	rank = If[hasVow, vowData["Rank"], None];
 	menace = If[hasVow && AssociationQ[Lookup[vowData, "Threat", None]], vowData["Threat", "Menace", "progress"], None];
-	bannerText = If[hasVowName, vowName, "Empty Vow"];
+	bannerText = If[hasVowName, vowName, "Empty"];
 	rowBannerOptions = Lookup[rowOptions, "BannerOptions", <||>];
 	bannerOptions = Join[
 		rowBannerOptions,
@@ -1593,13 +1597,13 @@ sheetVowsPanel[characterData_Association, backgroundTopY_:704, vowsTopY_:574] :=
 	{vows, backgroundVow, currentVows, x, width, rowOptions, currentStartY, currentPitch, overflow},
 	vows = Values[Lookup[characterData, "vows", <||>]];
 	backgroundVow = If[vows === {}, None, First[vows]];
-	currentVows = PadRight[Take[If[Length[vows] > 1, Rest[vows], {}], UpTo[4]], 4, None];
+	currentVows = PadRight[Take[If[Length[vows] > 1, Rest[vows], {}], UpTo[sheetCurrentVowSlots]], sheetCurrentVowSlots, None];
 	x = sheetMiddleX;
 	width = sheetMiddleWidth;
 	rowOptions = <|"BannerOptions" -> <|"FitScale" -> sheetCharacterTextFitScale[]|>|>;
 	currentStartY = sheetVowSectionFirstRowY[vowsTopY, width];
 	currentPitch = sheetVowRowHeight[width] + sheetVowRowGap;
-	overflow = Max[0, Length[vows] - 5];
+	overflow = Max[0, Length[vows] - 1 - sheetCurrentVowSlots];
 	Flatten[
 		Join[
 			sheetVowSectionPrimitives["Background Vow", {backgroundVow}, "Background Vow", {x, backgroundTopY}, width, rowOptions],
@@ -1612,6 +1616,15 @@ sheetVowsPanel[characterData_Association, backgroundTopY_:704, vowsTopY_:574] :=
 		],
 		1
 	]
+];
+
+sheetJourneyPanel[characterData_Association, topY_] := Module[
+	{journey, x, width, rowOptions},
+	journey = Lookup[characterData, "journey", None];
+	x = sheetMiddleX;
+	width = sheetMiddleWidth;
+	rowOptions = <|"BannerOptions" -> <|"FitScale" -> sheetCharacterTextFitScale[]|>|>;
+	sheetVowSectionPrimitives["Journey", {journey}, "Journey", {x, topY}, width, rowOptions]
 ];
 
 sheetFailurePanel[characterData_Association, topY_:86] := Module[
@@ -1727,6 +1740,7 @@ lodestarCharacterSheetGraphic[character_String, characterData_Association] := Mo
 				sheetDebilitiesPanel[characterData, middleLayout["Debilities"]],
 				sheetExperiencePanel[characterData, middleLayout["Experience"]],
 				sheetVowsPanel[characterData, middleLayout["BackgroundVow"], middleLayout["Vows"]],
+				sheetJourneyPanel[characterData, middleLayout["Journey"]],
 				sheetBondsPanel[characterData, middleLayout["Bonds"]],
 				sheetFailurePanel[characterData, middleLayout["Failures"]],
 				sheetMomentumColumn[character, characterData],
@@ -1778,8 +1792,11 @@ assetCardWidth :=
 assetBulletWidth :=
 	scaled[26];
 
+assetAbilityIndent :=
+	scaled[14];
+
 assetBodyWidth[contentWidth_:assetCardWidth] :=
-	contentWidth - assetBulletWidth;
+	Max[1, contentWidth - assetAbilityIndent - assetBulletWidth];
 
 assetContentPane[x_, width_:assetCardWidth] :=
 	Pane[
@@ -1859,9 +1876,6 @@ assetNameBoxGraphic[value_, placeholder_:"Name", boxWidth_:assetCardWidth] := Mo
 	]
 ];
 
-assetTitleNameGap :=
-	scaled[12];
-
 assetNameFieldKey[record_Association] :=
 	FirstCase[
 		Normal[Lookup[record, "Fields", <||>]],
@@ -1870,25 +1884,12 @@ assetNameFieldKey[record_Association] :=
 	];
 
 assetTitleRow[record_Association, fields_Association, contentWidth_:assetCardWidth] := Module[
-	{nameKey, nameWidth, titleWidth},
+	{nameKey},
 	nameKey = assetNameFieldKey[record];
 	If[nameKey === None,
-		Return[assetContentPane[titleStyle[record["Name"]], contentWidth]]
+		Return[Nothing]
 	];
-	nameWidth = contentWidth/2;
-	titleWidth = Max[1, contentWidth - nameWidth - assetTitleNameGap];
-	assetContentPane[
-		Grid[
-			{{
-				Pane[titleStyle[record["Name"]], {titleWidth, Automatic}, Alignment -> {Left, Center}],
-				Spacer[{assetTitleNameGap, 0}],
-				Item[assetNameBoxGraphic[Lookup[fields, nameKey, ""], "Name", nameWidth], Alignment -> {Right, Center}]
-			}},
-			Alignment -> {{Left, Left, Right}, {Center}},
-			Spacings -> {0, 0}
-		],
-		contentWidth
-	]
+	assetContentPane[assetNameBoxGraphic[Lookup[fields, nameKey, ""], "Name", contentWidth], contentWidth]
 ];
 
 assetFieldRow[label_String, value_, contentWidth_:assetCardWidth] :=
@@ -2180,6 +2181,7 @@ assetAbilityRow[ability_Association, selectedQ_, contentWidth_:assetCardWidth, c
 	assetContentPane[
 		Grid[
 			{{
+				Spacer[{assetAbilityIndent, 0}],
 				Pane[
 					displayText[
 						If[TrueQ[selectedQ], "\[FilledCircle]", "\[EmptyCircle]"],
@@ -2207,7 +2209,7 @@ assetAbilityRow[ability_Association, selectedQ_, contentWidth_:assetCardWidth, c
 					Alignment -> Left
 				]
 			}},
-			Alignment -> {Left, Top},
+			Alignment -> {{Left, Left, Left}, {Top}},
 			Spacings -> {0, 0}
 		],
 		contentWidth
@@ -2439,16 +2441,44 @@ assetRarityRows[_, contentWidth_:assetCardWidth] :=
 	{};
 
 assetCardHeaderTitle[record_Association] :=
-	StringJoin[Lookup[record, "Category", "Asset"], " Asset"];
+	Lookup[record, "Name", "Asset"];
 
-assetCardHeader[record_Association, None] :=
-	header[assetCardHeaderTitle[record]];
+assetCardHeaderAction[status_String] := Module[
+	{words, action},
+	words = StringSplit[StringTrim[status]];
+	If[Length[words] != 2 || ToLowerCase[Last[words]] =!= "asset", Return[None]];
+	action = ToLowerCase[First[words]];
+	Switch[
+		action,
+		"added", "Added",
+		"removed", "Removed",
+		"upgraded", "Upgraded",
+		_, None
+	]
+];
 
-assetCardHeader[record_Association, status_String] /; StringLength[StringTrim[status]] > 0 :=
-	header[assetCardHeaderTitle[record], status];
+assetCardHeaderAction[_] :=
+	None;
 
-assetCardHeader[record_Association, _] :=
-	assetCardHeader[record, None];
+assetCardHeaderSubtitle[record_Association, status_:None] := Module[
+	{category, action},
+	category = Lookup[record, "Category", "Asset"];
+	action = assetCardHeaderAction[status];
+	If[action === None, category, StringJoin[action, " ", category]]
+];
+
+assetCardHeader[record_Association, status_] := Module[
+	{title, subtitle},
+	title = assetCardHeaderTitle[record];
+	subtitle = assetCardHeaderSubtitle[record, status];
+	If[assetBlankValueQ[subtitle],
+		header[title],
+		header[title, subtitle]
+	]
+];
+
+assetOutputSubtitle[record_Association] :=
+	Lookup[record, "Name", ""];
 
 assetCardExpression[record_Association, selectedAbilities_List, fields_Association, tracks_Association, rarity_:None, status_:None] := Module[
 	{sideTrack, textWidth, rarityRows, fieldRows, requirementRows, abilityRows, trackRows, bodyRows},
@@ -2538,11 +2568,7 @@ assetRecordOutput[record_Association, status_:None] :=
 		<|
 			"Asset" -> Lookup[record, "Name", ""],
 			"Name" -> Lookup[record, "Name", ""],
-			"Subtitle" -> If[
-				StringQ[status] && StringLength[StringTrim[status]] > 0,
-				StringJoin[Lookup[record, "Name", ""], ": ", status],
-				Lookup[record, "Name", ""]
-			],
+			"Subtitle" -> assetOutputSubtitle[record],
 			"Choices" -> assetCardChoices[record]
 		|>
 	];
@@ -2891,8 +2917,15 @@ displayBannerGraphic[label_String, width_:Automatic, height_:Automatic] := Modul
 	]
 ];
 
-displayHeaderText[text_String, size_?NumericQ] :=
-	displayText[text, $displaySansFont, size, Bold, White];
+displayHeaderText[text_String, size_?NumericQ, width_:Automatic] := Module[
+	{textSize},
+	textSize = If[
+		NumericQ[width],
+		sheetFittedTextSize[text, Max[1, width], Bold, {Max[12, 0.65 size], size}],
+		size
+	];
+	displayText[text, $displaySansFont, textSize, Bold, White]
+];
 
 displayHeaderBanner[title_String, subtitle_:None, width_:Automatic, height_:Automatic] := Module[
 	{baseWidth, baseHeight, inset, contentWidth, titlePaneWidth, subtitlePaneWidth, titleText, subtitleText, content},
@@ -2900,9 +2933,9 @@ displayHeaderBanner[title_String, subtitle_:None, width_:Automatic, height_:Auto
 	baseHeight = Replace[height, Automatic :> $displayTrackBannerHeight];
 	inset = $displayHeaderBannerInset;
 	contentWidth = baseWidth - 2 inset;
-	titlePaneWidth = If[subtitle === None, contentWidth, contentWidth 0.35];
+	titlePaneWidth = If[subtitle === None, contentWidth, contentWidth 0.55];
 	subtitlePaneWidth = contentWidth - titlePaneWidth;
-	titleText = displayHeaderText[ToUpperCase[title], $displayFrameBannerTextSize];
+	titleText = displayHeaderText[ToUpperCase[title], $displayFrameBannerTextSize, titlePaneWidth];
 	content = If[
 		subtitle === None,
 		Pane[
@@ -2910,7 +2943,7 @@ displayHeaderBanner[title_String, subtitle_:None, width_:Automatic, height_:Auto
 			{scaled[contentWidth], scaled[baseHeight]},
 			Alignment -> {Left, Center}
 		],
-		subtitleText = displayHeaderText[ToUpperCase[subtitle], $displayFrameBannerTextSize];
+		subtitleText = displayHeaderText[ToUpperCase[subtitle], $displayFrameBannerTextSize, subtitlePaneWidth];
 		Row[
 			{
 				Pane[
@@ -2937,6 +2970,27 @@ displayHeaderBanner[title_String, subtitle_:None, width_:Automatic, height_:Auto
 		FrameMargins -> 0,
 		RoundingRadius -> 0
 	]
+];
+
+displayMutationAction[status_String] := Module[{action},
+	action = ToLowerCase[StringTrim[status]];
+	Switch[
+		action,
+		"added", "Added",
+		"removed", "Removed",
+		"upgraded", "Upgraded",
+		"began", "Began",
+		"ended", "Ended",
+		_, None
+	]
+];
+
+displayMutationAction[_] :=
+	None;
+
+displayStatusSubtitle[subtitle_String, status_:None] := Module[{action},
+	action = displayMutationAction[status];
+	If[action === None, subtitle, StringJoin[action, " ", subtitle]]
 ];
 
 progressSummaryHeader[label_String, rank_, progress_] :=
@@ -2981,6 +3035,9 @@ vowHeaderTitle[vowData_Association] :=
 vowHeaderSubtitle[vowData_Association] :=
 	rankedProgressSubtitle[vowData["Rank"], "Vow"];
 
+vowHeaderSubtitle[vowData_Association, status_] :=
+	displayStatusSubtitle[vowHeaderSubtitle[vowData], status];
+
 vowThreatLabel[_Association] :=
 	"THREAT: ";
 
@@ -2995,11 +3052,11 @@ vowThreatRow[threat_Association] :=
 		}
 	];
 
-displayVowCard[vowData_Association] := Module[
+displayVowCard[vowData_Association, status_:None] := Module[
 	{rows, ownedThreat},
 	ownedThreat = Lookup[vowData, "Threat", None];
 	rows = {
-		header[vowHeaderTitle[vowData], vowHeaderSubtitle[vowData]],
+		header[vowHeaderTitle[vowData], vowHeaderSubtitle[vowData, status]],
 		vowProgressSummary[vowData]
 	};
 	If[AssociationQ[ownedThreat],
@@ -3076,11 +3133,14 @@ progressTypeTitle[other_] := ToString[other];
 progressTargetHeaderSubtitle[target_Association] :=
 	rankedProgressSubtitle[target["Rank"], progressTypeTitle[target["Type"]]];
 
-displayNamedProgressTargetCard[target_Association] :=
+progressTargetHeaderSubtitle[target_Association, status_] :=
+	displayStatusSubtitle[progressTargetHeaderSubtitle[target], status];
+
+displayNamedProgressTargetCard[target_Association, status_:None] :=
 	ironFramed[
 		Column[
 			{
-				header[target["Name"], progressTargetHeaderSubtitle[target]],
+				header[target["Name"], progressTargetHeaderSubtitle[target, status]],
 				progressTrackGraphic[target["Progress"]]
 			},
 			Spacings -> 0.8,
@@ -3088,16 +3148,16 @@ displayNamedProgressTargetCard[target_Association] :=
 		]
 	];
 
-displayProgressTargetCard[target_Association] := Module[
+displayProgressTargetCard[target_Association, status_:None] := Module[
 	{rows, label, centeredTrackTypes},
-	If[MemberQ[{"Foe", "Journey"}, target["Type"]], Return[displayNamedProgressTargetCard[target]]];
+	If[MemberQ[{"Foe", "Journey"}, target["Type"]], Return[displayNamedProgressTargetCard[target, status]]];
 	label = If[target["Type"] === "Threat", "Menace", "Progress"];
 	centeredTrackTypes = {"Bonds", "Failures"};
 	rows = {
 		If[
 			MemberQ[centeredTrackTypes, target["Type"]],
-			displayBannerGraphic[progressTypeTitle[target["Type"]]],
-			header[progressTypeTitle[target["Type"]], target["Name"]]
+			displayBannerGraphic[displayStatusSubtitle[progressTypeTitle[target["Type"]], status]],
+			header[displayStatusSubtitle[progressTypeTitle[target["Type"]], status], target["Name"]]
 		]
 	};
 	If[target["Type"] === "Threat" && KeyExistsQ[target, "Vow"],
@@ -3115,18 +3175,19 @@ displayProgressTargetCard[target_Association] := Module[
 ];
 
 
-displayProgressObject[type_String, object_Association] :=
+displayProgressObject[type_String, object_Association, status_:None] :=
 	displayProgressTargetCard[
 		Association[
 			"Type" -> type,
 			"Name" -> object["Name"],
 			"Rank" -> object["Rank"],
 			"Progress" -> object["Progress"]
-		]
+		],
+		status
 	];
 
-displayProgressObjectCard[type_String, object_Association] :=
-	Print[displayProgressObject[type, object]];
+displayProgressObjectCard[type_String, object_Association, status_:None] :=
+	Print[displayProgressObject[type, object, status]];
 
 displayProgressObjectCards["Foe", objects_Association] :=
 	displayFoeCards[objects];
@@ -3151,12 +3212,17 @@ bondProgressGraphic[track_Association] :=
 bondProgressGraphic[_] :=
 	Nothing;
 
-displayBondList[names_List, track_:None] :=
+bondListHeader[status_] := Module[{action},
+	action = displayMutationAction[status];
+	If[action === None, "Bonds", StringJoin[action, " Bond"]]
+];
+
+displayBondList[names_List, track_:None, status_:None] :=
 	Print[
 		ironFramed[
 			Column[
 				{
-					displayBannerGraphic["Bonds"],
+					displayBannerGraphic[bondListHeader[status]],
 					moveTextStyle[bondListText[names]],
 					bondProgressGraphic[track]
 				},
@@ -3174,11 +3240,11 @@ displayBondList[names_List, track_:None] :=
 sceneCountdownSummary[countdown_] :=
 	displayLabelValue["Countdown", StringJoin[ToString[countdown], "/4"]];
 
-displaySceneCard[sceneData_Association] :=
+displaySceneCard[sceneData_Association, status_:None] :=
 	ironFramed[
 		Column[
 			{
-				header[sceneData["Name"], rankedProgressSubtitle[sceneData["Rank"], "Scene"]],
+				header[sceneData["Name"], displayStatusSubtitle[rankedProgressSubtitle[sceneData["Rank"], "Scene"], status]],
 				progressTrackGraphic[sceneData["Progress"], CountdownProgress -> sceneData["Countdown"]]
 			},
 			Spacings -> 0.8,
@@ -3186,8 +3252,8 @@ displaySceneCard[sceneData_Association] :=
 		]
 	];
 
-displayScene[sceneData_Association] :=
-	printAndReturn[displaySceneCard[sceneData], sceneData];
+displayScene[sceneData_Association, status_:None] :=
+	printAndReturn[displaySceneCard[sceneData, status], sceneData];
 
 
 
@@ -3227,12 +3293,12 @@ denizenMatrixGrid[denizenList_List] :=
 		Dividers -> {False, {2 -> GrayLevel[0.75]}}
 	];
 
-displayDelveCard[delveData_Association] := Module[
+displayDelveCard[delveData_Association, status_:None] := Module[
 	{rows, objective, denizenList},
 	objective = Lookup[delveData, "Objective", None];
 	denizenList = Lookup[delveData, "Denizens", emptyDenizenSlots[]];
 	rows = {
-		header[delveData["Name"], rankedProgressSubtitle[delveData["Rank"], "Delve"]],
+		header[delveData["Name"], displayStatusSubtitle[rankedProgressSubtitle[delveData["Rank"], "Delve"], status]],
 		subtitleStyle[delveCardSummary[delveData]]
 	};
 	If[objective =!= None,
@@ -3255,8 +3321,8 @@ displayDelveCard[delveData_Association] := Module[
 	]
 ];
 
-displayDelve[delveData_Association] :=
-	printAndReturn[displayDelveCard[delveData], delveData];
+displayDelve[delveData_Association, status_:None] :=
+	printAndReturn[displayDelveCard[delveData, status], delveData];
 
 displayDelves[delves_Association] :=
 	displayDelves[Values[delves]];

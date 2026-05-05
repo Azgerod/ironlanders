@@ -5,7 +5,7 @@
 
 
 (* ::Subtitle:: *)
-(*An implementation of Ironsworn mec\[AliasDelimiter]hanics*)
+(*An implementation of Ironsworn mechanics*)
 
 
 (* ::Chapter:: *)
@@ -55,8 +55,8 @@ beginStory::usage =
 "beginStory[name] starts a new story using name as the story name. Call beginStory[name] before createCharacter to establish the reproducible seed for character creation draws.";
 
 beginChapter::usage =
-"beginChapter[] loads the state for the current chapter, seeds the random number generator, and displays the solo character sheet.
-beginChapter[Display -> False] suppresses the character sheet display.
+"beginChapter[] loads the state for the current chapter, seeds the random number generator, and displays the solo character sheet and owned assets.
+beginChapter[Display -> False] suppresses the character sheet and asset display.
 beginChapter[ArcName -> arc] renames the current chapter as the first chapter of arc after loading its state.";
 
 endChapter::usage =
@@ -72,8 +72,8 @@ setSoloCharacter::usage =
 "setSoloCharacter[character] sets the solo character to character.";
 
 createCharacter::usage =
-"createCharacter[name, {a1, a2, a3}, edge, heart, iron, shadow, wits, vow[...] | {vowName, Extreme | Epic}, {b1, b2, b3}] creates a character, sets it as the solo character, and displays the character sheet. Starting assets may be asset name strings when the card has a printed default selected ability, or asset[...] specs.
-createCharacter[..., Display -> False] suppresses the character sheet display.";
+"createCharacter[name, {a1, a2, a3}, edge, heart, iron, shadow, wits, vow[...] | {vowName, Extreme | Epic}, {b1, b2, b3}] creates a character, sets it as the solo character, and displays the character sheet and starting assets. Starting assets may be asset name strings when the card has a printed default selected ability, or asset[...] specs.
+createCharacter[..., Display -> False] suppresses the character sheet and asset display.";
 
 characterSheet::usage =
 "characterSheet[] displays a Lodestar-style character sheet for the solo character.
@@ -1296,6 +1296,25 @@ displaySoloCharacterSheet[] := Module[{character},
 	If[StringQ[character], characterSheet[character], $Failed]
 ];
 
+displayCharacterAssets[character_String] := Module[{normalizedCharacter, ownedAssets, empty},
+	normalizedCharacter = normalizePublicString[character];
+	ownedAssets = IronLibrary`MechanicsHelpers`getAssets[normalizedCharacter];
+	empty = warnIfEmptyCollection[ownedAssets, {normalizedCharacter}, getAssets];
+	If[ListQ[ownedAssets] && !TrueQ[empty], IronLibrary`DisplayHelpers`displayOwnedAssets[ownedAssets]];
+	ownedAssets
+];
+
+displayCharacterSummary[character_String] := Module[{sheet},
+	sheet = characterSheet[character];
+	If[sheet === $Failed, Return[$Failed]];
+	displayCharacterAssets[character]
+];
+
+displaySoloCharacterSummary[] := Module[{character},
+	character = soloCharacterForDisplay[];
+	If[StringQ[character], displayCharacterSummary[character], $Failed]
+];
+
 stateForFileHelpers[] := Module[{state},
 	state = IronLibrary`MechanicsHelpers`getIronState[];
 	If[AssociationQ[state], state, Automatic]
@@ -1331,8 +1350,6 @@ displayDenizensFromDelve[delveData_] := Module[{denizenList},
 $mechanicsPassThroughAPI = {
 	"setSoloCharacter",
 	"vow",
-	"addVow",
-	"removeVow",
 	"setThreat",
 	"removeThreat",
 	"markWounded",
@@ -1368,16 +1385,8 @@ $mechanicsPassThroughAPI = {
 	"sufferSupply",
 	"takeSupply",
 	"recover",
-	"endJourney",
-	"addFoe",
-	"removeFoe",
-	"addBond",
-	"removeBond",
 	"markExperience",
-	"endScene",
-	"addDelve",
 	"setCurrentDelve",
-	"removeDelve",
 	"setDelveTheme",
 	"setDelveDomain",
 	"setDenizen",
@@ -1639,7 +1648,7 @@ beginChapter[opts : OptionsPattern[]] := Module[{state},
 	state = IronLibrary`FileHelpers`beginChapter @@ withoutDisplayOption[opts];
 	If[AssociationQ[state],
 		IronLibrary`MechanicsHelpers`setIronState[state];
-		If[TrueQ[OptionValue[Display]], displaySoloCharacterSheet[]]
+		If[TrueQ[OptionValue[Display]], displaySoloCharacterSummary[]]
 	];
 	state
 ];
@@ -1688,7 +1697,7 @@ createCharacter[args___] := Module[
 		AssociationQ[characterData] &&
 			StringQ[character] &&
 			displayRequested[True, args],
-		characterSheet[character]
+		displayCharacterSummary[character]
 	];
 	characterData
 ];
@@ -1697,6 +1706,24 @@ createCharacter[args___] := Module[
 (* ::Subsection::Closed:: *)
 (*Displayed mechanical objects*)
 
+
+Options[addVow] = Join[Options[IronLibrary`MechanicsHelpers`addVow], {Display -> True}];
+
+addVow[args___] := Module[{normalizedArgs, ownedVow},
+	normalizedArgs = normalizePublicCallArguments["addVow", withoutDisplayOption[args]];
+	ownedVow = IronLibrary`MechanicsHelpers`addVow @@ normalizedArgs;
+	If[AssociationQ[ownedVow] && displayRequested[True, args], Print[IronLibrary`DisplayHelpers`displayVowCard[ownedVow, "Added"]]];
+	ownedVow
+];
+
+Options[removeVow] = {Display -> True};
+
+removeVow[args___] := Module[{normalizedArgs, ownedVow},
+	normalizedArgs = normalizePublicCallArguments["removeVow", withoutDisplayOption[args]];
+	ownedVow = IronLibrary`MechanicsHelpers`removeVow @@ normalizedArgs;
+	If[AssociationQ[ownedVow] && displayRequested[True, args], Print[IronLibrary`DisplayHelpers`displayVowCard[ownedVow, "Removed"]]];
+	ownedVow
+];
 
 getVow[args___] := Module[{normalizedArgs, ownedVow},
 	normalizedArgs = normalizePublicCallArguments["getVow", {args}];
@@ -1784,10 +1811,12 @@ drawAssets[args___] := Module[{normalizedArgs, names},
 	names
 ];
 
+Options[beginJourney] = {Display -> True};
+
 beginJourney[args___] := Module[{normalizedArgs, ownedJourney},
-	normalizedArgs = normalizePublicCallArguments["beginJourney", {args}];
+	normalizedArgs = normalizePublicCallArguments["beginJourney", withoutDisplayOption[args]];
 	ownedJourney = IronLibrary`MechanicsHelpers`beginJourney @@ normalizedArgs;
-	If[AssociationQ[ownedJourney], IronLibrary`DisplayHelpers`displayProgressObjectCard["Journey", ownedJourney]];
+	If[AssociationQ[ownedJourney] && displayRequested[True, args], IronLibrary`DisplayHelpers`displayProgressObjectCard["Journey", ownedJourney, "Began"]];
 	ownedJourney
 ];
 
@@ -1798,11 +1827,46 @@ getJourney[args___] := Module[{normalizedArgs, ownedJourney},
 	ownedJourney
 ];
 
+Options[endJourney] = {Display -> True};
+
+endJourney[args___] := Module[{normalizedArgs, endedJourney, result},
+	normalizedArgs = normalizePublicCallArguments["endJourney", withoutDisplayOption[args]];
+	endedJourney = IronLibrary`MechanicsHelpers`journey @@ normalizedArgs;
+	If[endedJourney === $Failed, Return[$Failed]];
+	result = IronLibrary`MechanicsHelpers`endJourney @@ normalizedArgs;
+	If[result =!= $Failed && AssociationQ[endedJourney] && displayRequested[True, args],
+		IronLibrary`DisplayHelpers`displayProgressObjectCard["Journey", endedJourney, "Ended"]
+	];
+	result
+];
+
+Options[addFoe] = {Display -> True};
+
+addFoe[args___] := Module[{normalizedArgs, ownedFoe},
+	normalizedArgs = normalizePublicCallArguments["addFoe", withoutDisplayOption[args]];
+	ownedFoe = IronLibrary`MechanicsHelpers`addFoe @@ normalizedArgs;
+	If[AssociationQ[ownedFoe] && displayRequested[True, args], IronLibrary`DisplayHelpers`displayProgressObjectCard["Foe", ownedFoe, "Added"]];
+	ownedFoe
+];
+
 getFoe[args___] := Module[{normalizedArgs, ownedFoe},
 	normalizedArgs = normalizePublicCallArguments["getFoe", {args}];
 	ownedFoe = IronLibrary`MechanicsHelpers`foe @@ normalizedArgs;
 	If[AssociationQ[ownedFoe], IronLibrary`DisplayHelpers`displayProgressObjectCard["Foe", ownedFoe]];
 	ownedFoe
+];
+
+Options[removeFoe] = {Display -> True};
+
+removeFoe[args___] := Module[{normalizedArgs, removedFoe, result},
+	normalizedArgs = normalizePublicCallArguments["removeFoe", withoutDisplayOption[args]];
+	removedFoe = IronLibrary`MechanicsHelpers`foe @@ normalizedArgs;
+	If[removedFoe === $Failed, Return[$Failed]];
+	result = IronLibrary`MechanicsHelpers`removeFoe @@ normalizedArgs;
+	If[result =!= $Failed && AssociationQ[removedFoe] && displayRequested[True, args],
+		IronLibrary`DisplayHelpers`displayProgressObjectCard["Foe", removedFoe, "Removed"]
+	];
+	result
 ];
 
 getFoes[args___] := Module[{normalizedArgs, ownedFoes, empty},
@@ -1820,6 +1884,33 @@ getFailures[args___] := Module[{normalizedArgs, track},
 	track
 ];
 
+bondTrackArguments[normalizedArgs_List] :=
+	If[Length[normalizedArgs] >= 2, {normalizedArgs[[2]]}, {}];
+
+Options[addBond] = {Display -> True};
+
+addBond[args___] := Module[{normalizedArgs, ownedBonds, track},
+	normalizedArgs = normalizePublicCallArguments["addBond", withoutDisplayOption[args]];
+	ownedBonds = IronLibrary`MechanicsHelpers`addBond @@ normalizedArgs;
+	If[ListQ[ownedBonds] && displayRequested[True, args],
+		track = IronLibrary`MechanicsHelpers`bondProgress @@ bondTrackArguments[normalizedArgs];
+		IronLibrary`DisplayHelpers`displayBondList[ownedBonds, track, "Added"]
+	];
+	ownedBonds
+];
+
+Options[removeBond] = {Display -> True};
+
+removeBond[args___] := Module[{normalizedArgs, ownedBonds, track},
+	normalizedArgs = normalizePublicCallArguments["removeBond", withoutDisplayOption[args]];
+	ownedBonds = IronLibrary`MechanicsHelpers`removeBond @@ normalizedArgs;
+	If[ListQ[ownedBonds] && displayRequested[True, args],
+		track = IronLibrary`MechanicsHelpers`bondProgress @@ bondTrackArguments[normalizedArgs];
+		IronLibrary`DisplayHelpers`displayBondList[ownedBonds, track, "Removed"]
+	];
+	ownedBonds
+];
+
 getBonds[args___] := Module[{normalizedArgs, ownedBonds, track},
 	normalizedArgs = normalizePublicCallArguments["getBonds", {args}];
 	ownedBonds = IronLibrary`MechanicsHelpers`bonds @@ normalizedArgs;
@@ -1831,10 +1922,12 @@ getBonds[args___] := Module[{normalizedArgs, ownedBonds, track},
 	ownedBonds
 ];
 
+Options[beginScene] = {Display -> True};
+
 beginScene[args___] := Module[{normalizedArgs, sceneData},
-	normalizedArgs = normalizePublicCallArguments["beginScene", {args}];
+	normalizedArgs = normalizePublicCallArguments["beginScene", withoutDisplayOption[args]];
 	sceneData = IronLibrary`MechanicsHelpers`beginScene @@ normalizedArgs;
-	If[AssociationQ[sceneData], IronLibrary`DisplayHelpers`displayScene[sceneData]];
+	If[AssociationQ[sceneData] && displayRequested[True, args], IronLibrary`DisplayHelpers`displayScene[sceneData, "Began"]];
 	sceneData
 ];
 
@@ -1842,6 +1935,15 @@ getScene[args___] := Module[{normalizedArgs, sceneData},
 	normalizedArgs = normalizePublicCallArguments["getScene", {args}];
 	sceneData = IronLibrary`MechanicsHelpers`scene @@ normalizedArgs;
 	If[AssociationQ[sceneData], IronLibrary`DisplayHelpers`displayScene[sceneData]];
+	sceneData
+];
+
+Options[endScene] = {Display -> True};
+
+endScene[args___] := Module[{normalizedArgs, sceneData},
+	normalizedArgs = normalizePublicCallArguments["endScene", withoutDisplayOption[args]];
+	sceneData = IronLibrary`MechanicsHelpers`endScene @@ normalizedArgs;
+	If[AssociationQ[sceneData] && displayRequested[True, args], IronLibrary`DisplayHelpers`displayScene[sceneData, "Ended"]];
 	sceneData
 ];
 
@@ -1876,11 +1978,33 @@ markSceneCountdown[args___] :=
 		normalizePublicCallArguments["markSceneCountdown", {args}]
 	];
 
+Options[addDelve] = Join[Options[IronLibrary`MechanicsHelpers`addDelve], {Display -> True}];
+
+addDelve[args___] := Module[{normalizedArgs, ownedDelve},
+	normalizedArgs = normalizePublicCallArguments["addDelve", withoutDisplayOption[args]];
+	ownedDelve = IronLibrary`MechanicsHelpers`addDelve @@ normalizedArgs;
+	If[AssociationQ[ownedDelve] && displayRequested[True, args], IronLibrary`DisplayHelpers`displayDelve[ownedDelve, "Added"]];
+	ownedDelve
+];
+
 getDelve[args___] := Module[{normalizedArgs, ownedDelve},
 	normalizedArgs = normalizePublicCallArguments["getDelve", {args}];
 	ownedDelve = IronLibrary`MechanicsHelpers`delve @@ normalizedArgs;
 	If[AssociationQ[ownedDelve], IronLibrary`DisplayHelpers`displayDelve[ownedDelve]];
 	ownedDelve
+];
+
+Options[removeDelve] = {Display -> True};
+
+removeDelve[args___] := Module[{normalizedArgs, removedDelve, result},
+	normalizedArgs = normalizePublicCallArguments["removeDelve", withoutDisplayOption[args]];
+	removedDelve = IronLibrary`MechanicsHelpers`delve @@ normalizedArgs;
+	If[removedDelve === $Failed, Return[$Failed]];
+	result = IronLibrary`MechanicsHelpers`removeDelve @@ normalizedArgs;
+	If[result =!= $Failed && AssociationQ[removedDelve] && displayRequested[True, args],
+		IronLibrary`DisplayHelpers`displayDelve[removedDelve, "Removed"]
+	];
+	result
 ];
 
 getDelves[args___] := Module[{normalizedArgs, ownedDelves, empty},
