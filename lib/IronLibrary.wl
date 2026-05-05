@@ -1216,7 +1216,7 @@ normalizePublicArgument[rule : (_Rule | _RuleDelayed)] :=
 
 normalizePublicArgument[association_Association] :=
 	Association @ KeyValueMap[
-		normalizePublicArgument[#1] -> normalizePublicArgument[#2] &,
+		#1 -> normalizePublicArgument[#2] &,
 		association
 	];
 
