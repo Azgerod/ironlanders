@@ -48,11 +48,8 @@ BeginPackage["IronLibrary`"];
 
 
 (* ::Subsection::Closed:: *)
-(*State management*)
+(*Story/chapter management*)
 
-
-resetIronSession::usage =
-"resetIronSession[] clears the current in-memory IronLibrary state and solo character.";
 
 beginStory::usage =
 "beginStory[name] starts a new story using name as the story name. Call beginStory[name] before createCharacter to establish the reproducible seed for character creation draws.";
@@ -116,11 +113,6 @@ removeThreat::usage =
 "removeThreat[vowName] removes the threat attached to vowName for the solo character.
 removeThreat[vowName, character] removes the threat attached to vowName for character.";
 
-clearThreatProgress::usage =
-"clearThreatProgress[vowName] clears the menace progress for the threat attached to vowName for the solo character.
-clearThreatProgress[vowName, character] clears the menace progress for the threat attached to vowName for character.";
-
-
 (* ::Subsection::Closed:: *)
 (*Debility management*)
 
@@ -181,16 +173,43 @@ clearTormented::usage =
 "clearTormented[] clears Tormented for the solo character.
 clearTormented[character] clears Tormented for character.";
 
+markOathbreaker::usage =
+"markOathbreaker[] marks Oathbreaker for the solo character.
+markOathbreaker[character] marks Oathbreaker for character.";
+
+clearOathbreaker::usage =
+"clearOathbreaker[] clears Oathbreaker for the solo character.
+clearOathbreaker[character] clears Oathbreaker for character.";
+
 
 (* ::Subsection::Closed:: *)
 (*Asset management*)
 
 
+IronLibrary`Expertise::usage =
+"Expertise is an asset field symbol for field rules.";
+
+IronLibrary`GodsName::usage =
+"GodsName is an asset field symbol for the printed \"God's Name\" field.";
+
+IronLibrary`Stat::usage =
+"Stat is an asset field symbol for field rules.";
+
+IronLibrary`TitleLineage::usage =
+"TitleLineage is an asset field symbol for the printed \"Title/Lineage\" field.";
+
+IronLibrary`Specialty::usage =
+"Specialty is an asset field symbol for field rules.";
+
+IronLibrary`Equipped::usage =
+"Equipped is an asset field symbol for field rules.";
+
 asset::usage =
 "asset[name] creates a quiet starting asset spec using the asset's printed default selected abilities.
 asset[name, ability] creates a quiet starting asset spec with the selected ability index.
 asset[name, {ability1, ability2, ...}] creates a quiet starting asset spec with multiple selected abilities.
-asset[name, abilityOrAbilities, fields] includes custom field values such as <|\"Name\" -> \"Asha\"|>.";
+asset[name, field -> value, ...] creates a quiet starting asset spec with custom field values such as Name -> \"Asha\".
+asset[name, abilityOrAbilities, field -> value, ...] includes custom field values with selected abilities.";
 
 getAsset::usage =
 "getAsset[name] displays the owned asset named name for the solo character, or the default reference card if the solo character does not own it.
@@ -210,9 +229,12 @@ drawAssets[n] displays n random reference asset cards.
 drawAssets[n, category] draws from category, one of \"Path\", \"Companion\", \"Combat Talent\", or \"Ritual\".";
 
 addAsset::usage =
-"addAsset[assetSpec] spends 5 experience to add an asset to the solo character and displays the updated card.
-addAsset[assetSpec, character] spends 5 experience to add an asset to character.
-assetSpec may be an asset name string with printed default selected abilities, or an asset[...] spec.
+"addAsset[name] spends 5 experience to add an asset to the solo character using the asset's printed default selected abilities and displays the updated card.
+addAsset[name, ability] spends 5 experience to add an asset with the selected ability index.
+addAsset[name, {ability1, ability2, ...}] spends 5 experience to add an asset with multiple selected abilities.
+addAsset[name, field -> value, ...] spends 5 experience to add an asset with custom field values such as Name -> \"Asha\".
+addAsset[name, abilityOrAbilities, field -> value, ...] includes custom field values with selected abilities.
+Any addAsset form may include character before options.
 addAsset[..., Display -> False] suppresses display.";
 
 upgradeAsset::usage =
@@ -221,12 +243,12 @@ upgradeAsset[name, ability, character] spends 3 experience to mark ability on an
 upgradeAsset[..., Display -> False] suppresses display.";
 
 setAssetTrack::usage =
-"setAssetTrack[assetName, trackName, value] sets an owned asset track for the solo character, clamped to the printed track range.
-setAssetTrack[assetName, trackName, value, character] sets an owned asset track for character.";
+"setAssetTrack[assetName, value] sets an owned asset's track for the solo character, clamped to the printed track range.
+setAssetTrack[assetName, value, character] sets an owned asset's track for character.";
 
 adjustAssetTrack::usage =
-"adjustAssetTrack[assetName, trackName, delta] adjusts an owned asset track for the solo character, clamped to the printed track range.
-adjustAssetTrack[assetName, trackName, delta, character] adjusts an owned asset track for character.";
+"adjustAssetTrack[assetName, delta] adjusts an owned asset's track for the solo character, clamped to the printed track range.
+adjustAssetTrack[assetName, delta, character] adjusts an owned asset's track for character.";
 
 setIroncladArmor::usage =
 "setIroncladArmor[choice] chooses Unequipped, Lightly armored, or Geared for war for the solo character's Ironclad asset and displays the updated card.
@@ -238,23 +260,6 @@ removeAsset::usage =
 "removeAsset[name] removes an owned asset from the solo character without awarding experience.
 removeAsset[name, character] removes an owned asset from character without awarding experience.
 removeAsset[..., Display -> False] suppresses display.";
-
-getCompanion::usage =
-"getCompanion[name] displays the owned companion asset named name for the solo character.
-getCompanion[name, character] displays the owned companion asset named name for character.";
-
-getCompanions::usage =
-"getCompanions[] displays all owned companion assets for the solo character.
-getCompanions[character] displays all owned companion assets for character.";
-
-setCompanionHealth::usage =
-"setCompanionHealth[name, value] sets an owned companion's health track for the solo character.
-setCompanionHealth[name, value, character] sets an owned companion's health track for character.";
-
-adjustCompanionHealth::usage =
-"adjustCompanionHealth[name, delta] adjusts an owned companion's health track for the solo character.
-adjustCompanionHealth[name, delta, character] adjusts an owned companion's health track for character.";
-
 
 (* ::Subsection::Closed:: *)
 (*Action roll*)
@@ -271,6 +276,11 @@ actionRoll[stat, character] makes an action roll using stat for character.";
 
 burnMomentum::usage =
 "burnMomentum[roll] burns momentum for roll and returns the modified roll result.";
+
+
+(* ::Subsection::Closed:: *)
+(*Rarity die six conversion*)
+
 
 rarityDieSix::usage =
 "rarityDieSix[roll] displays a Rarity Die conversion to a strong hit and returns a copy of the action roll with a strong hit result.";
@@ -312,7 +322,7 @@ Typical usage is moveFunction[]; choose[%, n], or getAsset[name]; choose[%, n]."
 
 
 (* ::Subsection::Closed:: *)
-(*Marking progress*)
+(*Progress track management*)
 
 
 markProgress::usage =
@@ -336,6 +346,11 @@ raiseProgressRank::usage =
 "raiseProgressRank[track] raises track rank by one step for the solo character.
 raiseProgressRank[track, character] raises track rank by one step for character.";
 
+
+(* ::Subsection::Closed:: *)
+(*Journey management*)
+
+
 addJourney::usage =
 "addJourney[name, rank] adds a journey progress track for the solo character.
 addJourney[name, rank, character] adds a journey progress track for character.";
@@ -357,6 +372,11 @@ removeJourney::usage =
 "removeJourney[name] removes the named journey from the solo character.
 removeJourney[name, character] removes the named journey from character.";
 
+
+(* ::Subsection::Closed:: *)
+(*Foe management*)
+
+
 addFoe::usage =
 "addFoe[name, rank] adds a foe progress track for the solo character.
 addFoe[name, rank, character] adds a foe progress track for character.";
@@ -373,50 +393,50 @@ removeFoe::usage =
 "removeFoe[name] removes the named foe from the solo character.
 removeFoe[name, character] removes the named foe from character.";
 
+
+(* ::Subsection::Closed:: *)
+(*Failure display*)
+
+
 getFailures::usage =
 "getFailures[] displays the failure progress track for the solo character.
 getFailures[character] displays the failure progress track for character.";
 
-getBondProgress::usage =
-"getBondProgress[] displays the bonds progress track for the solo character.
-getBondProgress[character] displays the bonds progress track for character.";
-
-
 (* ::Subsection::Closed:: *)
-(*Suffering and taking*)
+(*Resource management*)
 
 
 sufferMomentum::usage =
-"sufferMomentum[n] adjusts the solo character's momentum by n.
-sufferMomentum[n, character] adjusts character's momentum by n.";
+"sufferMomentum[n] adjusts the solo character's momentum by negative integer n.
+sufferMomentum[n, character] adjusts character's momentum by negative integer n.";
 
 takeMomentum::usage =
-"takeMomentum[n] adjusts the solo character's momentum by n.
-takeMomentum[n, character] adjusts character's momentum by n.";
+"takeMomentum[n] adjusts the solo character's momentum by positive integer n.
+takeMomentum[n, character] adjusts character's momentum by positive integer n.";
 
 sufferHealth::usage =
-"sufferHealth[n] adjusts the solo character's health by n.
-sufferHealth[n, character] adjusts character's health by n.";
+"sufferHealth[n] adjusts the solo character's health by negative integer n.
+sufferHealth[n, character] adjusts character's health by negative integer n.";
 
 takeHealth::usage =
-"takeHealth[n] adjusts the solo character's health by n.
-takeHealth[n, character] adjusts character's health by n.";
+"takeHealth[n] adjusts the solo character's health by positive integer n.
+takeHealth[n, character] adjusts character's health by positive integer n.";
 
 sufferSpirit::usage =
-"sufferSpirit[n] adjusts the solo character's spirit by n.
-sufferSpirit[n, character] adjusts character's spirit by n.";
+"sufferSpirit[n] adjusts the solo character's spirit by negative integer n.
+sufferSpirit[n, character] adjusts character's spirit by negative integer n.";
 
 takeSpirit::usage =
-"takeSpirit[n] adjusts the solo character's spirit by n.
-takeSpirit[n, character] adjusts character's spirit by n.";
+"takeSpirit[n] adjusts the solo character's spirit by positive integer n.
+takeSpirit[n, character] adjusts character's spirit by positive integer n.";
 
 sufferSupply::usage =
-"sufferSupply[n] adjusts the solo character's supply by n.
-sufferSupply[n, character] adjusts character's supply by n.";
+"sufferSupply[n] adjusts the solo character's supply by negative integer n.
+sufferSupply[n, character] adjusts character's supply by negative integer n.";
 
 takeSupply::usage =
-"takeSupply[n] adjusts the solo character's supply by n.
-takeSupply[n, character] adjusts character's supply by n.";
+"takeSupply[n] adjusts the solo character's supply by positive integer n.
+takeSupply[n, character] adjusts character's supply by positive integer n.";
 
 recover::usage =
 "recover[] applies the Take a Hiatus recovery package to the solo character without advancing threats.
@@ -835,7 +855,7 @@ Supply::usage =
 
 
 Name::usage =
-"Name is a public symbol reserved by IronLibrary.";
+"Name is a public symbol reserved by IronLibrary and the asset field symbol for Name fields.";
 
 Edge::usage =
 "Edge is one of the five Ironsworn stats.";
@@ -862,7 +882,7 @@ Bonds::usage =
 "Bonds is a public symbol reserved by IronLibrary.";
 
 Adds::usage =
-"Adds is an option for actionRoll that specifies an association of named bonuses.";
+"Adds is an option for actionRoll that specifies a list of named bonus rules.";
 
 ArcName::usage =
 "ArcName is an option for beginChapter that specifies the arc name to use for the current chapter.";
@@ -908,6 +928,9 @@ Cursed::usage =
 Tormented::usage =
 "Tormented is a debility.";
 
+Oathbreaker::usage =
+"Oathbreaker is a burden debility.";
+
 
 (* ::Subsection::Closed:: *)
 (*Rank symbols*)
@@ -946,7 +969,7 @@ SmallerChallengeDie::usage =
 "SmallerChallengeDie specifies the smaller challenge die for reroll. If the challenge dice are tied, the first challenge die is selected.";
 
 
-(* ::Section:: *)
+(* ::Section::Closed:: *)
 (*Private implementation*)
 
 
@@ -993,7 +1016,16 @@ installHelperWrapper[helperContext_String, name_String] := Module[{publicName, h
 	helperName = StringJoin[helperContext, name];
 	ToExpression[StringJoin["Clear[", publicName, "]"]];
 	ToExpression[StringJoin["Options[", publicName, "] = Options[", helperName, "]"]];
-	ToExpression[StringJoin[publicName, "[args___] := ", helperName, "[args]"]]
+	ToExpression[
+		StringJoin[
+			publicName,
+			"[args___] := Apply[",
+			helperName,
+			", IronLibrary`Private`normalizePublicCallArguments[\"",
+			name,
+			"\", {args}]]"
+		]
+	]
 ];
 
 installHelperWrappers[helperContext_String, names_List] :=
@@ -1009,6 +1041,240 @@ displayRequested[default_, args___] :=
 
 withoutDisplayOption[args___] :=
 	DeleteCases[{args}, (Display -> _) | (Display :> _), {1}];
+
+publicStringMatchKey[s_String] :=
+	ToLowerCase[StringTrim[s]];
+
+publicStringCandidateRules[candidates_List] :=
+	DeleteDuplicatesBy[
+		Rule[publicStringMatchKey[#], #] & /@
+			Select[Cases[Flatten[candidates], _String], StringLength[StringTrim[#]] > 0 &],
+		First
+	];
+
+publicNormalExpression[association_Association] :=
+	KeyValueMap[
+		publicNormalExpression[#1] -> publicNormalExpression[#2] &,
+		association
+	];
+
+publicNormalExpression[list_List] :=
+	publicNormalExpression /@ list;
+
+publicNormalExpression[other_] :=
+	other;
+
+publicStateStringCandidates[] := Module[
+	{state, characters, data, candidates = {}, collections, currentKeys},
+	state = IronLibrary`MechanicsHelpers`getIronState[];
+	If[!AssociationQ[state], Return[{}]];
+	characters = stateCharacterNames[state];
+	collections = {"vows", "journeys", "foes", "delves"};
+	currentKeys = {"currentJourney", "currentDelve"};
+	Do[
+		data = state[character];
+		candidates = Join[
+			candidates,
+			{character},
+			Flatten[
+				Keys[Lookup[data, #, <||>]] & /@ collections
+			],
+			Lookup[Lookup[data, "assets", {}], "Name", {}],
+			Lookup[data, currentKeys, {}],
+			Cases[
+				publicNormalExpression[data],
+				Rule["Name", value_String] :> value,
+				Infinity
+			],
+			Cases[Lookup[data, "bonds", {}], value_String :> value, Infinity],
+			{"Failures", "Bonds"}
+		],
+		{character, characters}
+	];
+	DeleteDuplicates @ Cases[Flatten[candidates], _String]
+];
+
+publicAssetStringCandidates[] := Module[
+	{records, fieldAssocs, trackAssocs, fields, tracks, selectorValues},
+	records = Values[AssetData`assetData];
+	fieldAssocs = Lookup[records, "Fields", <||>];
+	trackAssocs = Lookup[records, "Tracks", <||>];
+	fields = Flatten[Values /@ fieldAssocs];
+	tracks = Flatten[Values /@ trackAssocs];
+	selectorValues = Cases[
+		Normal[records],
+		Rule["Value", value_String] :> value,
+		Infinity
+	];
+	DeleteDuplicates @ Cases[
+		Flatten @ {
+			Keys[AssetData`assetData],
+			Lookup[records, "Name", {}],
+			Lookup[records, "Category", {}],
+			Keys /@ fieldAssocs,
+			Lookup[fields, "Label", {}],
+			Keys /@ trackAssocs,
+			Lookup[tracks, "Key", {}],
+			selectorValues,
+			Lookup[fields, "Key", {}],
+			Lookup[tracks, "Label", {}]
+		},
+		_String
+	]
+];
+
+publicOracleStringCandidates[] := Module[{},
+	DeleteDuplicates @ Cases[
+		Flatten @ {
+			Keys[OracleTables`oracles],
+			{
+				"Yes/No",
+				"Reveal a Danger",
+				"Delve Site Feature",
+				"Delve Site Name",
+				"Settlement: Name",
+				"Settlement: Quick Name",
+				"Core: Prompt",
+				"Character",
+				"Settlement",
+				"Combat Scene",
+				"Journey Waypoint",
+				"Monstrosity",
+				"Trap",
+				"Combat Event",
+				"Threat",
+				"Settled",
+				"Settled Lands",
+				"Boundary",
+				"Boundary Lands",
+				"Remote",
+				"Remote Lands",
+				"Overland",
+				"Coastal Waters"
+			},
+			If[
+				KeyExistsQ[OracleTables`oracles, "Threat: Category"],
+				Values[OracleTables`oracles["Threat: Category"]],
+				{}
+			],
+			If[
+				ValueQ[OracleTables`Private`yesNoOddsValues],
+				Keys[OracleTables`Private`yesNoOddsValues],
+				{}
+			],
+			If[
+				ValueQ[OracleTables`Private`featureBaseTables],
+				Keys[OracleTables`Private`featureBaseTables],
+				{}
+			],
+			If[
+				ValueQ[OracleTables`Private`dangerBaseTables],
+				Keys[OracleTables`Private`dangerBaseTables],
+				{}
+			]
+		},
+		_String
+	]
+];
+
+publicLiteralStringCandidates[] := {
+	"Unequipped",
+	"Lightly armored",
+	"Geared for war",
+	"Health",
+	"Spirit",
+	"Supply",
+	"Momentum",
+	"Failures",
+	"Bonds"
+};
+
+$publicStringCandidateSources = {
+	publicStateStringCandidates,
+	publicAssetStringCandidates,
+	publicOracleStringCandidates,
+	publicLiteralStringCandidates
+};
+
+publicStringCandidates[] :=
+	DeleteDuplicates @ Cases[
+		Flatten[Quiet[Check[#[], {}]] & /@ $publicStringCandidateSources],
+		_String
+	];
+
+publicStringCandidateMap[] :=
+	Association[publicStringCandidateRules[publicStringCandidates[]]];
+
+normalizePublicString[s_String] :=
+	Lookup[publicStringCandidateMap[], publicStringMatchKey[s], s];
+
+normalizePublicArgument[s_String] :=
+	normalizePublicString[s];
+
+normalizePublicArgument[rule : (_Rule | _RuleDelayed)] :=
+	rule;
+
+normalizePublicArgument[association_Association] :=
+	Association @ KeyValueMap[
+		normalizePublicArgument[#1] -> normalizePublicArgument[#2] &,
+		association
+	];
+
+normalizePublicArgument[list_List] :=
+	normalizePublicArgument /@ list;
+
+normalizePublicArgument[other_] :=
+	other;
+
+$publicStringNormalizationPreservePaths = <|
+	"beginStory" -> {{1}},
+	"createCharacter" -> {{1}, {9}},
+	"vow" -> {{1}},
+	"addVow" -> {{1}},
+	"setThreat" -> {{2}},
+	"addJourney" -> {{1}},
+	"addFoe" -> {{1}},
+	"addBond" -> {{1}},
+	"beginScene" -> {{1}},
+	"addRarity" -> {{2}}
+|>;
+
+publicPreservedArgumentPaths["addDelve", args_List] :=
+	Join[
+		{{1}},
+		If[Length[args] >= 5 && ListQ[args[[5]]], {{5}}, {}]
+	];
+
+publicPreservedArgumentPaths["setDenizen", args_List] :=
+	Which[
+		Length[args] >= 2 && IntegerQ[First[args]], {{2}},
+		Length[args] >= 3, {{3}},
+		True, {}
+	];
+
+publicPreservedArgumentPaths[name_String, _List] :=
+	Lookup[$publicStringNormalizationPreservePaths, name, {}];
+
+validPartPathQ[expr_, path_List] :=
+	Quiet[Check[Extract[expr, path]; True, False]];
+
+restorePreservedArgumentPaths[original_List, normalized_List, paths_List] :=
+	Fold[
+		If[
+			validPartPathQ[original, #2],
+			ReplacePart[#1, #2 -> Extract[original, #2]],
+			#1
+		] &,
+		normalized,
+		paths
+	];
+
+normalizePublicCallArguments[name_String, args_List] :=
+	restorePreservedArgumentPaths[
+		args,
+		normalizePublicArgument /@ args,
+		publicPreservedArgumentPaths[name, args]
+	];
 
 characterStateQ[data_] :=
 	AssociationQ[data] &&
@@ -1046,17 +1312,6 @@ installStateFromFileResult[result_] := Module[{state},
 	KeyDrop[result, "State"]
 ];
 
-firstStringArg[args___] :=
-	FirstCase[{args}, s_String :> s, Missing["NoString"], {1}];
-
-companionForDisplay[name_String, args___] := Module[{character},
-	character = firstStringArg[args];
-	If[StringQ[character],
-		IronLibrary`MechanicsHelpers`companion[name, character],
-		IronLibrary`MechanicsHelpers`companion[name]
-	]
-];
-
 displayDelveRiskZone[delveData_] := Module[{zone},
 	If[!AssociationQ[delveData], Return[$Failed]];
 	zone = IronLibrary`MechanicsHelpers`riskZoneData[delveData];
@@ -1084,7 +1339,6 @@ $mechanicsPassThroughAPI = {
 	"removeVow",
 	"setThreat",
 	"removeThreat",
-	"clearThreatProgress",
 	"markWounded",
 	"clearWounded",
 	"markShaken",
@@ -1099,6 +1353,8 @@ $mechanicsPassThroughAPI = {
 	"clearCursed",
 	"markTormented",
 	"clearTormented",
+	"markOathbreaker",
+	"clearOathbreaker",
 	"asset",
 	"setAssetTrack",
 	"adjustAssetTrack",
@@ -1270,24 +1526,31 @@ learnFromYourFailures::threshold = "learnFromYourFailures[roll] requires the Fai
 (*State and file lifecycle*)
 
 
-resetIronSession[] :=
+resetLifecycleState[] :=
 	IronLibrary`MechanicsHelpers`resetIronSession[];
 
-beginStory[] :=
-	IronLibrary`FileHelpers`beginStory[];
+beginStory[] := (
+	resetLifecycleState[];
+	IronLibrary`FileHelpers`beginStory[]
+);
 
-beginStory[name_String] :=
+beginStory[name_String] := (
+	resetLifecycleState[];
 	installStateFromFileResult[
 		IronLibrary`FileHelpers`beginStory[name, stateForFileHelpers[]]
-	];
+	]
+);
 
-beginStory[name_] :=
-	IronLibrary`FileHelpers`beginStory[name];
+beginStory[name_] := (
+	resetLifecycleState[];
+	IronLibrary`FileHelpers`beginStory[name]
+);
 
 Options[beginChapter] =
 	Join[Options[IronLibrary`FileHelpers`beginChapter], {Display -> True}];
 
 beginChapter[opts : OptionsPattern[]] := Module[{state},
+	resetLifecycleState[];
 	state = IronLibrary`FileHelpers`beginChapter @@ withoutDisplayOption[opts];
 	If[AssociationQ[state],
 		IronLibrary`MechanicsHelpers`setIronState[state];
@@ -1322,17 +1585,18 @@ characterSheet[] := Module[{character},
 	characterSheet[character]
 ];
 
-characterSheet[character_String] := Module[{characterData},
-	characterData = IronLibrary`MechanicsHelpers`normalizeCharacterForSheet[character];
+characterSheet[character_String] := Module[{normalizedCharacter, characterData},
+	normalizedCharacter = normalizePublicString[character];
+	characterData = IronLibrary`MechanicsHelpers`normalizeCharacterForSheet[normalizedCharacter];
 	If[characterData === $Failed, Return[$Failed]];
-	IronLibrary`DisplayHelpers`displayCharacterSheet[character, characterData]
+	IronLibrary`DisplayHelpers`displayCharacterSheet[normalizedCharacter, characterData]
 ];
 
 Options[createCharacter] = {Display -> True};
 
 createCharacter[args___] := Module[
 	{characterArgs, characterData, character},
-	characterArgs = withoutDisplayOption[args];
+	characterArgs = normalizePublicCallArguments["createCharacter", withoutDisplayOption[args]];
 	characterData = IronLibrary`MechanicsHelpers`createCharacter @@ characterArgs;
 	character = If[Length[characterArgs] > 0, First[characterArgs], None];
 	If[
@@ -1349,27 +1613,30 @@ createCharacter[args___] := Module[
 (*Displayed mechanical objects*)
 
 
-getVow[args___] := Module[{ownedVow},
-	ownedVow = IronLibrary`MechanicsHelpers`getVow[args];
+getVow[args___] := Module[{normalizedArgs, ownedVow},
+	normalizedArgs = normalizePublicCallArguments["getVow", {args}];
+	ownedVow = IronLibrary`MechanicsHelpers`getVow @@ normalizedArgs;
 	If[AssociationQ[ownedVow], Print[IronLibrary`DisplayHelpers`displayVowCard[ownedVow]]];
 	ownedVow
 ];
 
-getVows[args___] := Module[{ownedVows},
-	ownedVows = IronLibrary`MechanicsHelpers`getVows[args];
+getVows[args___] := Module[{normalizedArgs, ownedVows},
+	normalizedArgs = normalizePublicCallArguments["getVows", {args}];
+	ownedVows = IronLibrary`MechanicsHelpers`getVows @@ normalizedArgs;
 	If[AssociationQ[ownedVows], IronLibrary`DisplayHelpers`displayVowCards[ownedVows]];
 	ownedVows
 ];
 
 getAsset[name_String] := Module[
-	{character, ownedAssets, ownedAsset},
+	{normalizedName, character, ownedAssets, ownedAsset},
+	normalizedName = normalizePublicString[name];
 	character = soloCharacterForDisplay[];
 	If[StringQ[character],
 		ownedAssets = IronLibrary`MechanicsHelpers`getAssets[character];
 		If[ListQ[ownedAssets],
 			ownedAsset = FirstCase[
 				ownedAssets,
-				asset_Association /; Lookup[asset, "Name", ""] === name :> asset,
+				asset_Association /; Lookup[asset, "Name", ""] === normalizedName :> asset,
 				None
 			];
 			If[AssociationQ[ownedAsset],
@@ -1377,118 +1644,114 @@ getAsset[name_String] := Module[
 			]
 		]
 	];
-	IronLibrary`DisplayHelpers`displayAssetReference[name]
+	IronLibrary`DisplayHelpers`displayAssetReference[normalizedName]
 ];
 
-getAsset[name_String, character_] := Module[{ownedAsset},
-	ownedAsset = IronLibrary`MechanicsHelpers`getAsset[name, character];
+getAsset[name_String, character_] := Module[{normalizedArgs, ownedAsset},
+	normalizedArgs = normalizePublicCallArguments["getAsset", {name, character}];
+	ownedAsset = IronLibrary`MechanicsHelpers`getAsset @@ normalizedArgs;
 	If[AssociationQ[ownedAsset],
-		IronLibrary`DisplayHelpers`displayAssetCard[ownedAsset, character],
+		IronLibrary`DisplayHelpers`displayAssetCard[ownedAsset, Last[normalizedArgs]],
 		ownedAsset
 	]
 ];
 
-getAsset[args___] := Module[{ownedAsset},
-	ownedAsset = IronLibrary`MechanicsHelpers`getAsset[args];
+getAsset[args___] := Module[{normalizedArgs, ownedAsset},
+	normalizedArgs = normalizePublicCallArguments["getAsset", {args}];
+	ownedAsset = IronLibrary`MechanicsHelpers`getAsset @@ normalizedArgs;
 	If[AssociationQ[ownedAsset],
 		IronLibrary`DisplayHelpers`displayAssetCard[ownedAsset],
 		ownedAsset
 	]
 ];
 
-getAssetAbility[name_String, ability_Integer] := Module[{ownedAsset},
-	ownedAsset = IronLibrary`MechanicsHelpers`getAsset[name];
+getAssetAbility[name_String, ability_Integer] := Module[{normalizedName, ownedAsset},
+	normalizedName = normalizePublicString[name];
+	ownedAsset = IronLibrary`MechanicsHelpers`getAsset[normalizedName];
 	If[AssociationQ[ownedAsset],
 		IronLibrary`DisplayHelpers`displayAssetAbility[ownedAsset, ability],
 		ownedAsset
 	]
 ];
 
-getAssetAbility[name_String, ability_Integer, character_] := Module[{ownedAsset},
-	ownedAsset = IronLibrary`MechanicsHelpers`getAsset[name, character];
+getAssetAbility[name_String, ability_Integer, character_] := Module[{normalizedArgs, ownedAsset},
+	normalizedArgs = normalizePublicCallArguments["getAssetAbility", {name, ability, character}];
+	ownedAsset = IronLibrary`MechanicsHelpers`getAsset[First[normalizedArgs], Last[normalizedArgs]];
 	If[AssociationQ[ownedAsset],
 		IronLibrary`DisplayHelpers`displayAssetAbility[ownedAsset, ability],
 		ownedAsset
 	]
 ];
 
-getAssets[args___] := Module[{ownedAssets},
-	ownedAssets = IronLibrary`MechanicsHelpers`getAssets[args];
+getAssets[args___] := Module[{normalizedArgs, ownedAssets},
+	normalizedArgs = normalizePublicCallArguments["getAssets", {args}];
+	ownedAssets = IronLibrary`MechanicsHelpers`getAssets @@ normalizedArgs;
 	If[ListQ[ownedAssets], IronLibrary`DisplayHelpers`displayOwnedAssets[ownedAssets]];
 	ownedAssets
 ];
 
-drawAssets[args___] := Module[{names},
-	names = IronLibrary`MechanicsHelpers`drawAssets[args];
+drawAssets[args___] := Module[{normalizedArgs, names},
+	normalizedArgs = normalizePublicCallArguments["drawAssets", {args}];
+	names = IronLibrary`MechanicsHelpers`drawAssets @@ normalizedArgs;
 	If[ListQ[names], IronLibrary`DisplayHelpers`displayAssetReferences[names]];
 	names
 ];
 
-getCompanion[args___] := Module[{ownedCompanion},
-	ownedCompanion = IronLibrary`MechanicsHelpers`companion[args];
-	If[AssociationQ[ownedCompanion], IronLibrary`DisplayHelpers`displayAssetCard[ownedCompanion]];
-	ownedCompanion
-];
-
-getCompanions[args___] := Module[{ownedCompanions},
-	ownedCompanions = IronLibrary`MechanicsHelpers`companions[args];
-	If[ListQ[ownedCompanions], IronLibrary`DisplayHelpers`displayOwnedAssets[ownedCompanions]];
-	ownedCompanions
-];
-
-getJourney[args___] := Module[{ownedJourney},
-	ownedJourney = IronLibrary`MechanicsHelpers`journey[args];
+getJourney[args___] := Module[{normalizedArgs, ownedJourney},
+	normalizedArgs = normalizePublicCallArguments["getJourney", {args}];
+	ownedJourney = IronLibrary`MechanicsHelpers`journey @@ normalizedArgs;
 	If[AssociationQ[ownedJourney], IronLibrary`DisplayHelpers`displayProgressObjectCard["Journey", ownedJourney]];
 	ownedJourney
 ];
 
-getJourneys[args___] := Module[{ownedJourneys},
-	ownedJourneys = IronLibrary`MechanicsHelpers`journeys[args];
+getJourneys[args___] := Module[{normalizedArgs, ownedJourneys},
+	normalizedArgs = normalizePublicCallArguments["getJourneys", {args}];
+	ownedJourneys = IronLibrary`MechanicsHelpers`journeys @@ normalizedArgs;
 	If[AssociationQ[ownedJourneys], IronLibrary`DisplayHelpers`displayProgressObjectCards["Journey", ownedJourneys]];
 	ownedJourneys
 ];
 
-getFoe[args___] := Module[{ownedFoe},
-	ownedFoe = IronLibrary`MechanicsHelpers`foe[args];
+getFoe[args___] := Module[{normalizedArgs, ownedFoe},
+	normalizedArgs = normalizePublicCallArguments["getFoe", {args}];
+	ownedFoe = IronLibrary`MechanicsHelpers`foe @@ normalizedArgs;
 	If[AssociationQ[ownedFoe], IronLibrary`DisplayHelpers`displayProgressObjectCard["Foe", ownedFoe]];
 	ownedFoe
 ];
 
-getFoes[args___] := Module[{ownedFoes},
-	ownedFoes = IronLibrary`MechanicsHelpers`foes[args];
+getFoes[args___] := Module[{normalizedArgs, ownedFoes},
+	normalizedArgs = normalizePublicCallArguments["getFoes", {args}];
+	ownedFoes = IronLibrary`MechanicsHelpers`foes @@ normalizedArgs;
 	If[AssociationQ[ownedFoes], IronLibrary`DisplayHelpers`displayProgressObjectCards["Foe", ownedFoes]];
 	ownedFoes
 ];
 
-getFailures[args___] := Module[{track},
-	track = IronLibrary`MechanicsHelpers`failures[args];
+getFailures[args___] := Module[{normalizedArgs, track},
+	normalizedArgs = normalizePublicCallArguments["getFailures", {args}];
+	track = IronLibrary`MechanicsHelpers`failures @@ normalizedArgs;
 	If[AssociationQ[track], IronLibrary`DisplayHelpers`displayProgressObjectCard["Failures", track]];
 	track
 ];
 
-getBondProgress[args___] := Module[{track},
-	track = IronLibrary`MechanicsHelpers`bondProgress[args];
-	If[AssociationQ[track], IronLibrary`DisplayHelpers`displayProgressObjectCard["Bonds", track]];
-	track
-];
-
-getBonds[args___] := Module[{ownedBonds, track},
-	ownedBonds = IronLibrary`MechanicsHelpers`bonds[args];
+getBonds[args___] := Module[{normalizedArgs, ownedBonds, track},
+	normalizedArgs = normalizePublicCallArguments["getBonds", {args}];
+	ownedBonds = IronLibrary`MechanicsHelpers`bonds @@ normalizedArgs;
 	If[ListQ[ownedBonds],
-		track = IronLibrary`MechanicsHelpers`bondProgress[args];
+		track = IronLibrary`MechanicsHelpers`bondProgress @@ normalizedArgs;
 		IronLibrary`DisplayHelpers`displayBondList[ownedBonds, track]
 	];
 	ownedBonds
 ];
 
-beginScene[args___] := Module[{sceneData},
-	sceneData = IronLibrary`MechanicsHelpers`beginScene[args];
+beginScene[args___] := Module[{normalizedArgs, sceneData},
+	normalizedArgs = normalizePublicCallArguments["beginScene", {args}];
+	sceneData = IronLibrary`MechanicsHelpers`beginScene @@ normalizedArgs;
 	If[AssociationQ[sceneData], IronLibrary`DisplayHelpers`displayScene[sceneData]];
 	sceneData
 ];
 
-getScene[args___] := Module[{sceneData},
-	sceneData = IronLibrary`MechanicsHelpers`scene[args];
+getScene[args___] := Module[{normalizedArgs, sceneData},
+	normalizedArgs = normalizePublicCallArguments["getScene", {args}];
+	sceneData = IronLibrary`MechanicsHelpers`scene @@ normalizedArgs;
 	If[AssociationQ[sceneData], IronLibrary`DisplayHelpers`displayScene[sceneData]];
 	sceneData
 ];
@@ -1509,25 +1772,31 @@ markSceneCountdown[n_Integer?NonNegative] := Module[{result, sceneData},
 	result
 ];
 
-markSceneCountdown[n_Integer?NonNegative, character_] := Module[{result, sceneData},
-	result = IronLibrary`MechanicsHelpers`markSceneCountdown[n, character];
+markSceneCountdown[n_Integer?NonNegative, character_] := Module[{normalizedArgs, result, sceneData},
+	normalizedArgs = normalizePublicCallArguments["markSceneCountdown", {n, character}];
+	result = IronLibrary`MechanicsHelpers`markSceneCountdown @@ normalizedArgs;
 	If[result === $Failed, Return[$Failed]];
-	sceneData = IronLibrary`MechanicsHelpers`scene[character];
+	sceneData = IronLibrary`MechanicsHelpers`scene[Last[normalizedArgs]];
 	If[AssociationQ[sceneData], IronLibrary`DisplayHelpers`displayScene[sceneData]];
 	result
 ];
 
 markSceneCountdown[args___] :=
-	IronLibrary`MechanicsHelpers`markSceneCountdown[args];
+	Apply[
+		IronLibrary`MechanicsHelpers`markSceneCountdown,
+		normalizePublicCallArguments["markSceneCountdown", {args}]
+	];
 
-getDelve[args___] := Module[{ownedDelve},
-	ownedDelve = IronLibrary`MechanicsHelpers`delve[args];
+getDelve[args___] := Module[{normalizedArgs, ownedDelve},
+	normalizedArgs = normalizePublicCallArguments["getDelve", {args}];
+	ownedDelve = IronLibrary`MechanicsHelpers`delve @@ normalizedArgs;
 	If[AssociationQ[ownedDelve], IronLibrary`DisplayHelpers`displayDelve[ownedDelve]];
 	ownedDelve
 ];
 
-getDelves[args___] := Module[{ownedDelves},
-	ownedDelves = IronLibrary`MechanicsHelpers`delves[args];
+getDelves[args___] := Module[{normalizedArgs, ownedDelves},
+	normalizedArgs = normalizePublicCallArguments["getDelves", {args}];
+	ownedDelves = IronLibrary`MechanicsHelpers`delves @@ normalizedArgs;
 	If[AssociationQ[ownedDelves], IronLibrary`DisplayHelpers`displayDelves[ownedDelves]];
 	ownedDelves
 ];
@@ -1536,13 +1805,16 @@ getRiskZone[] :=
 	displayDelveRiskZone[IronLibrary`MechanicsHelpers`currentDelveData[]];
 
 getRiskZone[delveName_String] :=
-	displayDelveRiskZone[IronLibrary`MechanicsHelpers`delve[delveName]];
+	displayDelveRiskZone[IronLibrary`MechanicsHelpers`delve[normalizePublicString[delveName]]];
 
-getRiskZone[delveName_String, character_] :=
-	displayDelveRiskZone[IronLibrary`MechanicsHelpers`delve[delveName, character]];
+getRiskZone[delveName_String, character_] := Module[{normalizedArgs},
+	normalizedArgs = normalizePublicCallArguments["getRiskZone", {delveName, character}];
+	displayDelveRiskZone[IronLibrary`MechanicsHelpers`delve @@ normalizedArgs]
+];
 
-returnToSite[args___] := Module[{roll},
-	roll = IronLibrary`MechanicsHelpers`returnToSite[args];
+returnToSite[args___] := Module[{normalizedArgs, roll},
+	normalizedArgs = normalizePublicCallArguments["returnToSite", {args}];
+	roll = IronLibrary`MechanicsHelpers`returnToSite @@ normalizedArgs;
 	If[AssociationQ[roll], IronLibrary`DisplayHelpers`displayReturnToSiteRoll[roll]];
 	roll
 ];
@@ -1551,13 +1823,16 @@ getDenizens[] :=
 	displayDenizensFromDelve[IronLibrary`MechanicsHelpers`currentDelveData[]];
 
 getDenizens[delveName_String] :=
-	displayDenizensFromDelve[IronLibrary`MechanicsHelpers`delve[delveName]];
+	displayDenizensFromDelve[IronLibrary`MechanicsHelpers`delve[normalizePublicString[delveName]]];
 
-getDenizens[delveName_String, character_] :=
-	displayDenizensFromDelve[IronLibrary`MechanicsHelpers`delve[delveName, character]];
+getDenizens[delveName_String, character_] := Module[{normalizedArgs},
+	normalizedArgs = normalizePublicCallArguments["getDenizens", {delveName, character}];
+	displayDenizensFromDelve[IronLibrary`MechanicsHelpers`delve @@ normalizedArgs]
+];
 
-rollDenizen[args___] := Module[{roll},
-	roll = IronLibrary`MechanicsHelpers`rollDenizen[args];
+rollDenizen[args___] := Module[{normalizedArgs, roll},
+	normalizedArgs = normalizePublicCallArguments["rollDenizen", {args}];
+	roll = IronLibrary`MechanicsHelpers`rollDenizen @@ normalizedArgs;
 	If[AssociationQ[roll], IronLibrary`DisplayHelpers`displayDenizenRoll[roll["delveName"], roll]];
 	roll
 ];
@@ -1569,110 +1844,99 @@ rollDenizen[args___] := Module[{roll},
 
 Options[addAsset] = {Display -> True};
 
-addAsset[args___] := Module[{ownedAsset},
-	ownedAsset = IronLibrary`MechanicsHelpers`addAsset[args];
+addAsset[args___] := Module[{normalizedArgs, ownedAsset},
+	normalizedArgs = normalizePublicCallArguments["addAsset", withoutDisplayOption[args]];
+	ownedAsset = IronLibrary`MechanicsHelpers`addAsset @@ normalizedArgs;
 	If[AssociationQ[ownedAsset] && displayRequested[True, args], IronLibrary`DisplayHelpers`displayAssetCard[ownedAsset, "Added Asset"]];
 	ownedAsset
 ];
 
 Options[upgradeAsset] = {Display -> True};
 
-upgradeAsset[args___] := Module[{ownedAsset},
-	ownedAsset = IronLibrary`MechanicsHelpers`upgradeAsset[args];
+upgradeAsset[args___] := Module[{normalizedArgs, ownedAsset},
+	normalizedArgs = normalizePublicCallArguments["upgradeAsset", {args}];
+	ownedAsset = IronLibrary`MechanicsHelpers`upgradeAsset @@ normalizedArgs;
 	If[AssociationQ[ownedAsset] && displayRequested[True, args], IronLibrary`DisplayHelpers`displayAssetCard[ownedAsset, "Upgraded Asset"]];
 	ownedAsset
 ];
 
 Options[setIroncladArmor] = {Display -> True};
 
-setIroncladArmor[choice_, args___] := Module[{ownedAsset},
-	ownedAsset = IronLibrary`MechanicsHelpers`setIroncladArmor[choice, args];
+setIroncladArmor[choice_, args___] := Module[{normalizedArgs, ownedAsset},
+	normalizedArgs = normalizePublicCallArguments["setIroncladArmor", {choice, args}];
+	ownedAsset = IronLibrary`MechanicsHelpers`setIroncladArmor @@ normalizedArgs;
 	If[AssociationQ[ownedAsset] && displayRequested[True, args], IronLibrary`DisplayHelpers`displayAssetCard[ownedAsset, "Ironclad Armor"]];
 	ownedAsset
 ];
 
 Options[removeAsset] = {Display -> True};
 
-removeAsset[args___] := Module[{ownedAsset},
-	ownedAsset = IronLibrary`MechanicsHelpers`removeAsset[args];
+removeAsset[args___] := Module[{normalizedArgs, ownedAsset},
+	normalizedArgs = normalizePublicCallArguments["removeAsset", {args}];
+	ownedAsset = IronLibrary`MechanicsHelpers`removeAsset @@ normalizedArgs;
 	If[AssociationQ[ownedAsset] && displayRequested[True, args], IronLibrary`DisplayHelpers`displayAssetCard[ownedAsset, "Removed Asset"]];
 	ownedAsset
 ];
 
-Options[setCompanionHealth] = {Display -> True};
-
-setCompanionHealth[name_String, value_Integer, args___] := Module[{result, ownedCompanion},
-	result = IronLibrary`MechanicsHelpers`setCompanionHealth[name, value, args];
-	If[result =!= $Failed && displayRequested[True, args],
-		ownedCompanion = companionForDisplay[name, args];
-		If[AssociationQ[ownedCompanion], IronLibrary`DisplayHelpers`displayAssetCard[ownedCompanion, "Companion Health"]]
-	];
-	result
-];
-
-Options[adjustCompanionHealth] = {Display -> True};
-
-adjustCompanionHealth[name_String, delta_Integer, args___] := Module[{result, ownedCompanion},
-	result = IronLibrary`MechanicsHelpers`adjustCompanionHealth[name, delta, args];
-	If[result =!= $Failed && displayRequested[True, args],
-		ownedCompanion = companionForDisplay[name, args];
-		If[AssociationQ[ownedCompanion], IronLibrary`DisplayHelpers`displayAssetCard[ownedCompanion, "Companion Health"]]
-	];
-	result
-];
-
 Options[addRarity] = {Display -> True};
 
-addRarity[args___] := Module[{ownedAsset},
-	ownedAsset = IronLibrary`MechanicsHelpers`addRarity[args];
+addRarity[args___] := Module[{normalizedArgs, ownedAsset},
+	normalizedArgs = normalizePublicCallArguments["addRarity", {args}];
+	ownedAsset = IronLibrary`MechanicsHelpers`addRarity @@ normalizedArgs;
 	If[AssociationQ[ownedAsset] && displayRequested[True, args], IronLibrary`DisplayHelpers`displayAssetCard[ownedAsset, "Added Rarity"]];
 	ownedAsset
 ];
 
 Options[removeRarity] = {Display -> True};
 
-removeRarity[args___] := Module[{ownedAsset},
-	ownedAsset = IronLibrary`MechanicsHelpers`removeRarity[args];
+removeRarity[args___] := Module[{normalizedArgs, ownedAsset},
+	normalizedArgs = normalizePublicCallArguments["removeRarity", {args}];
+	ownedAsset = IronLibrary`MechanicsHelpers`removeRarity @@ normalizedArgs;
 	If[AssociationQ[ownedAsset] && displayRequested[True, args], IronLibrary`DisplayHelpers`displayAssetCard[ownedAsset, "Removed Rarity"]];
 	ownedAsset
 ];
 
-Options[actionRoll] = {Adds -> Association[], Display -> True};
+Options[actionRoll] = {Adds -> {}, Display -> True};
 
-actionRoll[args___] := Module[{roll},
-	roll = IronLibrary`MechanicsHelpers`actionRoll[args];
+actionRoll[args___] := Module[{normalizedArgs, roll},
+	normalizedArgs = normalizePublicCallArguments["actionRoll", {args}];
+	roll = IronLibrary`MechanicsHelpers`actionRoll @@ normalizedArgs;
 	If[AssociationQ[roll] && displayRequested[True, args], IronLibrary`DisplayHelpers`displayActionRoll[roll]];
 	roll
 ];
 
 Options[burnMomentum] = {Display -> True};
 
-burnMomentum[args___] := Module[{burn},
-	burn = IronLibrary`MechanicsHelpers`burnMomentum[args];
+burnMomentum[args___] := Module[{normalizedArgs, burn},
+	normalizedArgs = normalizePublicCallArguments["burnMomentum", {args}];
+	burn = IronLibrary`MechanicsHelpers`burnMomentum @@ normalizedArgs;
 	If[AssociationQ[burn] && displayRequested[True, args], IronLibrary`DisplayHelpers`displayMomentumBurn[burn]];
 	burn
 ];
 
 Options[rarityDieSix] = {Display -> True};
 
-rarityDieSix[args___] := Module[{roll},
-	roll = IronLibrary`MechanicsHelpers`rarityDieSix[args];
+rarityDieSix[args___] := Module[{normalizedArgs, roll},
+	normalizedArgs = normalizePublicCallArguments["rarityDieSix", {args}];
+	roll = IronLibrary`MechanicsHelpers`rarityDieSix @@ normalizedArgs;
 	If[AssociationQ[roll] && displayRequested[True, args], IronLibrary`DisplayHelpers`displayRarityDieSix[roll]];
 	roll
 ];
 
 Options[progressRoll] = {Display -> True};
 
-progressRoll[args___] := Module[{roll},
-	roll = IronLibrary`MechanicsHelpers`progressRoll[args];
+progressRoll[args___] := Module[{normalizedArgs, roll},
+	normalizedArgs = normalizePublicCallArguments["progressRoll", {args}];
+	roll = IronLibrary`MechanicsHelpers`progressRoll @@ normalizedArgs;
 	If[AssociationQ[roll] && displayRequested[True, args], IronLibrary`DisplayHelpers`displayProgressRoll[roll]];
 	roll
 ];
 
 Options[reroll] = {Display -> True};
 
-reroll[args___] := Module[{roll},
-	roll = IronLibrary`MechanicsHelpers`reroll[args];
+reroll[args___] := Module[{normalizedArgs, roll},
+	normalizedArgs = normalizePublicCallArguments["reroll", {args}];
+	roll = IronLibrary`MechanicsHelpers`reroll @@ normalizedArgs;
 	If[AssociationQ[roll] && displayRequested[True, args], IronLibrary`DisplayHelpers`displayReroll[roll]];
 	roll
 ];
@@ -1682,28 +1946,27 @@ reroll[args___] := Module[{roll},
 (*Oracle composition*)
 
 
-askTheOracle["Reveal a Danger"] := Module[{ownedDelve},
-	ownedDelve = IronLibrary`MechanicsHelpers`currentDelveDataQuiet[];
-	If[AssociationQ[ownedDelve],
-		IronLibrary`DisplayHelpers`displayOracleQuery["Reveal a Danger", ownedDelve],
-		IronLibrary`DisplayHelpers`displayOracleQuery["Reveal a Danger"]
+askTheOracle[args___] := Module[{normalizedArgs, ownedDelve},
+	normalizedArgs = normalizePublicCallArguments["askTheOracle", {args}];
+	Which[
+		normalizedArgs === {"Reveal a Danger"},
+			ownedDelve = IronLibrary`MechanicsHelpers`currentDelveDataQuiet[];
+			If[AssociationQ[ownedDelve],
+				IronLibrary`DisplayHelpers`displayOracleQuery["Reveal a Danger", ownedDelve],
+				IronLibrary`DisplayHelpers`displayOracleQuery["Reveal a Danger"]
+			],
+		normalizedArgs === {"Delve Site Feature"},
+			ownedDelve = IronLibrary`MechanicsHelpers`currentDelveData[];
+			If[ownedDelve === $Failed, Return[$Failed]];
+			IronLibrary`DisplayHelpers`displayOracleQuery["Delve Site Feature", ownedDelve],
+		normalizedArgs === {"Delve Site Name"},
+			ownedDelve = IronLibrary`MechanicsHelpers`currentDelveData[];
+			If[ownedDelve === $Failed, Return[$Failed]];
+			IronLibrary`DisplayHelpers`displayOracleQuery["Delve Site Name", ownedDelve],
+		True,
+			Apply[IronLibrary`DisplayHelpers`displayOracleQuery, normalizedArgs]
 	]
 ];
-
-askTheOracle["Delve Site Feature"] := Module[{ownedDelve},
-	ownedDelve = IronLibrary`MechanicsHelpers`currentDelveData[];
-	If[ownedDelve === $Failed, Return[$Failed]];
-	IronLibrary`DisplayHelpers`displayOracleQuery["Delve Site Feature", ownedDelve]
-];
-
-askTheOracle["Delve Site Name"] := Module[{ownedDelve},
-	ownedDelve = IronLibrary`MechanicsHelpers`currentDelveData[];
-	If[ownedDelve === $Failed, Return[$Failed]];
-	IronLibrary`DisplayHelpers`displayOracleQuery["Delve Site Name", ownedDelve]
-];
-
-askTheOracle[args___] :=
-	IronLibrary`DisplayHelpers`displayOracleQuery[args];
 
 
 (* ::Subsection::Closed:: *)

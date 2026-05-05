@@ -399,7 +399,7 @@ scoreCircle[score_Integer /; 1 <= score <= 10] := Module[{circle},
 rollColumnEntry[value_, sortGroup_, image_] :=
 	{value, sortGroup, image};
 
-rollColumn[actionScore_, challengeDice_List, challengeDiceCancelled_:Automatic] := Module[
+rollColumn[actionScore_, challengeDice_List, challengeDiceCancelled_:Automatic, alignment_:Center] := Module[
 	{cancelled, entries},
 	cancelled = Replace[
 		challengeDiceCancelled,
@@ -412,7 +412,10 @@ rollColumn[actionScore_, challengeDice_List, challengeDiceCancelled_:Automatic] 
 			{challengeDice, cancelled}
 		]
 	];
-	Column[Last /@ ReverseSortBy[entries, {#1[[1]], #1[[2]]} &]]
+	Column[
+		Last /@ ReverseSortBy[entries, {#1[[1]], #1[[2]]} &],
+		Alignment -> alignment
+	]
 ];
 
 rollFrameStyle := Directive[
@@ -420,14 +423,14 @@ rollFrameStyle := Directive[
 	AbsoluteThickness[scaled[4]]
 ];
 
-mathCoreWidth := scaled[200];
+mathCoreWidth := scaled[160];
 mathOperatorWidth := scaled[24];
 mathValueWidth := scaled[60];
 mathOpValueGap := scaled[6];
 mathReasonGap := scaled[0];
 mathDieAddGap := scaled[0];
 mathReasonYOffset := scaled[-0.4];
-mathDieXOffset := scaled[34];
+mathDieXOffset := 0;
 
 mathOperator[x_] := mainStyle[x];
 mathValue[x_] := mainStyle[x];
@@ -446,13 +449,13 @@ mathCore[op_, value_] :=
 	Pane[
 		Row[
 			{
-				Pane[mathOperator[op], {mathOperatorWidth, Automatic}, Alignment -> Center],
+				Pane[mathOperator[op], {mathOperatorWidth, Automatic}, Alignment -> Left],
 				Pane[mathValue[value], {mathValueWidth, Automatic}, Alignment -> Left]
 			},
 			Spacer[mathOpValueGap]
 		],
 		{mathCoreWidth, Automatic},
-		Alignment -> Center
+		Alignment -> Left
 	];
 
 mathTermRow[op_, value_, source_] := {mathCore[op, value], mathLabel[source]};
@@ -464,17 +467,17 @@ mathDieRow[actionDie_Integer, actionDieCancelled_, momentum_] :=
 		Pane[
 			offsetX[d6Image[actionDie, Cancelled -> actionDieCancelled], mathDieXOffset],
 			{mathCoreWidth, Automatic},
-			Alignment -> Center
+			Alignment -> Left
 		],
 		If[actionDieCancelled, mathLabel[StringJoin["Momentum ", ToString[momentum]]], Spacer[0]]
 	};
 
-mathColumn[actionDie_Integer, statValue_Integer, adds_Association, actionScore_Integer, actionDieCancelled_, momentum_] := Module[
+mathColumn[actionDie_Integer, statValue_Integer, adds_Association, actionScore_Integer, actionDieCancelled_, momentum_, statReason_] := Module[
 	{termRows, rows, dividerPosition, blankRow, dieGapRow},
 	blankRow = {Spacer[{0, 4}], Spacer[{0, 4}]};
 	dieGapRow = {Spacer[{0, mathDieAddGap}], Spacer[{0, mathDieAddGap}]};
 	termRows = Join[
-		{mathTermRow["+", statValue, "Stat"]},
+		{mathTermRow["+", statValue, statReason]},
 		KeyValueMap[mathTermRow["+", #2, #1] &, adds]
 	];
 	rows = Join[
@@ -485,7 +488,7 @@ mathColumn[actionDie_Integer, statValue_Integer, adds_Association, actionScore_I
 	dividerPosition = 2 + Length[termRows] + 2;
 	Grid[
 		rows,
-		Alignment -> {{Center, Left}},
+		Alignment -> {{Left, Left}},
 		Spacings -> {mathReasonGap, 0.6},
 		Dividers -> {False, {dividerPosition -> rollFrameStyle}}
 	]
@@ -564,20 +567,24 @@ actionRollCard[title_String, subtitle_String, roll_Association] :=
 			{
 				{Item[header[title, subtitle], Alignment -> Left], SpanFromLeft},
 				{
-					mathColumn[
-						roll["actionDie"],
-						roll["statValue"],
-						roll["adds"],
-						roll["actionScore"],
-						roll["actionDieCancelled"],
-						roll["momentum"]
+					Item[
+						mathColumn[
+							roll["actionDie"],
+							roll["statValue"],
+							roll["adds"],
+							roll["actionScore"],
+							roll["actionDieCancelled"],
+							roll["momentum"],
+							Capitalize[symbolNameLower[roll["stat"]]]
+						],
+						Alignment -> Left
 					],
-					rollColumn[roll["actionScore"], roll["challengeDice"]]
+					Item[rollColumn[roll["actionScore"], roll["challengeDice"], Automatic, Right], Alignment -> Right]
 				},
 				{Item[actionRollResultDisplay[roll["result"], roll["match"]], Alignment -> Center], SpanFromLeft}
 			},
 			Dividers -> {None, {False, False, False, False}},
-			Alignment -> {{Left, Center, Center}, {Top, Top, Bottom}},
+			Alignment -> {{Left, Right}, {Top, Top, Bottom}},
 			Spacings -> {2, {Automatic, rollHeaderBodyGap, rollBodyResultGap}},
 			FrameStyle -> None
 		]
@@ -1215,7 +1222,7 @@ sheetCharacterTextFitScale[] :=
 
 sheetDebilityGroups[] := {
 	"Conditions" -> {Wounded, Shaken, Unprepared, Encumbered},
-	"Burdens" -> {Cursed, Tormented},
+	"Burdens" -> {Cursed, Tormented, Oathbreaker},
 	"Banes" -> {Maimed, Corrupted}
 };
 
@@ -1815,14 +1822,14 @@ assetMarkerFieldRow[label_String, value_, contentWidth_:assetCardWidth] :=
 		contentWidth
 	];
 
-assetNameBoxGraphic[value_, placeholder_:"Name"] := Module[
+assetNameBoxGraphic[value_, placeholder_:"Name", boxWidth_:assetCardWidth] := Module[
 	{text, textColor, inset, height, frameThickness, contentWidth, contentHeight},
 	text = If[assetBlankValueQ[value], placeholder, ToString[value]];
 	textColor = If[assetBlankValueQ[value], sheetHintInk, sheetInk];
 	inset = scaled[$assetNameBoxInset];
 	height = scaled[$assetNameBoxHeight];
 	frameThickness = displayTrackFrameThickness;
-	contentWidth = Max[1, assetCardWidth - 2 inset - 2 frameThickness];
+	contentWidth = Max[1, boxWidth - 2 inset - 2 frameThickness];
 	contentHeight = Max[1, height - 2 frameThickness];
 	Framed[
 		Pane[
@@ -1834,6 +1841,38 @@ assetNameBoxGraphic[value_, placeholder_:"Name"] := Module[
 		FrameMargins -> {{inset, inset}, {0, 0}},
 		RoundingRadius -> 0,
 		Background -> White
+	]
+];
+
+assetTitleNameGap :=
+	scaled[12];
+
+assetNameFieldKey[record_Association] :=
+	FirstCase[
+		Normal[Lookup[record, "Fields", <||>]],
+		Rule[key_, fieldDef_Association] /; assetFieldDisplayedQ[fieldDef] && assetNameFieldQ[fieldDef] :> key,
+		None
+	];
+
+assetTitleRow[record_Association, fields_Association, contentWidth_:assetCardWidth] := Module[
+	{nameKey, nameWidth, titleWidth},
+	nameKey = assetNameFieldKey[record];
+	If[nameKey === None,
+		Return[assetContentPane[titleStyle[record["Name"]], contentWidth]]
+	];
+	nameWidth = contentWidth/2;
+	titleWidth = Max[1, contentWidth - nameWidth - assetTitleNameGap];
+	assetContentPane[
+		Grid[
+			{{
+				Pane[titleStyle[record["Name"]], {titleWidth, Automatic}, Alignment -> {Left, Center}],
+				Spacer[{assetTitleNameGap, 0}],
+				Item[assetNameBoxGraphic[Lookup[fields, nameKey, ""], "Name", nameWidth], Alignment -> {Right, Center}]
+			}},
+			Alignment -> {{Left, Left, Right}, {Center}},
+			Spacings -> {0, 0}
+		],
+		contentWidth
 	]
 ];
 
@@ -1857,7 +1896,7 @@ assetFieldRow[fieldKey_String, fieldDef_Association, fields_Association, content
 
 assetFieldRows[record_Association, fields_Association, contentWidth_:assetCardWidth] :=
 	KeyValueMap[
-		assetFieldRow[#1, #2, fields, contentWidth] &,
+		If[assetNameFieldQ[#2], Nothing, assetFieldRow[#1, #2, fields, contentWidth]] &,
 		Lookup[record, "Fields", <||>]
 	];
 
@@ -2343,7 +2382,7 @@ assetSideTrackPane[sideTrack_Association] :=
 	Pane[
 		sideTrack["Graphic"],
 		{sideTrack["Width"] + Lookup[sideTrack, "Outset", 0], sideTrack["Height"]},
-		Alignment -> {Left, Center}
+		Alignment -> {Left, Top}
 	];
 
 assetTextAndTrackColumns[textRows_List, sideTrack_Association, textWidth_] :=
@@ -2352,7 +2391,7 @@ assetTextAndTrackColumns[textRows_List, sideTrack_Association, textWidth_] :=
 			{{
 				Pane[Column[textRows, Spacings -> 0.8, Alignment -> Left], {textWidth, Automatic}, Alignment -> Left],
 				Spacer[{scaled[$assetHealthTrackGap], 0}],
-				Item[assetSideTrackPane[sideTrack], Alignment -> {Left, Center}]
+				Item[assetSideTrackPane[sideTrack], Alignment -> {Left, Top}]
 			}},
 			Alignment -> {{Left, Left, Left}, {Top}},
 			Spacings -> {0, 0}
@@ -2420,7 +2459,7 @@ assetCardExpression[record_Association, selectedAbilities_List, fields_Associati
 			Join[
 				{
 					assetCardHeader[record, status],
-					assetContentPane[titleStyle[record["Name"]]]
+					assetTitleRow[record, fields]
 				},
 				rarityRows,
 				fieldRows,
@@ -2470,7 +2509,7 @@ assetAbilityCardExpression[owned_Association, ability_Integer, status_:Automatic
 		Column[
 			{
 				assetCardHeader[record, statusText],
-				assetContentPane[titleStyle[record["Name"]]],
+				assetTitleRow[record, fields],
 				row
 			},
 			Spacings -> 0.8,
@@ -2893,6 +2932,20 @@ vowHeaderTitle[vowData_Association] :=
 vowHeaderSubtitle[vowData_Association] :=
 	vowData["Name"];
 
+vowThreatLabel[_Association] :=
+	"THREAT: ";
+
+vowThreatText[threat_Association] :=
+	StringJoin[threat["Name"], " (", threat["Goal"], ")"];
+
+vowThreatRow[threat_Association] :=
+	Row[
+		{
+			displayText[vowThreatLabel[threat], $displaySansFont, 18, Bold],
+			moveTextStyle[vowThreatText[threat]]
+		}
+	];
+
 displayVowCard[vowData_Association] := Module[
 	{rows, ownedThreat},
 	ownedThreat = Lookup[vowData, "Threat", None];
@@ -2903,27 +2956,7 @@ displayVowCard[vowData_Association] := Module[
 	If[AssociationQ[ownedThreat],
 		rows = Join[
 			rows,
-			{
-				Row[
-					{
-						displayText[
-							"Threat: ",
-							$displaySerifFont,
-							18,
-							Bold
-						],
-						moveTextStyle[
-							StringJoin[
-								ownedThreat["Name"],
-								" (",
-								ToLowerCase[ToString[ownedThreat["Menace", "rank"]]],
-								"): ",
-								ownedThreat["Goal"]
-							]
-						]
-					}
-				]
-			}
+			{vowThreatRow[ownedThreat]}
 		]
 	];
 	ironFramed[Column[rows, Spacings -> 0.8, Alignment -> Left]]

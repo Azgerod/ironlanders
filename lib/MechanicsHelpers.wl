@@ -52,6 +52,8 @@ markCursed::usage = "markCursed is part of the internal MechanicsHelpers API use
 clearCursed::usage = "clearCursed is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
 markTormented::usage = "markTormented is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
 clearTormented::usage = "clearTormented is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
+markOathbreaker::usage = "markOathbreaker is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
+clearOathbreaker::usage = "clearOathbreaker is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
 asset::usage = "asset is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
 getAsset::usage = "getAsset is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
 getAssets::usage = "getAssets is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
@@ -170,7 +172,7 @@ symString[symbol_] := ToLowerCase[SymbolName[symbol]];
 
 stats = {Edge, Heart, Iron, Shadow, Wits, Health, Spirit, Supply};
 ranks = {Troublesome, Dangerous, Formidable, Extreme, Epic};
-debilities = {Wounded, Shaken, Unprepared, Encumbered, Maimed, Corrupted, Cursed, Tormented};
+debilities = {Wounded, Shaken, Unprepared, Encumbered, Maimed, Corrupted, Cursed, Tormented, Oathbreaker};
 permanentDebilities = {Maimed, Corrupted};
 recoverableConditions = {Wounded, Shaken, Unprepared, Encumbered};
 delveThemes = {"Ancient", "Corrupted", "Fortified", "Hallowed", "Haunted", "Infested", "Ravaged", "Wild"};
@@ -384,6 +386,19 @@ actionDieAfterMomentumCancel[actionDie_Integer, momentum_Integer] :=
 actionScoreFromParts[actionValue_Integer, statValue_Integer, adds_Association] :=
 	Min[actionValue + Total[Values[adds]] + statValue, 10];
 
+actionAddsQ[adds_List] :=
+	AllTrue[adds, MatchQ[#, _Rule] && IntegerQ[#[[2]]] &];
+
+actionAddsQ[_] := False;
+
+normalizeActionAdds[adds_List] /; actionAddsQ[adds] :=
+	Association[adds];
+
+normalizeActionAdds[adds_] := (
+	Message[actionRoll::badadds, adds];
+	$Failed
+);
+
 rollOracleDice = rollChallengeDice;
 
 
@@ -559,24 +574,61 @@ normalizeAbilitySelection[_, record_Association] := (
 	$Failed
 );
 
-normalizeAssetFields[fields_Association, record_Association] := Module[
-	{keys, invalid, blankFields},
+assetFieldRulesQ[fields_List] := MatchQ[fields, {___Rule}];
+assetFieldRulesQ[_] := False;
+
+assetFieldSymbolRuleQ[Rule[_Symbol, _]] := True;
+assetFieldSymbolRuleQ[_] := False;
+
+assetFieldAssociation[fields_Association] := fields;
+assetFieldAssociation[fields_List] /; assetFieldRulesQ[fields] :=
+	If[AllTrue[fields, assetFieldSymbolRuleQ],
+		Association[fields],
+		$Failed
+	];
+assetFieldAssociation[_] := $Failed;
+
+SetAttributes[assetFieldKeyName, HoldFirst];
+assetFieldKeyName[key_Symbol] := SymbolName[Unevaluated[key]];
+assetFieldKeyName[key_String] := key;
+assetFieldKeyName[key_] := ToString[Unevaluated[key]];
+
+assetFieldKeyToken[key_] :=
+	ToLowerCase[
+		StringReplace[
+			StringTrim[assetFieldKeyName[key]],
+			RegularExpression["[^A-Za-z0-9]"] -> ""
+		]
+	];
+
+canonicalAssetFieldKey[key_, keys_List] := Module[
+	{matches},
+	matches = Select[keys, assetFieldKeyToken[#] === assetFieldKeyToken[key] &];
+	If[matches === {}, Missing["UnknownField", key], First[matches]]
+];
+
+normalizeAssetFieldKeys[fields_Association, keys_List] :=
+	Association @ KeyValueMap[canonicalAssetFieldKey[#1, keys] -> #2 &, fields];
+
+normalizeAssetFields[fieldSpec_, record_Association] := Module[
+	{fields, keys, normalizedFields, invalid, blankFields},
 	keys = assetFieldKeys[record];
-	invalid = Complement[Keys[fields], keys];
+	fields = assetFieldAssociation[fieldSpec];
+	If[fields === $Failed,
+		Message[asset::badfields, record["Name"]];
+		Return[$Failed]
+	];
+	normalizedFields = normalizeAssetFieldKeys[fields, keys];
+	invalid = Cases[Keys[normalizedFields], Missing["UnknownField", key_] :> key];
 	If[invalid =!= {},
 		Message[asset::badfield, First[invalid], record["Name"]];
 		Return[$Failed]
 	];
 	blankFields = AssociationThread[keys -> ConstantArray["", Length[keys]]];
-	Join[blankFields, fields]
+	Join[blankFields, normalizedFields]
 ];
 
-normalizeAssetFields[_, record_Association] := (
-	Message[asset::badfields, record["Name"]];
-	$Failed
-);
-
-makeOwnedAsset[name_String, abilitySpec_, fields_Association] := Module[
+makeOwnedAsset[name_String, abilitySpec_, fields_] := Module[
 	{record, abilities, normalizedFields},
 	record = assetRecord[name];
 	If[!AssociationQ[record],
@@ -596,7 +648,7 @@ makeOwnedAsset[name_String, abilitySpec_, fields_Association] := Module[
 		]
 	];
 
-makeStarterAssetSpec[name_String, abilitySpec_, fields_Association] := Module[
+makeStarterAssetSpec[name_String, abilitySpec_, fields_] := Module[
 	{owned},
 	owned = makeOwnedAsset[name, abilitySpec, fields];
 	If[owned === $Failed, Return[$Failed]];
@@ -709,6 +761,23 @@ availableExperience[character_] :=
 
 assetTrackDefinition[record_Association, trackName_String] :=
 	Lookup[Lookup[record, "Tracks", <||>], trackName, Missing["UnknownTrack", trackName]];
+
+soleAssetTrackContext[record_Association, assetName_String] := Module[
+	{trackDefinitions, trackNames, trackName},
+	trackDefinitions = Lookup[record, "Tracks", <||>];
+	trackNames = Keys[trackDefinitions];
+	Which[
+		Length[trackNames] == 0,
+			Message[asset::notrack, assetName];
+			$Failed,
+		Length[trackNames] > 1,
+			Message[asset::multitrack, assetName, StringRiffle[trackNames, ", "]];
+			$Failed,
+		True,
+			trackName = First[trackNames];
+			Association["Name" -> trackName, "Definition" -> trackDefinitions[trackName]]
+	]
+];
 
 clampAssetTrackValue[trackDef_Association, value_Integer] :=
 	Clip[value, {trackDef["Min"], trackDef["Max"]}];
@@ -1780,6 +1849,12 @@ markTormented[character_ : $soloCharacter] :=
 clearTormented[character_ : $soloCharacter] :=
 	clearDebilityState[Tormented, character];
 
+markOathbreaker[character_ : $soloCharacter] :=
+	markDebilityState[Oathbreaker, character];
+
+clearOathbreaker[character_ : $soloCharacter] :=
+	clearDebilityState[Oathbreaker, character];
+
 debility::invalid = "`1` is not an Ironsworn debility.";
 debility::marked = "`1` is already marked for character `2`.";
 debility::unmarked = "`1` is not marked for character `2`.";
@@ -1897,14 +1972,14 @@ vow::nothreat = "Vow `1` does not have an attached threat.";
 asset[name_String] :=
 	makeStarterAssetSpec[name, Automatic, <||>];
 
-asset[name_String, fields_Association] :=
-	makeStarterAssetSpec[name, Automatic, fields];
+asset[name_String, fieldRules : __Rule] :=
+	makeStarterAssetSpec[name, Automatic, {fieldRules}];
 
 asset[name_String, abilitySpec : (_Integer | {__Integer})] :=
 	makeStarterAssetSpec[name, abilitySpec, <||>];
 
-asset[name_String, abilitySpec : (_Integer | {__Integer}), fields_Association] :=
-	makeStarterAssetSpec[name, abilitySpec, fields];
+asset[name_String, abilitySpec : (_Integer | {__Integer}), fieldRules : __Rule] :=
+	makeStarterAssetSpec[name, abilitySpec, {fieldRules}];
 
 asset[args___] := (
 	Message[asset::badasset, HoldForm[asset[args]]];
@@ -1967,12 +2042,7 @@ drawAssets[args___] := (
 	$Failed
 );
 
-Options[addAsset] = {Display -> False};
-
-addAsset[assetSpec_, opts : OptionsPattern[]] :=
-	addAsset[assetSpec, $soloCharacter, opts];
-
-addAsset[assetSpec_, character_, opts : OptionsPattern[]] := Module[
+addAssetFromSpec[assetSpec_, character_] := Module[
 	{ownedAssets, owned, name},
 	If[!characterExistsQ[character],
 		Message[asset::nochar, character];
@@ -1992,6 +2062,35 @@ addAsset[assetSpec_, character_, opts : OptionsPattern[]] := Module[
 	spendExperience[5, character];
 	owned
 ];
+
+addAsset[name_String] :=
+	addAssetFromSpec[makeStarterAssetSpec[name, Automatic, <||>], $soloCharacter];
+
+addAsset[name_String, character_String] :=
+	addAssetFromSpec[makeStarterAssetSpec[name, Automatic, <||>], character];
+
+addAsset[name_String, fieldRules : __Rule] :=
+	addAssetFromSpec[makeStarterAssetSpec[name, Automatic, {fieldRules}], $soloCharacter];
+
+addAsset[name_String, character_String, fieldRules : __Rule] :=
+	addAssetFromSpec[makeStarterAssetSpec[name, Automatic, {fieldRules}], character];
+
+addAsset[name_String, abilitySpec : (_Integer | {__Integer})] :=
+	addAssetFromSpec[makeStarterAssetSpec[name, abilitySpec, <||>], $soloCharacter];
+
+addAsset[name_String, abilitySpec : (_Integer | {__Integer}), character_String] :=
+	addAssetFromSpec[makeStarterAssetSpec[name, abilitySpec, <||>], character];
+
+addAsset[name_String, abilitySpec : (_Integer | {__Integer}), fieldRules : __Rule] :=
+	addAssetFromSpec[makeStarterAssetSpec[name, abilitySpec, {fieldRules}], $soloCharacter];
+
+addAsset[name_String, abilitySpec : (_Integer | {__Integer}), character_String, fieldRules : __Rule] :=
+	addAssetFromSpec[makeStarterAssetSpec[name, abilitySpec, {fieldRules}], character];
+
+addAsset[args___] := (
+	Message[asset::badaddasset, HoldForm[addAsset[args]]];
+	$Failed
+);
 
 Options[upgradeAsset] = {Display -> False};
 
@@ -2022,17 +2121,16 @@ upgradeAsset[name_String, ability_Integer, character_, opts : OptionsPattern[]] 
 	updated
 ];
 
-setAssetTrack[assetName_String, trackName_String, value_Integer, character_ : $soloCharacter] := Module[
-	{context, record, owned, trackDef, tracks, updated, clamped},
+setAssetTrack[assetName_String, value_Integer, character_ : $soloCharacter] := Module[
+	{context, record, owned, trackContext, trackName, trackDef, tracks, updated, clamped},
 	context = ownedAssetContext[assetName, character];
 	If[context === $Failed, Return[$Failed]];
 	record = context["Record"];
 	owned = context["Owned"];
-	trackDef = assetTrackDefinition[record, trackName];
-	If[!AssociationQ[trackDef],
-		Message[asset::track, trackName, assetName];
-		Return[$Failed]
-	];
+	trackContext = soleAssetTrackContext[record, assetName];
+	If[trackContext === $Failed, Return[$Failed]];
+	trackName = trackContext["Name"];
+	trackDef = trackContext["Definition"];
 	tracks = ownedAssetTracks[record, owned];
 	clamped = clampAssetTrackValue[trackDef, value];
 	tracks[trackName] = clamped;
@@ -2042,20 +2140,19 @@ setAssetTrack[assetName_String, trackName_String, value_Integer, character_ : $s
 	clamped
 ];
 
-adjustAssetTrack[assetName_String, trackName_String, delta_Integer, character_ : $soloCharacter] := Module[
-	{context, record, owned, trackDef, tracks, current},
+adjustAssetTrack[assetName_String, delta_Integer, character_ : $soloCharacter] := Module[
+	{context, record, owned, trackContext, trackName, trackDef, tracks, current},
 	context = ownedAssetContext[assetName, character];
 	If[context === $Failed, Return[$Failed]];
 	record = context["Record"];
 	owned = context["Owned"];
-	trackDef = assetTrackDefinition[record, trackName];
-	If[!AssociationQ[trackDef],
-		Message[asset::track, trackName, assetName];
-		Return[$Failed]
-	];
+	trackContext = soleAssetTrackContext[record, assetName];
+	If[trackContext === $Failed, Return[$Failed]];
+	trackName = trackContext["Name"];
+	trackDef = trackContext["Definition"];
 	tracks = ownedAssetTracks[record, owned];
 	current = Lookup[tracks, trackName, Lookup[trackDef, "Default", 0]];
-	setAssetTrack[assetName, trackName, current + delta, character]
+	setAssetTrack[assetName, current + delta, character]
 ];
 
 Options[setIroncladArmor] = {Display -> False};
@@ -2125,7 +2222,7 @@ setCompanionHealth[name_String, value_Integer, character_, opts : OptionsPattern
 	{context, clamped},
 	context = ownedCompanionContext[name, character];
 	If[context === $Failed, Return[$Failed]];
-	clamped = setAssetTrack[name, "health", value, character];
+	clamped = setAssetTrack[name, value, character];
 	If[clamped === $Failed, Return[$Failed]];
 	clamped
 ];
@@ -2136,11 +2233,15 @@ adjustCompanionHealth[name_String, delta_Integer, opts : OptionsPattern[]] :=
 	adjustCompanionHealth[name, delta, $soloCharacter, opts];
 
 adjustCompanionHealth[name_String, delta_Integer, character_, opts : OptionsPattern[]] := Module[
-	{context, tracks, current},
+	{context, trackContext, trackName, trackDef, tracks, current},
 	context = ownedCompanionContext[name, character];
 	If[context === $Failed, Return[$Failed]];
+	trackContext = soleAssetTrackContext[context["Record"], name];
+	If[trackContext === $Failed, Return[$Failed]];
+	trackName = trackContext["Name"];
+	trackDef = trackContext["Definition"];
 	tracks = ownedAssetTracks[context["Record"], context["Owned"]];
-	current = Lookup[tracks, "health", Lookup[assetTrackDefinition[context["Record"], "health"], "Default", 0]];
+	current = Lookup[tracks, trackName, Lookup[trackDef, "Default", 0]];
 	setCompanionHealth[name, current + delta, character, opts]
 ];
 
@@ -2224,8 +2325,9 @@ asset::badability = "Ability `1` is not available for asset `2`. Valid ability i
 asset::badabilities = "Asset `1` requires a non-empty integer ability selection.";
 asset::dupeability = "Ability `1` was selected more than once for asset `2`.";
 asset::badfield = "Field `1` is not defined for asset `2`.";
-asset::badfields = "Fields for asset `1` must be an association.";
-asset::badasset = "`1` is not a valid asset spec. Use an asset name string or asset[...].";
+asset::badfields = "Fields for asset `1` must be trailing rules keyed by asset field symbols, such as Name -> \"Asha\". String field keys are not supported.";
+asset::badasset = "`1` is not a valid asset spec. Use asset[name], asset[name, abilityOrAbilities], or asset[name, abilityOrAbilities, field -> value, ...].";
+asset::badaddasset = "`1` is not a valid addAsset call. Use addAsset[name, ...] directly; addAsset[asset[...]] is not supported.";
 asset::badstoredassets = "The stored assets for character `1` could not be migrated to structured asset state.";
 asset::nochar = "No character named `1` exists in the current state.";
 asset::notowned = "Character `2` does not own asset `1`.";
@@ -2233,6 +2335,8 @@ asset::duplicate = "Character `2` already owns asset `1`.";
 asset::xp = "Character `1` needs `2` available experience, but only has `3`.";
 asset::selected = "Ability `1` is already selected for asset `2`.";
 asset::track = "Track `1` is not defined for asset `2`.";
+asset::notrack = "Asset `1` does not have a track.";
+asset::multitrack = "Asset `1` has multiple tracks (`2`); specify track handling before updating it.";
 asset::badcategory = "Unknown asset category `1`. Use one of: `2`.";
 asset::drawcount = "Cannot draw `1` distinct assets from a pool of `2`.";
 asset::baddraw = "`1` is not a valid drawAssets call.";
@@ -2249,7 +2353,9 @@ asset::badironcladarmor = "Ironclad armor choice `1` is not valid. Use \"Unequip
 (*Action roll*)
 
 
-Options[actionRoll] = {Adds -> Association[], Display -> False};
+actionRoll::badadds = "Adds must be a list of rules with integer bonus values, such as {Aid -> 1}, not `1`.";
+
+Options[actionRoll] = {Adds -> {}, Display -> False};
 
 actionRoll[(stat_)?statQ, opts : OptionsPattern[]] :=
 	actionRoll[stat, $soloCharacter, opts];
@@ -2271,7 +2377,8 @@ actionRoll[(stat_)?statQ, character_String, opts : OptionsPattern[]] := Module[
 	momentum = getMomentum[character];
 	{actionValue, actionDieCancelled} = actionDieAfterMomentumCancel[actionDie, momentum];
 	statValue = getAttr[stat, character];
-	adds = OptionValue[Adds];
+	adds = normalizeActionAdds[OptionValue[Adds]];
+	If[adds === $Failed, Return[$Failed]];
 	actionScore = actionScoreFromParts[actionValue, statValue, adds];
 	challengeDice = {cd1, cd2} = rollChallengeDice[];
 	Association[
@@ -2533,29 +2640,48 @@ reroll[roll_Association, dice_List, opts : OptionsPattern[]] := Module[
 (*Resource and momentum adjustment*)
 
 
-sufferMomentum[n_Integer, character_ : $soloCharacter] :=
-	adjustMomentum[n, character];
+sufferResource[adjuster_, n_Integer?Negative, character_] :=
+	adjuster[n, character];
 
-takeMomentum[n_Integer, character_ : $soloCharacter] :=
-	adjustMomentum[n, character];
+sufferResource[_, n_, _] := (
+	Message[resource::badsuffer, n];
+	$Failed
+);
 
-sufferHealth[n_Integer, character_ : $soloCharacter] :=
-	adjustHealth[n, character];
+takeResource[adjuster_, n_Integer?Positive, character_] :=
+	adjuster[n, character];
 
-takeHealth[n_Integer, character_ : $soloCharacter] :=
-	adjustHealth[n, character];
+takeResource[_, n_, _] := (
+	Message[resource::badtake, n];
+	$Failed
+);
 
-sufferSpirit[n_Integer, character_ : $soloCharacter] :=
-	adjustSpirit[n, character];
+sufferMomentum[n_, character_ : $soloCharacter] :=
+	sufferResource[adjustMomentum, n, character];
 
-takeSpirit[n_Integer, character_ : $soloCharacter] :=
-	adjustSpirit[n, character];
+takeMomentum[n_, character_ : $soloCharacter] :=
+	takeResource[adjustMomentum, n, character];
 
-sufferSupply[n_Integer, character_ : $soloCharacter] :=
-	adjustSupply[n, character];
+sufferHealth[n_, character_ : $soloCharacter] :=
+	sufferResource[adjustHealth, n, character];
 
-takeSupply[n_Integer, character_ : $soloCharacter] :=
-	adjustSupply[n, character];
+takeHealth[n_, character_ : $soloCharacter] :=
+	takeResource[adjustHealth, n, character];
+
+sufferSpirit[n_, character_ : $soloCharacter] :=
+	sufferResource[adjustSpirit, n, character];
+
+takeSpirit[n_, character_ : $soloCharacter] :=
+	takeResource[adjustSpirit, n, character];
+
+sufferSupply[n_, character_ : $soloCharacter] :=
+	sufferResource[adjustSupply, n, character];
+
+takeSupply[n_, character_ : $soloCharacter] :=
+	takeResource[adjustSupply, n, character];
+
+resource::badsuffer = "Suffer functions require a negative integer, not `1`.";
+resource::badtake = "Take functions require a positive integer, not `1`.";
 
 recover[] :=
 	recover[$soloCharacter];
