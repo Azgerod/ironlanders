@@ -224,6 +224,12 @@ adjustAssetTrack::usage =
 "adjustAssetTrack[assetName, trackName, delta] adjusts an owned asset track for the solo character, clamped to the printed track range.
 adjustAssetTrack[assetName, trackName, delta, character] adjusts an owned asset track for character.";
 
+setIroncladArmor::usage =
+"setIroncladArmor[choice] chooses Unequipped, Lightly armored, or Geared for war for the solo character's Ironclad asset and displays the updated card.
+setIroncladArmor[choice, character] chooses an Ironclad armor mode for character.
+choice may be \"Unequipped\", \"unequipped\", \"Lightly armored\", \"lightly-armored\", \"Geared for war\", or \"geared-for-war\".
+setIroncladArmor[..., Display -> False] suppresses display.";
+
 removeAsset::usage =
 "removeAsset[name] removes an owned asset from the solo character without awarding experience.
 removeAsset[name, character] removes an owned asset from character without awarding experience.
@@ -1554,6 +1560,14 @@ Options[upgradeAsset] = {Display -> True};
 upgradeAsset[args___] := Module[{ownedAsset},
 	ownedAsset = IronLibrary`MechanicsHelpers`upgradeAsset[args];
 	If[AssociationQ[ownedAsset] && displayRequested[True, args], IronLibrary`DisplayHelpers`displayAssetCard[ownedAsset, "Upgraded Asset"]];
+	ownedAsset
+];
+
+Options[setIroncladArmor] = {Display -> True};
+
+setIroncladArmor[choice_, args___] := Module[{ownedAsset},
+	ownedAsset = IronLibrary`MechanicsHelpers`setIroncladArmor[choice, args];
+	If[AssociationQ[ownedAsset] && displayRequested[True, args], IronLibrary`DisplayHelpers`displayAssetCard[ownedAsset, "Ironclad Armor"]];
 	ownedAsset
 ];
 

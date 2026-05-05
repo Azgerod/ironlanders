@@ -60,6 +60,7 @@ addAsset::usage = "addAsset is part of the internal MechanicsHelpers API used by
 upgradeAsset::usage = "upgradeAsset is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
 setAssetTrack::usage = "setAssetTrack is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
 adjustAssetTrack::usage = "adjustAssetTrack is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
+setIroncladArmor::usage = "setIroncladArmor is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
 removeAsset::usage = "removeAsset is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
 companion::usage = "companion is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
 companions::usage = "companions is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
@@ -711,6 +712,32 @@ assetTrackDefinition[record_Association, trackName_String] :=
 
 clampAssetTrackValue[trackDef_Association, value_Integer] :=
 	Clip[value, {trackDef["Min"], trackDef["Max"]}];
+
+$ironcladArmorAssetName = "Ironclad";
+$ironcladArmorFieldName = "Equipped";
+
+normalizeIroncladArmorChoiceKey[choice_] :=
+	StringTrim[
+		StringReplace[
+			ToLowerCase[ToString[choice]],
+			RegularExpression["[^a-z0-9]+"] -> "-"
+		],
+		"-"
+	];
+
+normalizeIroncladArmorChoice[choice_] := Module[
+	{key},
+	key = normalizeIroncladArmorChoiceKey[choice];
+	Lookup[
+		<|
+			"unequipped" -> "unequipped",
+			"lightly-armored" -> "lightly-armored",
+			"geared-for-war" -> "geared-for-war"
+		|>,
+		key,
+		$Failed
+	]
+];
 
 
 (* ::Subsection::Closed:: *)
@@ -2031,6 +2058,28 @@ adjustAssetTrack[assetName_String, trackName_String, delta_Integer, character_ :
 	setAssetTrack[assetName, trackName, current + delta, character]
 ];
 
+Options[setIroncladArmor] = {Display -> False};
+
+setIroncladArmor[choice_, opts : OptionsPattern[]] :=
+	setIroncladArmor[choice, $soloCharacter, opts];
+
+setIroncladArmor[choice_, character_String, opts : OptionsPattern[]] := Module[
+	{normalized, context, owned, fields, updated},
+	normalized = normalizeIroncladArmorChoice[choice];
+	If[normalized === $Failed,
+		Message[asset::badironcladarmor, choice];
+		Return[$Failed]
+	];
+	context = ownedAssetContext[$ironcladArmorAssetName, character];
+	If[context === $Failed, Return[$Failed]];
+	owned = context["Owned"];
+	fields = Association[Lookup[owned, "Fields", <||>]];
+	fields[$ironcladArmorFieldName] = normalized;
+	updated = Association[owned];
+	updated["Fields"] = fields;
+	replaceOwnedAsset[character, context["Index"], updated]
+];
+
 Options[removeAsset] = {Display -> False};
 
 removeAsset[name_String, opts : OptionsPattern[]] :=
@@ -2193,6 +2242,7 @@ asset::noraritycost = "Asset `1` is not eligible for rarity augmentation.";
 asset::rarityduplicate = "Asset `1` already has rarity `2`.";
 asset::norarity = "Asset `1` does not have a rarity to remove.";
 asset::notcompanion = "Asset `1` is not a companion.";
+asset::badironcladarmor = "Ironclad armor choice `1` is not valid. Use \"Unequipped\", \"Lightly armored\", or \"Geared for war\".";
 
 
 (* ::Subsection::Closed:: *)

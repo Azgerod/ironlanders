@@ -1787,6 +1787,9 @@ assetMarkerSelectedQ[value_] :=
 		value =!= None &&
 		value =!= 0;
 
+assetFieldDisplayedQ[fieldDef_Association] :=
+	Lookup[fieldDef, "Display", True] =!= False;
+
 assetMarkerFieldRow[label_String, value_, contentWidth_:assetCardWidth] :=
 	assetContentPane[
 		Row[
@@ -1835,6 +1838,8 @@ assetFieldRow[label_String, value_, contentWidth_:assetCardWidth] :=
 
 assetFieldRow[fieldKey_String, fieldDef_Association, fields_Association, contentWidth_:assetCardWidth] :=
 	Which[
+		!assetFieldDisplayedQ[fieldDef],
+			Nothing,
 		assetNameFieldQ[fieldDef],
 			assetNameBoxGraphic[Lookup[fields, fieldKey, ""], "Name"],
 		assetMarkerFieldQ[fieldDef],
@@ -1859,15 +1864,76 @@ assetTextEmptyQ[text_] :=
 	MissingQ[text] || text === None || text === Null ||
 		(StringQ[text] && StringLength[StringTrim[text]] == 0);
 
-assetDisplayText[text_String] :=
+assetFieldSelectorQ[item_] :=
+	AssociationQ[item] && Lookup[item, "Type", None] === "FieldSelector";
+
+assetFieldSelectorComparable[value_] :=
+	StringTrim[
+		StringReplace[
+			ToLowerCase[ToString[value]],
+			RegularExpression["[^a-z0-9]+"] -> "-"
+		],
+		"-"
+	];
+
+assetFieldSelectorSelectedQ[current_, option_Association] :=
+	MemberQ[
+		assetFieldSelectorComparable /@ {
+			Lookup[option, "Value", ""],
+			Lookup[option, "Label", ""]
+		},
+		assetFieldSelectorComparable[current]
+	];
+
+assetFieldSelectorCircle[selectedQ_] :=
+	displayText[
+		If[TrueQ[selectedQ], "\[FilledCircle]", "\[EmptyCircle]"],
+		$displaySansFont,
+		16,
+		Plain,
+		sheetInk
+	];
+
+assetFieldSelectorOptionDisplay[current_, option_Association] :=
+	Row[
+		{
+			assetFieldSelectorCircle[assetFieldSelectorSelectedQ[current, option]],
+			Spacer[scaled[8]],
+			displayText[
+				ToUpperCase[Lookup[option, "Label", Lookup[option, "Value", ""]]],
+				$displaySansFont,
+				12,
+				Bold,
+				sheetInk
+			]
+		}
+	];
+
+assetFieldSelectorDisplay[selector_Association, fields_Association] := Module[
+	{field, current, options},
+	field = Lookup[selector, "Field", ""];
+	current = Lookup[fields, field, ""];
+	options = Select[Lookup[selector, "Options", {}], AssociationQ];
+	If[options === {}, Return[""]];
+	Grid[
+		{assetFieldSelectorOptionDisplay[current, #] & /@ options},
+		Alignment -> {Left, Center},
+		Spacings -> {1.2, 0}
+	]
+];
+
+assetDisplayText[text_String, fields_Association:<||>] :=
 	StringReplace[StringTrim[text], WhitespaceCharacter.. -> " "];
 
-assetDisplayText[text_] :=
+assetDisplayText[text_Association, fields_Association:<||>] /; assetFieldSelectorQ[text] :=
+	assetFieldSelectorDisplay[text, fields];
+
+assetDisplayText[text_, fields_Association:<||>] :=
 	text;
 
-assetParagraphBlock[items_List] := Module[
+assetParagraphBlock[items_List, fields_Association:<||>] := Module[
 	{content},
-	content = DeleteCases[assetDisplayText /@ items, _?assetTextEmptyQ];
+	content = DeleteCases[assetDisplayText[#, fields] & /@ items, _?assetTextEmptyQ];
 	Which[
 		content === {}, "",
 		Length[content] == 1, First[content],
@@ -1914,15 +1980,17 @@ assetChoiceNumberGap :=
 assetChoiceTextWidth[bodyWidth_] :=
 	Max[scaled[40], bodyWidth - assetChoiceNumberWidth - assetChoiceNumberGap];
 
-assetAbilitySectionsFromChoiceSection[section_Association] :=
-	<|
-		"PreText" -> assetParagraphBlock[Lookup[section, "PreText", {}]],
-		"Choices" -> assetNormalizeChoiceItems[Lookup[section, "ChoiceItems", {}]],
-		"PostText" -> assetParagraphBlock[Lookup[section, "PostText", {}]],
-		"DisplayChoices" -> True
-	|>;
+	assetAbilitySectionsFromChoiceSection[section_Association, fields_Association:<||>] :=
+		<|
+			"PreText" -> assetParagraphBlock[Lookup[section, "PreText", {}], fields],
+			"Choices" -> assetNormalizeChoiceItems[Lookup[section, "ChoiceItems", {}]],
+			"PostText" -> assetParagraphBlock[Lookup[section, "PostText", {}], fields],
+			"DisplayChoices" -> True,
+			"ChoiceDisplay" -> Lookup[section, "ChoiceDisplay", "Numbered"],
+			"ChoiceField" -> Lookup[section, "ChoiceField", None]
+		|>;
 
-assetAbilitySectionsFromMoveSection[section_Association] :=
+assetAbilitySectionsFromMoveSection[section_Association, fields_Association:<||>] :=
 	<|
 		"PreText" -> assetDisplayText[Lookup[section, "Text", ""]],
 		"Choices" -> assetNormalizeChoices[Lookup[section, "Choices", {}]],
@@ -1930,21 +1998,21 @@ assetAbilitySectionsFromMoveSection[section_Association] :=
 		"DisplayChoices" -> False
 	|>;
 
-assetAbilitySections[text_String] := (
+assetAbilitySections[text_String, fields_Association:<||>] := (
 	Message[displayAssetCard::badtext, text];
 	$Failed
 );
 
-assetAbilitySections[text_] :=
+assetAbilitySections[text_, fields_Association:<||>] :=
 	<|"PreText" -> assetDisplayText[text], "Choices" -> {}, "PostText" -> "", "DisplayChoices" -> True|>;
 
-assetAbilitySections[ability_Association] := Module[
+assetAbilitySections[ability_Association, fields_Association:<||>] := Module[
 	{text, sections, explicitChoices},
 	text = Lookup[ability, "Text", ""];
 	sections = Which[
-		AssociationQ[text] && KeyExistsQ[text, "ChoiceItems"], assetAbilitySectionsFromChoiceSection[text],
-		AssociationQ[text] && KeyExistsQ[text, "Text"], assetAbilitySectionsFromMoveSection[text],
-		True, assetAbilitySections[text]
+		AssociationQ[text] && KeyExistsQ[text, "ChoiceItems"], assetAbilitySectionsFromChoiceSection[text, fields],
+		AssociationQ[text] && KeyExistsQ[text, "Text"], assetAbilitySectionsFromMoveSection[text, fields],
+		True, assetAbilitySections[text, fields]
 	];
 	If[sections === $Failed, Return[$Failed]];
 	explicitChoices = Lookup[ability, "Choices", Automatic];
@@ -1955,10 +2023,10 @@ assetAbilitySections[ability_Association] := Module[
 	sections
 ];
 
-assetNumberedChoiceRow[index_Integer, choice_Association, bodyWidth_] :=
-	Grid[
-		{{
-			Pane[
+	assetNumberedChoiceRow[index_Integer, choice_Association, bodyWidth_] :=
+		Grid[
+			{{
+				Pane[
 				StringJoin[ToString[index], "."],
 				{assetChoiceNumberWidth, Automatic},
 				Alignment -> Right
@@ -1970,20 +2038,67 @@ assetNumberedChoiceRow[index_Integer, choice_Association, bodyWidth_] :=
 			]
 		}},
 		Alignment -> {Left, Top},
-		Spacings -> {0.35, 0}
+			Spacings -> {0.35, 0}
+		];
+
+assetFieldSelectorChoiceSelectedQ[current_, choice_Association] :=
+	Module[
+		{currentKey, optionKeys},
+		currentKey = assetFieldSelectorComparable[current];
+		If[currentKey === "", Return[False]];
+		optionKeys = DeleteCases[
+			assetFieldSelectorComparable /@ {
+				Lookup[choice, "Value", ""],
+				Lookup[choice, "Key", ""]
+			},
+			""
+		];
+		MemberQ[optionKeys, currentKey]
 	];
 
-assetAbilityBody[ability_Association, choiceOffset_Integer, bodyWidth_:assetBodyWidth[]] := Module[
-	{sections, rows, choices, displayChoices},
-	sections = assetAbilitySections[ability];
+	assetFieldSelectorChoiceRow[choice_Association, field_String, fields_Association, bodyWidth_] := Module[
+		{current},
+		current = Lookup[fields, field, ""];
+		Grid[
+			{{
+				Pane[
+					assetFieldSelectorCircle[assetFieldSelectorChoiceSelectedQ[current, choice]],
+					{assetChoiceNumberWidth, Automatic},
+					Alignment -> Right,
+					ImageMargins -> {{0, 0}, {0, scaled[-3]}}
+				],
+				Pane[
+					assetDisplayText[Lookup[choice, "Text", ""]],
+					{assetChoiceTextWidth[bodyWidth], Automatic},
+					Alignment -> Left
+				]
+			}},
+			Alignment -> {Left, Top},
+			Spacings -> {0.35, 0}
+		]
+	];
+
+	assetChoiceRows[choices_List, sections_Association, choiceOffset_Integer, bodyWidth_, fields_Association] := Module[
+		{choiceDisplay, choiceField},
+		choiceDisplay = Lookup[sections, "ChoiceDisplay", "Numbered"];
+		choiceField = Lookup[sections, "ChoiceField", None];
+		If[choiceDisplay === "FieldSelector" && StringQ[choiceField],
+			assetFieldSelectorChoiceRow[#, choiceField, fields, bodyWidth] & /@ choices,
+			MapIndexed[assetNumberedChoiceRow[choiceOffset + First[#2], #1, bodyWidth] &, choices]
+		]
+	];
+
+	assetAbilityBody[ability_Association, choiceOffset_Integer, bodyWidth_:assetBodyWidth[], fields_Association:<||>] := Module[
+		{sections, rows, choices, displayChoices},
+		sections = assetAbilitySections[ability, fields];
 	If[sections === $Failed, Return[$Failed]];
 	choices = Lookup[sections, "Choices", {}];
 	displayChoices = Lookup[sections, "DisplayChoices", True];
-	rows = Join[
-		If[Lookup[sections, "PreText", ""] === "", {}, {sections["PreText"]}],
-		If[TrueQ[displayChoices], MapIndexed[assetNumberedChoiceRow[choiceOffset + First[#2], #1, bodyWidth] &, choices], {}],
-		If[Lookup[sections, "PostText", ""] === "", {}, {sections["PostText"]}]
-	];
+		rows = Join[
+			If[Lookup[sections, "PreText", ""] === "", {}, {sections["PreText"]}],
+			If[TrueQ[displayChoices], assetChoiceRows[choices, sections, choiceOffset, bodyWidth, fields], {}],
+			If[Lookup[sections, "PostText", ""] === "", {}, {sections["PostText"]}]
+		];
 	If[
 		Length[rows] == 1,
 		First[rows],
@@ -1997,9 +2112,9 @@ assetAbilityChoices[ability_Association] := Module[
 	If[AssociationQ[sections], Lookup[sections, "Choices", {}], {}]
 ];
 
-assetAbilityRow[ability_Association, selectedQ_, contentWidth_:assetCardWidth, choiceOffset_:0] := Module[
+assetAbilityRow[ability_Association, selectedQ_, contentWidth_:assetCardWidth, choiceOffset_:0, fields_Association:<||>] := Module[
 	{body},
-	body = assetAbilityBody[ability, choiceOffset, assetBodyWidth[contentWidth]];
+	body = assetAbilityBody[ability, choiceOffset, assetBodyWidth[contentWidth], fields];
 	If[body === $Failed, Return[$Failed]];
 	assetContentPane[
 		Grid[
@@ -2038,11 +2153,17 @@ assetAbilityRow[ability_Association, selectedQ_, contentWidth_:assetCardWidth, c
 	]
 ];
 
-assetAbilityRows[record_Association, selectedAbilities_List, contentWidth_:assetCardWidth] := Module[
+assetAbilityRows[record_Association, selectedAbilities_List, contentWidth_?NumericQ] :=
+	assetAbilityRows[record, selectedAbilities, <||>, contentWidth];
+
+assetAbilityRows[record_Association, selectedAbilities_List] :=
+	assetAbilityRows[record, selectedAbilities, <||>, assetCardWidth];
+
+assetAbilityRows[record_Association, selectedAbilities_List, fields_Association, contentWidth_:assetCardWidth] := Module[
 	{offset = 0},
 	Map[
 		Module[{row, choiceCount},
-			row = assetAbilityRow[#, MemberQ[selectedAbilities, #["Index"]], contentWidth, offset];
+			row = assetAbilityRow[#, MemberQ[selectedAbilities, #["Index"]], contentWidth, offset, fields];
 			choiceCount = Length[assetAbilityChoices[#]];
 			offset += choiceCount;
 			row
@@ -2146,21 +2267,24 @@ assetHealthTrackBasePlotWidth[] :=
 assetHealthTrackDisplayWidth[] :=
 	scaled[assetHealthRenderScale[] assetHealthTrackBaseWidth[]];
 
+assetHealthTrackDisplayHeight[max_Integer] :=
+	scaled[assetHealthRenderScale[] assetHealthTrackBaseHeight[max]];
+
 assetHealthTrackGraphic[track_Association] := Module[
-	{height},
+	{height, image},
 	height = assetHealthTrackBaseHeight[track["Max"]];
-	scaleFinalGraphic[
+	image = scaleFinalGraphic[
 		Graphics[
 			sheetVerticalResource[
 				track["Label"],
 				track["Current"],
-					{0, 0},
-					{assetHealthTrackBaseWidth[], height},
-					track["Max"],
-					Right,
-					assetHealthIndicatorScale[]
-				],
-				PlotRange -> {{0, assetHealthTrackBasePlotWidth[]}, {0, height}},
+				{0, 0},
+				{assetHealthTrackBaseWidth[], height},
+				track["Max"],
+				Right,
+				assetHealthIndicatorScale[]
+			],
+			PlotRange -> {{0, assetHealthTrackBasePlotWidth[]}, {0, height}},
 			PlotRangePadding -> None,
 			ImagePadding -> 1,
 			ImageSize -> {
@@ -2170,6 +2294,10 @@ assetHealthTrackGraphic[track_Association] := Module[
 			Background -> White
 		],
 		White
+	];
+	Show[
+		image,
+		ImageSize -> {assetHealthTrackDisplayWidth[] + assetHealthIndicatorDisplayOutset[], Automatic}
 	]
 ];
 
@@ -2179,16 +2307,24 @@ assetHealthTrackColumn[record_Association, tracks_Association] := Module[
 	If[
 		entry === None,
 		None,
-		<|
-			"Graphic" -> assetHealthTrackGraphic[entry],
-			"Width" -> assetHealthTrackDisplayWidth[],
-			"Outset" -> assetHealthIndicatorDisplayOutset[]
-		|>
-	]
+			<|
+				"Graphic" -> assetHealthTrackGraphic[entry],
+				"Width" -> assetHealthTrackDisplayWidth[],
+				"Height" -> assetHealthTrackDisplayHeight[entry["Max"]],
+				"Outset" -> assetHealthIndicatorDisplayOutset[]
+			|>
+		]
 ];
 
 assetTextWidthWithSideTrack[sideTrack_Association] :=
 	assetCardWidth - sideTrack["Width"] - scaled[$assetHealthTrackGap];
+
+assetSideTrackPane[sideTrack_Association] :=
+	Pane[
+		sideTrack["Graphic"],
+		{sideTrack["Width"] + Lookup[sideTrack, "Outset", 0], sideTrack["Height"]},
+		Alignment -> {Left, Center}
+	];
 
 assetTextAndTrackColumns[textRows_List, sideTrack_Association, textWidth_] :=
 	assetContentPane[
@@ -2196,7 +2332,7 @@ assetTextAndTrackColumns[textRows_List, sideTrack_Association, textWidth_] :=
 			{{
 				Pane[Column[textRows, Spacings -> 0.8, Alignment -> Left], {textWidth, Automatic}, Alignment -> Left],
 				Spacer[{scaled[$assetHealthTrackGap], 0}],
-				Item[sideTrack["Graphic"], Alignment -> {Left, Center}]
+				Item[assetSideTrackPane[sideTrack], Alignment -> {Left, Center}]
 			}},
 			Alignment -> {{Left, Left, Left}, {Top}},
 			Spacings -> {0, 0}
@@ -2251,7 +2387,7 @@ assetCardExpression[record_Association, selectedAbilities_List, fields_Associati
 		{},
 		{assetContentPane[moveTextStyle[Lookup[record, "Requirement", None]], textWidth]}
 	];
-	abilityRows = assetAbilityRows[record, selectedAbilities, textWidth];
+	abilityRows = assetAbilityRows[record, selectedAbilities, fields, textWidth];
 	trackRows = assetTrackRows[
 		record,
 		tracks,
