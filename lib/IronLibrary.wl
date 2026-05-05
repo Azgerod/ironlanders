@@ -196,6 +196,10 @@ getAsset::usage =
 "getAsset[name] displays the owned asset named name for the solo character, or the default reference card if the solo character does not own it.
 getAsset[name, character] displays the owned asset named name for character.";
 
+getAssetAbility::usage =
+"getAssetAbility[name, ability] displays one ability from an owned asset for the solo character.
+getAssetAbility[name, ability, character] displays one ability from an owned asset for character.";
+
 getAssets::usage =
 "getAssets[] displays all owned assets for the solo character.
 getAssets[character] displays all owned assets for character.";
@@ -1388,6 +1392,22 @@ getAsset[args___] := Module[{ownedAsset},
 	ownedAsset = IronLibrary`MechanicsHelpers`getAsset[args];
 	If[AssociationQ[ownedAsset],
 		IronLibrary`DisplayHelpers`displayAssetCard[ownedAsset],
+		ownedAsset
+	]
+];
+
+getAssetAbility[name_String, ability_Integer] := Module[{ownedAsset},
+	ownedAsset = IronLibrary`MechanicsHelpers`getAsset[name];
+	If[AssociationQ[ownedAsset],
+		IronLibrary`DisplayHelpers`displayAssetAbility[ownedAsset, ability],
+		ownedAsset
+	]
+];
+
+getAssetAbility[name_String, ability_Integer, character_] := Module[{ownedAsset},
+	ownedAsset = IronLibrary`MechanicsHelpers`getAsset[name, character];
+	If[AssociationQ[ownedAsset],
+		IronLibrary`DisplayHelpers`displayAssetAbility[ownedAsset, ability],
 		ownedAsset
 	]
 ];

@@ -39,6 +39,7 @@ displayRarityDieSix::usage = "displayRarityDieSix is part of the internal Displa
 displayAssetCard::usage = "displayAssetCard is part of the internal DisplayHelpers API used by IronLibrary.wl.";
 displayAssetCards::usage = "displayAssetCards is part of the internal DisplayHelpers API used by IronLibrary.wl.";
 displayOwnedAssets::usage = "displayOwnedAssets is part of the internal DisplayHelpers API used by IronLibrary.wl.";
+displayAssetAbility::usage = "displayAssetAbility is part of the internal DisplayHelpers API used by IronLibrary.wl.";
 displayAssetReference::usage = "displayAssetReference is part of the internal DisplayHelpers API used by IronLibrary.wl.";
 displayAssetReferences::usage = "displayAssetReferences is part of the internal DisplayHelpers API used by IronLibrary.wl.";
 assetReferenceCard::usage = "assetReferenceCard is part of the internal DisplayHelpers API used by IronLibrary.wl.";
@@ -1738,6 +1739,9 @@ displayAssetCard::badtext =
 displayAssetCard::badchoice =
 "Asset choices must use choice[key, text] or choiceGroup[label, choices]. Raw choice item is not accepted: `1`.";
 
+displayAssetAbility::badability =
+"Ability `1` is not available for asset `2`. Valid ability indices are 1 through `3`.";
+
 
 (* ::Subsection:: *)
 (*Asset card display*)
@@ -2175,6 +2179,19 @@ assetAbilityRows[record_Association, selectedAbilities_List, fields_Association,
 assetCardChoices[record_Association] :=
 	Flatten[assetAbilityChoices /@ Lookup[record, "Abilities", {}]];
 
+	assetAbilityDefinition[record_Association, ability_Integer] :=
+		FirstCase[
+			Lookup[record, "Abilities", {}],
+			abilityDef_Association /; Lookup[abilityDef, "Index", None] === ability :> abilityDef,
+			Missing["UnknownAbility", ability]
+		];
+
+assetAbilityDisplayStatus[ability_Integer, Automatic] :=
+	StringJoin["Ability ", ToString[ability]];
+
+assetAbilityDisplayStatus[_, status_] :=
+	status;
+
 assetTrackCell[value_Integer, current_Integer] :=
 	Framed[
 		displayText[
@@ -2429,6 +2446,36 @@ assetCardExpression[owned_Association, status_:None] := Module[
 	]
 ];
 
+assetAbilityCardExpression[owned_Association, ability_Integer, status_:Automatic] := Module[
+	{record, abilityDef, selectedAbilities, fields, row, statusText},
+	record = assetDefinition[owned["Name"]];
+	If[!AssociationQ[record],
+		Message[asset::unknown, owned["Name"]];
+		Return[$Failed]
+	];
+	abilityDef = assetAbilityDefinition[record, ability];
+	If[!AssociationQ[abilityDef],
+		Message[displayAssetAbility::badability, ability, record["Name"], Length[Lookup[record, "Abilities", {}]]];
+		Return[$Failed]
+	];
+	selectedAbilities = Lookup[owned, "Abilities", {}];
+	fields = Lookup[owned, "Fields", <||>];
+	row = assetAbilityRow[abilityDef, MemberQ[selectedAbilities, ability], assetCardWidth, 0, fields];
+	If[row === $Failed, Return[$Failed]];
+	statusText = assetAbilityDisplayStatus[ability, status];
+	ironFramed[
+		Column[
+			{
+				assetCardHeader[record, statusText],
+				assetContentPane[titleStyle[record["Name"]]],
+				row
+			},
+			Spacings -> 0.8,
+			Alignment -> Left
+		]
+	]
+];
+
 assetRecordOutput[record_Association, status_:None] :=
 	AssetDisplayOutput[
 		<|
@@ -2448,6 +2495,28 @@ assetOwnedOutput[owned_Association, status_:None] := Module[
 	record = assetDefinition[owned["Name"]];
 	If[!AssociationQ[record], Return[$Failed]];
 	assetRecordOutput[record, status]
+];
+
+assetAbilityOutput[owned_Association, ability_Integer, status_:Automatic] := Module[
+	{record, abilityDef, statusText},
+	record = assetDefinition[owned["Name"]];
+	If[!AssociationQ[record], Return[$Failed]];
+	abilityDef = assetAbilityDefinition[record, ability];
+	If[!AssociationQ[abilityDef], Return[$Failed]];
+	statusText = assetAbilityDisplayStatus[ability, status];
+	AssetDisplayOutput[
+		<|
+			"Asset" -> Lookup[record, "Name", ""],
+			"Name" -> Lookup[record, "Name", ""],
+			"Ability" -> ability,
+			"Subtitle" -> If[
+				StringQ[statusText] && StringLength[StringTrim[statusText]] > 0,
+				StringJoin[Lookup[record, "Name", ""], ": ", statusText],
+				Lookup[record, "Name", ""]
+			],
+			"Choices" -> assetAbilityChoices[abilityDef]
+		|>
+	]
 ];
 
 assetReferenceCard[name_String] := Module[
@@ -2472,6 +2541,14 @@ displayAssetCard[owned_Association, status_:None] := Module[
 	card = assetCardExpression[owned, status];
 	If[card === $Failed, Return[$Failed]];
 	output = assetOwnedOutput[owned, status];
+	printAndReturn[card, output]
+];
+
+displayAssetAbility[owned_Association, ability_Integer, status_:Automatic] := Module[
+	{card, output},
+	card = assetAbilityCardExpression[owned, ability, status];
+	If[card === $Failed, Return[$Failed]];
+	output = assetAbilityOutput[owned, ability, status];
 	printAndReturn[card, output]
 ];
 

@@ -44,7 +44,51 @@ b[text_] := Style[text, Bold];
 i[text_] := Style[text, Italic];
 bi[text_] := Style[text, Bold, Italic];
 
-p[parts___] := Row[{parts}];
+$attachedPunctuationStartChars = {",", ".", ";", ":", "!", "?", ")", "]", "}"};
+
+attachedWhitespaceQ[char_String] :=
+	StringMatchQ[char, WhitespaceCharacter];
+
+attachedPunctuationQ[char_String] :=
+	MemberQ[$attachedPunctuationStartChars, char];
+
+attachedTextPrefix[text_String] := Module[
+	{chars, punctuationCount, whitespaceCount},
+	chars = Characters[text];
+	If[chars === {}, Return[""]];
+	If[attachedWhitespaceQ[First[chars]],
+		whitespaceCount = Length[TakeWhile[chars, attachedWhitespaceQ]];
+		Return[StringJoin[Take[chars, whitespaceCount]]]
+	];
+	If[!attachedPunctuationQ[First[chars]], Return[""]];
+	punctuationCount = Length[TakeWhile[chars, attachedPunctuationQ]];
+	whitespaceCount = Length[TakeWhile[Drop[chars, punctuationCount], attachedWhitespaceQ]];
+	StringJoin[Take[chars, punctuationCount + whitespaceCount]]
+];
+
+attachPlainPrefixes[items_List] := Module[
+	{result = {}, normalizedItems = items, i = 1, j, n = Length[items], item, prefix, rest},
+	While[i <= n,
+		item = normalizedItems[[i]];
+		j = i + 1;
+		While[j <= n && StringQ[normalizedItems[[j]]],
+			prefix = attachedTextPrefix[normalizedItems[[j]]];
+			If[prefix === "", Break[]];
+			item = Row[{item, prefix}];
+			rest = StringDrop[normalizedItems[[j]], StringLength[prefix]];
+			If[rest === "",
+				j++,
+				normalizedItems[[j]] = rest;
+				Break[]
+			]
+		];
+		AppendTo[result, item];
+		i = j
+	];
+	result
+];
+
+p[parts___] := Row[attachPlainPrefixes[{parts}]];
 
 paras[items___] := Column[
 	{items},

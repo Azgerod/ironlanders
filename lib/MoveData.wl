@@ -350,7 +350,7 @@ moves["followAPath"] = move[
 		followAPathWeakChoices
 	],
 	paras[
-		p["You are waylaid by a dire threat, and must ", i["Pay the Price"], ". If you overcome this obstacle, you may push on safely to your destination."]
+		p["You are waylaid by a dire threat, and must ", i["Pay the Price"], ".", " If you overcome this obstacle, you may push on safely to your destination."]
 	]
 ];
 
@@ -400,7 +400,7 @@ moves["faceDangerScene"] = move[
 		p["You are successful and mark progress, but also encounter a complication or setback. Envision what occurs and mark a countdown segment."]
 	],
 	paras[
-		p["You fail, or a momentary success is undermined by a dramatic turn of events. Mark a countdown segment and ", i["Pay the Price"], ". ", b["On a match,"], " mark two segments and ", i["Pay the Price"], "."]
+		p["You fail, or a momentary success is undermined by a dramatic turn of events. Mark a countdown segment and ", i["Pay the Price"], ".", " ", b["On a match,"], " mark two segments and ", i["Pay the Price"], "."]
 	]
 ];
 
@@ -429,7 +429,7 @@ moves["secureAnAdvantageScene"] = move[
 		secureAnAdvantageChoices
 	],
 	paras[
-		p["You fail or your assumptions betray you. Mark a countdown segment and ", i["Pay the Price"], ". ", b["On a match,"], " mark two segments and ", i["Pay the Price"], "."]
+		p["You fail or your assumptions betray you. Mark a countdown segment and ", i["Pay the Price"], ".", " ", b["On a match,"], " mark two segments and ", i["Pay the Price"], "."]
 	]
 ];
 
@@ -447,7 +447,7 @@ moves["finishTheScene"] = move[
 		p["You achieve your objective unconditionally."]
 	],
 	paras[
-		p["You succeed, but not without cost. You must ", i["Pay the Price"], ". Make this a minor cost relative to the scope of the scene."]
+		p["You succeed, but not without cost. You must ", i["Pay the Price"], ".", " Make this a minor cost relative to the scope of the scene."]
 	],
 	paras[
 		p["You fail or are undermined by a dire turn of events. ", i["Pay the Price"], "."]
@@ -545,7 +545,7 @@ moves["fulfillYourVow"] = move[
 moves["forsakeYourVow"] = Association[];
 moves["forsakeYourVow", "name"] = "Forsake Your Vow";
 moves["forsakeYourVow", "header"] = paras[
-	p[b["When you renounce your quest, betray your promise, or the goal is lost to you,"], " clear the vow and ", i["Endure Stress"], ". You suffer \[Dash]spirit equal to the rank of your quest (troublesome=1; dangerous=2; formidable=3; extreme=4; epic=5)."],
+	p[b["When you renounce your quest, betray your promise, or the goal is lost to you,"], " clear the vow and ", i["Endure Stress"], ".", " You suffer \[Dash]spirit equal to the rank of your quest (troublesome=1; dangerous=2; formidable=3; extreme=4; epic=5)."],
 	p["If the vow was made to a person or community with whom you share a bond, ", i["Test Your Bond"], " when you next meet."]
 ];
 
@@ -622,7 +622,7 @@ moves["compel"] = move[
 		p["\:2734 Lie or swindle: Roll +shadow."]
 	],
 	paras[
-		p["They\[CloseCurlyQuote]ll do what you want or share what they know. Take +1 momentum. If you use this exchange to ", i["Gather Information"], ", make that move now and add +1."]
+		p["They\[CloseCurlyQuote]ll do what you want or share what they know. Take +1 momentum. If you use this exchange to ", i["Gather Information"], ",", " make that move now and add +1."]
 	],
 	paras[
 		p["As above, but they ask something of you in return. Envision what they want (", i["Ask the Oracle"], " if unsure)."]
@@ -640,7 +640,7 @@ moves["compel"] = move[
 moves["aidYourAlly"] = Association[];
 moves["aidYourAlly", "name"] = "Aid Your Ally";
 moves["aidYourAlly", "header"] = paras[
-	p[b["When you ", i["Secure an Advantage"], " in direct support of an ally,"], " and score a hit, they (instead of you) can take the benefits of the move. If you are in combat and score a ", b["strong hit"], ", you and your ally have initiative."]
+		p[b["When you ", i["Secure an Advantage"], " in direct support of an ally,"], " and score a hit, they (instead of you) can take the benefits of the move. If you are in combat and score a ", b["strong hit,"], " you and your ally have initiative."]
 ];
 
 
@@ -721,7 +721,7 @@ moves["forgeABond"] = move[
 		spiritMomentumChoices
 	],
 	paras[
-		p["They ask something more of you first. Envision what it is (", i["Ask the Oracle"], " if unsure), do it (or ", i["Swear an Iron Vow"], "), and mark the bond. If you refuse or fail, ", i["Pay the Price"], "."]
+		p["They ask something more of you first. Envision what it is (", i["Ask the Oracle"], " if unsure), do it (or ", i["Swear an Iron Vow"], "),", " and mark the bond. If you refuse or fail, ", i["Pay the Price"], "."]
 	],
 	paras[
 		p["They reject you. ", i["Pay the Price"], "."]
@@ -743,7 +743,7 @@ moves["testYourBond"] = move[
 		spiritMomentumChoices
 	],
 	paras[
-		p["Your bond is fragile and you must prove your loyalty. Envision what they ask of you (", i["Ask the Oracle"], " if unsure), and do it (or ", i["Swear an Iron Vow"], "). If you refuse or fail, clear the bond and ", i["Pay the Price"], "."]
+		p["Your bond is fragile and you must prove your loyalty. Envision what they ask of you (", i["Ask the Oracle"], " if unsure), and do it (or ", i["Swear an Iron Vow"], ").", " If you refuse or fail, clear the bond and ", i["Pay the Price"], "."]
 	],
 	paras[
 		p["Your bond is broken. Clear the bond and ", i["Pay the Price"], "."]
@@ -843,7 +843,7 @@ moves["enterTheFray"] = move[
 		enterTheFrayWeakChoices
 	],
 	paras[
-		p["Combat begins with you at a disadvantage. ", i["Pay the Price"], ". Your foe has initiative."]
+		p["Combat begins with you at a disadvantage. ", i["Pay the Price"], ".", " Your foe has initiative."]
 	]
 ];
 
@@ -864,7 +864,7 @@ moves["strike"] = move[
 		p["Inflict your harm and lose initiative."]
 	],
 	paras[
-		p["Your attack fails and you must ", i["Pay the Price"], ". Your foe has initiative."]
+		p["Your attack fails and you must ", i["Pay the Price"], ".", " Your foe has initiative."]
 	]
 ];
 
@@ -889,10 +889,10 @@ moves["clash"] = move[
 		clashStrongChoices
 	],
 	paras[
-		p["Inflict your harm, but then ", i["Pay the Price"], ". Your foe has initiative."]
+		p["Inflict your harm, but then ", i["Pay the Price"], ".", " Your foe has initiative."]
 	],
 	paras[
-		p["You are outmatched and must ", i["Pay the Price"], ". Your foe has initiative."]
+		p["You are outmatched and must ", i["Pay the Price"], ".", " Your foe has initiative."]
 	]
 ];
 
@@ -1006,7 +1006,7 @@ moves["endureHarm"] = move[
 
 faceDeathWeakChoices = {
 	choice["sacrifice", p["You die, but not before making a noble sacrifice. Envision your final moments."]],
-	choice["quest", p["Death desires something of you in exchange for your life. Envision what it wants (", i["Ask the Oracle"], " if unsure), and ", i["Swear an Iron Vow"], " (formidable or extreme) to complete that quest. If you fail to score a hit when you ", i["Swear an Iron Vow"], ", or refuse the quest, you are dead. Otherwise, you return to the mortal world and are now cursed. You may only clear the cursed debility by completing the quest."]]
+	choice["quest", p["Death desires something of you in exchange for your life. Envision what it wants (", i["Ask the Oracle"], " if unsure), and ", i["Swear an Iron Vow"], " (formidable or extreme) to complete that quest. If you fail to score a hit when you ", i["Swear an Iron Vow"], ",", " or refuse the quest, you are dead. Otherwise, you return to the mortal world and are now cursed. You may only clear the cursed debility by completing the quest."]]
 };
 
 
@@ -1085,7 +1085,7 @@ moves["endureStress"] = move[
 
 faceDesolationWeakChoices = {
 	choice["sacrifice", p["Your spirit or sanity breaks, but not before you make a noble sacrifice. Envision your final moments."]],
-	choice["vision", p["You see a vision of a dreaded event coming to pass. Envision that dark future (", i["Ask the Oracle"], " if unsure), and ", i["Swear an Iron Vow"], " (formidable or extreme) to prevent it. If you fail to score a hit when you ", i["Swear an Iron Vow"], ", or refuse the quest, you are lost. Otherwise, you return to your senses and are now tormented. You may only clear the tormented debility by completing the quest."]]
+	choice["vision", p["You see a vision of a dreaded event coming to pass. Envision that dark future (", i["Ask the Oracle"], " if unsure), and ", i["Swear an Iron Vow"], " (formidable or extreme) to prevent it. If you fail to score a hit when you ", i["Swear an Iron Vow"], ",", " or refuse the quest, you are lost. Otherwise, you return to your senses and are now tormented. You may only clear the tormented debility by completing the quest."]]
 };
 
 
@@ -1204,7 +1204,7 @@ moves["findAnOpportunity", "name"] = "Find an Opportunity";
 moves["findAnOpportunity", "header"] = choiceSection[
 	{
 		p[b["When you encounter a helpful situation or feature within a site,"], " roll on the Find an Opportunity table."],
-		p["If you are making this move as a result of a strong hit on ", i["Delve the Depths"], ", you may pick or envision an opportunity instead of rolling. Then, choose one."]
+		p["If you are making this move as a result of a strong hit on ", i["Delve the Depths"], ",", " you may pick or envision an opportunity instead of rolling. Then, choose one."]
 	},
 	findOpportunityChoices
 ];
@@ -1275,7 +1275,7 @@ moves["escapeTheDepths"] = move[
 		escapeDepthsWeakChoices
 	],
 	paras[
-		p["A dire threat or imposing obstacle stands in your way. ", i["Reveal a Danger"], ". If you survive, you may make your escape."]
+		p["A dire threat or imposing obstacle stands in your way. ", i["Reveal a Danger"], ".", " If you survive, you may make your escape."]
 	]
 ];
 
@@ -1301,7 +1301,7 @@ moves["markYourFailure", "header"] = paras[
 
 learnFailuresStrongChoices = {
 	choice["adjust", p["Adjust your approach: Discard a single asset, and take 2 experience for each marked ability."]],
-	choice["oath", p["Make an oath: ", i["Swear an Iron Vow"], ", and reroll any dice."]],
+	choice["oath", p["Make an oath: ", i["Swear an Iron Vow"], ",", " and reroll any dice."]],
 	choice["ready", p["Ready your next steps: Take +3 momentum."]]
 };
 

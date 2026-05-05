@@ -124,7 +124,7 @@ assetData["Cave Lion"] = assetRecord[
 	{
 		assetAbility[1, "Eager", p["When your cat chases down big game, you may ", i["Resupply"], " with +edge (instead of +wits). If you do, take +1 supply or +1 momentum on a strong hit."]],
 		assetAbility[2, "Inescapable", p["When you ", i["Enter the Fray"], " or ", i["Strike"], " by sending your cat to attack, roll +edge. On a hit, take +2 momentum."]],
-		assetAbility[3, "Protective", p["When you ", i["Make Camp"], ", your cat is alert to trouble. If you or an ally choose to relax, take +1 spirit. If you focus, take +1 momentum."]]
+		assetAbility[3, "Protective", p["When you ", i["Make Camp"], ",", " your cat is alert to trouble. If you or an ally choose to relax, take +1 spirit. If you focus, take +1 momentum."]]
 	},
 	{},
 	<|
@@ -160,7 +160,7 @@ assetData["Hawk"] = assetRecord[
 		"Name" -> assetField["name", "Name", "text"]
 	|>,
 	{
-		assetAbility[1, "Far-seeing", p["When you ", i["Undertake a Journey"], ", or when you ", i["Resupply"], " by hunting for small game, add +1."]],
+		assetAbility[1, "Far-seeing", p["When you ", i["Undertake a Journey"], ",", " or when you ", i["Resupply"], " by hunting for small game, add +1."]],
 		assetAbility[2, "Fierce", p["When you ", i["Secure an Advantage"], " +edge using your hawk to harass and distract your foes, add +1 and take +1 momentum on a hit."]],
 		assetAbility[3, "Vigilant", p["When you ", i["Face Danger"], " +wits to detect an approaching threat, or when you ", i["Enter the Fray"], " +wits against an ambush, add +2."]]
 	},
@@ -179,7 +179,7 @@ assetData["Horse"] = assetRecord[
 		"Name" -> assetField["name", "Name", "text"]
 	|>,
 	{
-		assetAbility[1, "Swift", p["When you ", i["Face Danger"], " +edge using your horse\[CloseCurlyQuote]s speed and grace, or when you ", i["Undertake a Journey"], ", add +1."]],
+		assetAbility[1, "Swift", p["When you ", i["Face Danger"], " +edge using your horse\[CloseCurlyQuote]s speed and grace, or when you ", i["Undertake a Journey"], ",", " add +1."]],
 		assetAbility[2, "Fearless", p["When you ", i["Enter the Fray"], " or ", i["Secure an Advantage"], " +heart by charging into combat, add +1 and take +1 momentum on a hit."]],
 		assetAbility[3, "Mighty", p["When you ", i["Strike"], " or ", i["Clash"], " at close range while mounted, add +1 and inflict +1 harm on a hit."]]
 	},
@@ -245,7 +245,7 @@ assetData["Mammoth"] = assetRecord[
 		"Name" -> assetField["name", "Name", "text"]
 	|>,
 	{
-		assetAbility[1, "Lumbering", p["When your mammoth travels with you as you ", i["Undertake a Journey"], ", you may add +2 but suffer -1 momentum (decide before rolling)."]],
+		assetAbility[1, "Lumbering", p["When your mammoth travels with you as you ", i["Undertake a Journey"], ",", " you may add +2 but suffer -1 momentum (decide before rolling)."]],
 		assetAbility[2, "Beast of burden", p["When you make a move which requires you to roll +supply, you may instead roll +your mammoth\[CloseCurlyQuote]s health."]],
 		assetAbility[3, "Overpowering", p["When you ", i["Strike"], " or ", i["Clash"], " by riding your mammoth against a pack of foes, add +1 and inflict +1 harm on a hit."]]
 	},
@@ -266,7 +266,7 @@ assetData["Owl"] = assetRecord[
 	{
 		assetAbility[1, "Nocturnal", p["If you ", i["Resupply"], " at night by sending your owl to hunt, take +2 momentum on a hit. When you ", i["Enter the Fray"], " +wits against an ambush in darkness, add +1 and take +1 momentum on a hit."]],
 		assetAbility[2, "Sage", p["When you leverage your owl\[CloseCurlyQuote]s secret knowledge to perform a ritual, add +1 or take +1 momentum on a hit (decide before rolling)."]],
-		assetAbility[3, "Embodying", p["When you ", i["Face Death"], ", take your owl\[CloseCurlyQuote]s health as +momentum before you roll."]]
+		assetAbility[3, "Embodying", p["When you ", i["Face Death"], ",", " take your owl\[CloseCurlyQuote]s health as +momentum before you roll."]]
 	},
 	{},
 	<|
@@ -284,8 +284,8 @@ assetData["Raven"] = assetRecord[
 	|>,
 	{
 		assetAbility[1, "Sly", p["When you ", i["Secure an Advantage"], " or ", i["Face Danger"], " +shadow using your raven to perform trickery (such as creating a distraction or stealing a small object) add +1 and take +1 momentum on a hit."]],
-		assetAbility[2, "Knowing", p["When you ", i["Face Death"], ", add +2 and take +1 momentum on a hit."]],
-		assetAbility[3, "Diligent", p["When your raven carries messages for you, you may ", i["Secure an Advantage"], ", ", i["Gather Information"], ", or ", i["Compel"], " from a distance."]]
+		assetAbility[2, "Knowing", p["When you ", i["Face Death"], ",", " add +2 and take +1 momentum on a hit."]],
+		assetAbility[3, "Diligent", p["When your raven carries messages for you, you may ", i["Secure an Advantage"], ",", " ", i["Gather Information"], ",", " or ", i["Compel"], " from a distance."]]
 	},
 	{},
 	<|
@@ -395,7 +395,7 @@ assetData["Battle-scarred"] = assetRecord[
 	{
 		assetAbility[1, "", p["You focus your energies: Reduce your edge or iron by 1 and add +2 to wits or heart, or +1 to each (to a maximum of +4)."]],
 		assetAbility[2, "", p["You overcome your limitations: Reduce your maximum health by 1. Maimed no longer counts as a debility, and does not reduce your maximum momentum or reset value. When you ", i["Endure Stress"], " +heart, take +1 momentum on a strong hit."]],
-		assetAbility[3, "", p["You have stared down death before: When you are at 0 health and ", i["Endure Harm"], ", you may roll +wits or +heart (instead of +health or +iron). If you do, take +1 momentum on a hit."]]
+		assetAbility[3, "", p["You have stared down death before: When you are at 0 health and ", i["Endure Harm"], ",", " you may roll +wits or +heart (instead of +health or +iron). If you do, take +1 momentum on a hit."]]
 	},
 	{},
 	<||>,
@@ -450,10 +450,10 @@ assetData["Commander"] = assetRecord[
 		assetAbility[
 			1,
 			"",
-			p["You lead a warband with +4 strength. Roll +strength when you command your warband to ", i["Face Danger"], ", ", i["Secure an Advantage"], ", ", i["Compel"], ", or ", i["Battle"], ". When you face the negative outcome of any move, you may suffer -1 strength as the cost. When you ", i["Make Camp"], " or ", i["Sojourn"], " and score a hit, take +1 strength. While at 0 strength, this asset counts as a debility."],
+			p["You lead a warband with +4 strength. Roll +strength when you command your warband to ", i["Face Danger"], ",", " ", i["Secure an Advantage"], ",", " ", i["Compel"], ",", " or ", i["Battle"], ".", " When you face the negative outcome of any move, you may suffer -1 strength as the cost. When you ", i["Make Camp"], " or ", i["Sojourn"], " and score a hit, take +1 strength. While at 0 strength, this asset counts as a debility."],
 			True
 		],
-		assetAbility[2, "", p["You may dispatch scouts from your warband to ", i["Gather Information"], " or ", i["Resupply"], "; if you do, roll +strength."]],
+		assetAbility[2, "", p["You may dispatch scouts from your warband to ", i["Gather Information"], " or ", i["Resupply"], ";", " if you do, roll +strength."]],
 		assetAbility[3, "", p["Once you ", i["Forge a Bond"], " with your warband, take +1 momentum on a hit when you leverage a warband ability."]]
 	},
 	{
@@ -526,7 +526,7 @@ assetData["Empowered"] = assetRecord[
 			p["When you ", i["Sojourn"], " and score a weak hit or miss, you may claim the rights of hospitality warranted by your title or lineage. If you do, roll all dice again and add +1. On a miss, you are refused, and your presumption causes significant new trouble."],
 			True
 		],
-		assetAbility[2, "", p["When you exert your title or lineage to ", i["Compel"], ", add +1 and take +1 momentum on a hit."]],
+		assetAbility[2, "", p["When you exert your title or lineage to ", i["Compel"], ",", " add +1 and take +1 momentum on a hit."]],
 		assetAbility[3, "", p["When you forgo your title or lineage and ", i["Forge a Bond"], " as an equal, or when you ", i["Swear an Iron Vow"], " to serve someone of a lower station, add +1 and take +1 momentum or +1 spirit on a hit."]]
 	},
 	{
@@ -549,7 +549,7 @@ assetData["Fated"] = assetRecord[
 			True
 		],
 		assetAbility[2, "", p["When you ", i["Reach a Milestone"], " on your background vow, take +2 momentum or +1 spirit."]],
-		assetAbility[3, "", p["For every two boxes filled on your background vow progress track, take 1 experience. When you ", i["Fulfill Your Vow"], ", your fate is at hand. Envision your final sacrifice and reroll any dice."]]
+		assetAbility[3, "", p["For every two boxes filled on your background vow progress track, take 1 experience. When you ", i["Fulfill Your Vow"], ",", " your fate is at hand. Envision your final sacrifice and reroll any dice."]]
 	},
 	{
 		1
@@ -620,7 +620,7 @@ assetData["Honorbound"] = assetRecord[
 		assetAbility[
 			1,
 			"",
-			p["When you ", i["Turn the Tide"], ", envision how your vows give you strength in this moment. Then, when you make your move, add +2 (instead of +1) and take +1 momentum on a hit."],
+			p["When you ", i["Turn the Tide"], ",", " envision how your vows give you strength in this moment. Then, when you make your move, add +2 (instead of +1) and take +1 momentum on a hit."],
 			True
 		],
 		assetAbility[2, "", p["When you ", i["Secure an Advantage"], " or ", i["Compel"], " by telling a hard truth, add +1 and take +1 momentum on a hit. On a weak hit or miss, envision how this truth complicates your current situation."]],
@@ -642,7 +642,7 @@ assetData["Improviser"] = assetRecord[
 		assetAbility[
 			1,
 			"",
-			p["When you ", i["Check Your Gear"], ", you may roll +wits (instead of +supply). If you do, envision how you make do with a clever solution, and take +1 momentum on a hit."],
+			p["When you ", i["Check Your Gear"], ",", " you may roll +wits (instead of +supply). If you do, envision how you make do with a clever solution, and take +1 momentum on a hit."],
 			True
 		],
 		assetAbility[2, "", p["When you ", i["Secure an Advantage"], " or ", i["Face Danger"], " by cobbling together an ad hoc tool or apparatus, add +1 and take +1 momentum on a hit. After rolling, you may also suffer -1 supply and add +1 more."]],
@@ -708,7 +708,7 @@ assetData["Loyalist"] = assetRecord[
 		assetAbility[
 			1,
 			"",
-			p["When you ", i["Aid Your Ally"], ", add +1 and take +1 momentum on a hit. This is in addition to the benefits taken by your ally."],
+			p["When you ", i["Aid Your Ally"], ",", " add +1 and take +1 momentum on a hit. This is in addition to the benefits taken by your ally."],
 			True
 		],
 		assetAbility[2, "", p["When an ally makes the ", i["Endure Stress"], " move in your company, they add +1 and you take +1 momentum on a hit."]],
@@ -763,7 +763,7 @@ assetData["Oathbreaker"] = assetRecord[
 		assetAbility[
 			1,
 			"",
-			p[b["This asset counts as a debility"], ". One time only, when you ", i["Swear an Iron Vow"], " to redeem yourself (extreme or greater), give that vow a special mark. When you ", i["Reach a Milestone"], " on the marked vow, take +2 momentum."],
+			p[b["This asset counts as a debility"], ".", " One time only, when you ", i["Swear an Iron Vow"], " to redeem yourself (extreme or greater), give that vow a special mark. When you ", i["Reach a Milestone"], " on the marked vow, take +2 momentum."],
 			True
 		],
 		assetAbility[2, "", p["When you ", i["Secure an Advantage"], " or ", i["Compel"], " by reaffirming your commitment to your marked vow, add +1 and take +1 momentum on a hit."]],
@@ -788,7 +788,7 @@ assetData["Outcast"] = assetRecord[
 			p["When your supply is reduced to 0, suffer any remaining -supply as -momentum. Then, roll +wits. On a strong hit, you manage to scrape by and take +1 supply. On a weak hit, you may suffer -2 momentum in exchange for +1 supply. On a miss, you are ", i["Out of Supply"], "."],
 			True
 		],
-		assetAbility[2, "", p["When you ", i["Sojourn"], ", you may reroll any dice. If you do (decide before your first roll), your needs are few, but your isolation sets you apart from others. A strong hit counts as a weak hit."]],
+		assetAbility[2, "", p["When you ", i["Sojourn"], ",", " you may reroll any dice. If you do (decide before your first roll), your needs are few, but your isolation sets you apart from others. A strong hit counts as a weak hit."]],
 		assetAbility[3, "", p["When you ", i["Reach Your Destination"], " and score a strong hit, you recall or recognize something helpful about this place. Envision what it is, and take +2 momentum."]]
 	},
 	{
@@ -829,11 +829,11 @@ assetData["Revenant"] = assetRecord[
 		assetAbility[
 			1,
 			"",
-			p["When you are at 0 health, and ", i["Endure Harm"], " or ", i["Face Death"], ", add +1. If you then burn momentum to improve your result, envision what bond or vow binds you to this world, and take +2 momentum after you reset."],
+			p["When you are at 0 health, and ", i["Endure Harm"], " or ", i["Face Death"], ",", " add +1. If you then burn momentum to improve your result, envision what bond or vow binds you to this world, and take +2 momentum after you reset."],
 			True
 		],
 		assetAbility[2, "", p["When you make a move to investigate, oppose, or interact with a horror, spirit, or other undead being, add +1."]],
-		assetAbility[3, "", p["When you bring death to your foe to ", i["End the Fight"], ", you may burn momentum to cancel one (not both) of the challenge dice if your momentum is greater than the value of that die. If you do, ", i["Endure Stress"], " (2 stress)."]]
+		assetAbility[3, "", p["When you bring death to your foe to ", i["End the Fight"], ",", " you may burn momentum to cancel one (not both) of the challenge dice if your momentum is greater than the value of that die. If you do, ", i["Endure Stress"], " (2 stress)."]]
 	},
 	{
 		1
@@ -854,7 +854,7 @@ assetData["Rider"] = assetRecord[
 			p["When you ", i["Heal"], " your horse, or when you ", i["Face Danger"], " to calm or encourage it, add +1 and take +1 momentum on a hit."],
 			True
 		],
-		assetAbility[2, "", p["When you ", i["Undertake a Journey"], ", you may push your horse harder and add +1 (after rolling). If you do, make the ", i["Companion Endure Harm"], " move (1 harm)."]],
+		assetAbility[2, "", p["When you ", i["Undertake a Journey"], ",", " you may push your horse harder and add +1 (after rolling). If you do, make the ", i["Companion Endure Harm"], " move (1 harm)."]],
 		assetAbility[3, "", p["When you ", i["Secure an Advantage"], " +wits by sizing up a perilous situation from the saddle, you are one with your horse\[CloseCurlyQuote]s instincts. Add +1 and take +1 momentum on a hit."]]
 	},
 	{
@@ -894,7 +894,7 @@ assetData["Shadow-kin"] = assetRecord[
 	{
 		assetAbility[1, "", p["You harden your heart: Reduce your heart stat by 1 and add up to +2 to shadow (to a maximum of +4)."]],
 		assetAbility[2, "", p["You are attuned to the realms of shadow: When you perform a ritual, add +1."]],
-		assetAbility[3, "", p["You know the sly ways of death: When you ", i["Face Death"], ", you may roll +shadow (instead of +heart). On a weak hit, if you choose to undertake a deathbound quest, you may roll +shadow (instead of +heart) and reroll any dice as you ", i["Swear an Iron Vow"], ". When you ", i["Fulfill Your Vow"], " on that quest and and mark experience, take +2 experience."]]
+		assetAbility[3, "", p["You know the sly ways of death: When you ", i["Face Death"], ",", " you may roll +shadow (instead of +heart). On a weak hit, if you choose to undertake a deathbound quest, you may roll +shadow (instead of +heart) and reroll any dice as you ", i["Swear an Iron Vow"], ".", " When you ", i["Fulfill Your Vow"], " on that quest and and mark experience, take +2 experience."]]
 	},
 	{},
 	<||>,
@@ -913,7 +913,7 @@ assetData["Sighted"] = assetRecord[
 			p["When you ", i["Face Danger"], " or ", i["Gather Information"], " to identify or detect mystic forces, add +1 and take +1 momentum on a hit."],
 			True
 		],
-		assetAbility[2, "", p["When you ", i["Compel"], ", ", i["Forge a Bond"], ", or ", i["Test Your Bond"], " with a fellow mystic or mystical being, add +1 and take +1 momentum on a hit."]],
+		assetAbility[2, "", p["When you ", i["Compel"], ",", " ", i["Forge a Bond"], ",", " or ", i["Test Your Bond"], " with a fellow mystic or mystical being, add +1 and take +1 momentum on a hit."]],
 		assetAbility[3, "", p["When you ", i["Secure an Advantage"], " by studying someone or something in a charged situation, add +1 and take +1 momentum on a hit. When you also pierce the veil to explore deeper truths (decide before rolling), you may reroll any dice. If you do, count a weak hit as a miss."]]
 	},
 	{
@@ -940,7 +940,7 @@ assetData["Slayer"] = assetRecord[
 			{p["When you slay a beast or horror (at least formidable), you may take a trophy and choose one."]},
 			{
 				choice["power-a-ritual", p["Power a ritual: When you or an ally make a ritual move, reroll any dice (one time only)."]],
-				choice["prove-your-worth", p["Prove your worth: When you ", i["Sojourn"], ", reroll any dice (one time only)."]]
+				choice["prove-your-worth", p["Prove your worth: When you ", i["Sojourn"], ",", " reroll any dice (one time only)."]]
 			},
 			{}
 		]]
@@ -961,7 +961,7 @@ assetData["Spirit-bound"] = assetRecord[
 		assetAbility[
 			1,
 			"",
-			p["You are haunted by someone whose death you caused through your actions or failures. When you consult with their spirit to ", i["Secure an Advantage"], " or ", i["Gather Information"], ", add +1 and take +2 momentum on a hit. On a weak hit, also ", i["Endure Stress"], " (1 stress)."],
+			p["You are haunted by someone whose death you caused through your actions or failures. When you consult with their spirit to ", i["Secure an Advantage"], " or ", i["Gather Information"], ",", " add +1 and take +2 momentum on a hit. On a weak hit, also ", i["Endure Stress"], " (1 stress)."],
 			True
 		],
 		assetAbility[2, "", p["When you ", i["Face Death"], " guided by the spirit, add +1. On a strong hit, envision what you learn and take 1 experience."]],
@@ -990,7 +990,7 @@ assetData["Storyweaver"] = assetRecord[
 		assetAbility[
 			1,
 			"",
-			p["When you ", i["Secure an Advantage"], ", ", i["Compel"], ", or ", i["Forge a Bond"], " by sharing an inspiring or enlightening song, poem, or tale, envision the story you tell. Then, add +1 and take +1 momentum on a hit."],
+			p["When you ", i["Secure an Advantage"], ",", " ", i["Compel"], ",", " or ", i["Forge a Bond"], " by sharing an inspiring or enlightening song, poem, or tale, envision the story you tell. Then, add +1 and take +1 momentum on a hit."],
 			True
 		],
 		assetAbility[2, "", p["When you ", i["Make Camp"], " and choose the option to relax, you may share a story with your allies or compose a new story if alone. If you do, envision the story you tell and take +1 spirit or +1 momentum. Any allies who choose to relax in your company may also take +1 spirit or +1 momentum."]],
@@ -1012,7 +1012,7 @@ assetData["Trickster"] = assetRecord[
 		assetAbility[
 			1,
 			"",
-			p["When you ", i["Face Danger"], ", ", i["Secure an Advantage"], ", or ", i["Compel"], " by lying, bluffing, stealing, or cheating, add +1."],
+			p["When you ", i["Face Danger"], ",", " ", i["Secure an Advantage"], ",", " or ", i["Compel"], " by lying, bluffing, stealing, or cheating, add +1."],
 			True
 		],
 		assetAbility[2, "", p["When you ", i["Gather Information"], " by investigating a devious scheme, you may roll +shadow (instead of +wits). If you do, take +2 momentum on a hit."]],
@@ -1063,7 +1063,7 @@ assetData["Waterborn"] = assetRecord[
 		assetAbility[
 			1,
 			"",
-			p["When you ", i["Face Danger"], ", ", i["Gather Information"], ", or ", i["Secure an Advantage"], " related to your knowledge of watercraft, water travel, or aquatic environments or creatures, add +1 and take +1 momentum on a hit."],
+			p["When you ", i["Face Danger"], ",", " ", i["Gather Information"], ",", " or ", i["Secure an Advantage"], " related to your knowledge of watercraft, water travel, or aquatic environments or creatures, add +1 and take +1 momentum on a hit."],
 			True
 		],
 		assetAbility[2, "", choiceSection[
@@ -1093,7 +1093,7 @@ assetData["Wayfinder"] = assetRecord[
 		assetAbility[
 			1,
 			"",
-			p["When you ", i["Undertake a Journey"], ", take +1 momentum on a strong hit. If you burn momentum to improve your result, also take +1 momentum after you reset."],
+			p["When you ", i["Undertake a Journey"], ",", " take +1 momentum on a strong hit. If you burn momentum to improve your result, also take +1 momentum after you reset."],
 			True
 		],
 		assetAbility[2, "", p["When you ", i["Secure an Advantage"], " or ", i["Gather Information"], " by carefully surveying the landscape or scouting ahead, add +1 and take +1 momentum on a hit."]],
@@ -1119,7 +1119,7 @@ assetData["Weaponmaster"] = assetRecord[
 			True
 		],
 		assetAbility[2, "", p["When you study or train in a new weapon or technique, you may obtain and upgrade that combat talent for 1 fewer experience."]],
-		assetAbility[3, "", p["When you ", i["Turn the Tide"], " with a sudden change of weapon or technique, and your next move is a ", i["Strike"], ", add +1 and inflict +2 harm on a strong hit."]]
+		assetAbility[3, "", p["When you ", i["Turn the Tide"], " with a sudden change of weapon or technique, and your next move is a ", i["Strike"], ",", " add +1 and inflict +2 harm on a strong hit."]]
 	},
 	{
 		1
@@ -1137,7 +1137,7 @@ assetData["Wildblood"] = assetRecord[
 		assetAbility[
 			1,
 			"",
-			p["When you ", i["Face Danger"], ", ", i["Secure an Advantage"], ", or ", i["Gather Information"], " using your knowledge of tracking, woodcraft, or woodland creatures, add +1."],
+			p["When you ", i["Face Danger"], ",", " ", i["Secure an Advantage"], ",", " or ", i["Gather Information"], " using your knowledge of tracking, woodcraft, or woodland creatures, add +1."],
 			True
 		],
 		assetAbility[2, "", p["When you ", i["Face Danger"], " or ", i["Secure an Advantage"], " by hiding or sneaking in the woodlands, add +1 and take +1 momentum on a hit."]],
@@ -1165,7 +1165,7 @@ assetData["Wright"] = assetRecord[
 			True
 		],
 		assetAbility[2, "", p["As above, and you may suffer -1 supply (after rolling) to add an additional +1."]],
-		assetAbility[3, "", p["When you give the item you create as a gift to commemorate an important event or relationship, you may (one time only) reroll any dice when you ", i["Compel"], ", ", i["Forge a Bond"], ", or ", i["Test Your Bond"], "."]]
+		assetAbility[3, "", p["When you give the item you create as a gift to commemorate an important event or relationship, you may (one time only) reroll any dice when you ", i["Compel"], ",", " ", i["Forge a Bond"], ",", " or ", i["Test Your Bond"], "."]]
 	},
 	{
 		1
@@ -1199,7 +1199,7 @@ assetData["Archer"] = assetRecord[
 		],
 			True
 		],
-		assetAbility[2, "", p["Once per fight, when you ", i["Strike"], " or ", i["Clash"], ", you may take extra shots and suffer -1 supply (decide before rolling). When you do, reroll any dice. On a hit, inflict +2 harm and take +1 momentum."]],
+		assetAbility[2, "", p["Once per fight, when you ", i["Strike"], " or ", i["Clash"], ",", " you may take extra shots and suffer -1 supply (decide before rolling). When you do, reroll any dice. On a hit, inflict +2 harm and take +1 momentum."]],
 		assetAbility[3, "", p["When you ", i["Resupply"], " by hunting, add +1 and take +1 momentum on a hit."]]
 	},
 	{
@@ -1279,7 +1279,7 @@ assetData["Cutthroat"] = assetRecord[
 		],
 			True
 		],
-		assetAbility[2, "", p["When you ", i["Compel"], " someone at the point of your blade, or when you rely on your blade to ", i["Face Danger"], ", add +1."]],
+		assetAbility[2, "", p["When you ", i["Compel"], " someone at the point of your blade, or when you rely on your blade to ", i["Face Danger"], ",", " add +1."]],
 		assetAbility[3, "", p["Once per fight, when you ", i["Secure an Advantage"], " +shadow by performing a feint or misdirection, reroll any dice and take +1 momentum on a hit."]]
 	},
 	{
@@ -1298,12 +1298,12 @@ assetData["Duelist"] = assetRecord[
 		assetAbility[
 			1,
 			"",
-			p["When you ", i["Strike"], " or ", i["Clash"], ", you may add +2. If you do (decide before rolling), inflict +1 harm on a strong hit and count a weak hit as a miss."],
+			p["When you ", i["Strike"], " or ", i["Clash"], ",", " you may add +2. If you do (decide before rolling), inflict +1 harm on a strong hit and count a weak hit as a miss."],
 			True
 		],
 		assetAbility[2, "", p["Once per fight, when you ", i["Secure an Advantage"], " +edge by making a bold display of your combat prowess, you may reroll any dice."]],
 		assetAbility[3, "", choiceSection[
-			{p["When you ", i["Draw the Circle"], ", choose one (before rolling)."]},
+			{p["When you ", i["Draw the Circle"], ",", " choose one (before rolling)."]},
 			{
 				choice["add-2", p["Add +2."]],
 				choice["take-2-momentum-on-a-hit", p["Take +2 momentum on a hit."]]
@@ -1492,8 +1492,8 @@ assetData["Sunderer"] = assetRecord[
 			p["When you ", i["Strike"], " or ", i["Clash"], " in close quarters, you may suffer -1 momentum and inflict +1 harm on a hit (decide before rolling)."],
 			True
 		],
-		assetAbility[2, "", p["When you have your axe in hand, and use the promise of violence to ", i["Compel"], " or ", i["Secure an Advantage"], ", add +1 and take +1 momentum on a hit."]],
-		assetAbility[3, "", p["When you make a tribute to a fallen foe (formidable or greater) by carving a rune in the haft of your axe, roll +heart. On a strong hit, inflict +1d6 harm (one time only) when you ", i["Strike"], " or ", i["Clash"], ". On a weak hit, as above, but this death weighs on you; ", i["Endure Stress"], " (2 stress)."]]
+		assetAbility[2, "", p["When you have your axe in hand, and use the promise of violence to ", i["Compel"], " or ", i["Secure an Advantage"], ",", " add +1 and take +1 momentum on a hit."]],
+		assetAbility[3, "", p["When you make a tribute to a fallen foe (formidable or greater) by carving a rune in the haft of your axe, roll +heart. On a strong hit, inflict +1d6 harm (one time only) when you ", i["Strike"], " or ", i["Clash"], ".", " On a weak hit, as above, but this death weighs on you; ", i["Endure Stress"], " (2 stress)."]]
 	},
 	{
 		1
@@ -1533,11 +1533,11 @@ assetData["Thunder-bringer"] = assetRecord[
 		assetAbility[
 			1,
 			"",
-			p["When you ", i["Face Danger"], ", ", i["Secure an Advantage"], ", or ", i["Compel"], " by hitting or breaking an inanimate object, add +1 and take +1 momentum on a hit."],
+			p["When you ", i["Face Danger"], ",", " ", i["Secure an Advantage"], ",", " or ", i["Compel"], " by hitting or breaking an inanimate object, add +1 and take +1 momentum on a hit."],
 			True
 		],
 		assetAbility[2, "", p["When you ", i["Strike"], " a foe to knock them back, stun them, or put them off balance, inflict 1 harm (instead of 2) and take +2 momentum on a hit. On a strong hit, you also create an opening and add +1 on your next move."]],
-		assetAbility[3, "", p["When you ", i["Turn the Tide"], ", you may ", i["Strike"], " with all the fury and power you can muster. If you do (decide before rolling), you may reroll any dice and inflict +2 harm on a strong hit, but count a weak hit as a miss."]]
+		assetAbility[3, "", p["When you ", i["Turn the Tide"], ",", " you may ", i["Strike"], " with all the fury and power you can muster. If you do (decide before rolling), you may reroll any dice and inflict +2 harm on a strong hit, but count a weak hit as a miss."]]
 	},
 	{
 		1
@@ -1651,7 +1651,7 @@ assetData["Divination"] = assetRecord[
 		assetAbility[
 			1,
 			"",
-			p["When you take a drop of blood from a willing subject (not yourself) and cast the rune-carved stones, roll +heart. On a strong hit, you may read the runes to gain insight about the subject and people close to them, including information you and the subject have no knowledge of. If you use the reading to ", i["Gather Information"], ", ", i["Compel"], ", or ", i["Forge a Bond"], ", add +1. On a weak hit, as above, but the runes reveal their secrets only with extra time and focus; suffer -2 momentum."],
+			p["When you take a drop of blood from a willing subject (not yourself) and cast the rune-carved stones, roll +heart. On a strong hit, you may read the runes to gain insight about the subject and people close to them, including information you and the subject have no knowledge of. If you use the reading to ", i["Gather Information"], ",", " ", i["Compel"], ",", " or ", i["Forge a Bond"], ",", " add +1. On a weak hit, as above, but the runes reveal their secrets only with extra time and focus; suffer -2 momentum."],
 			True
 		],
 		assetAbility[2, "", p["As above, and your divination can also reveal information about the subject\[CloseCurlyQuote]s future."]],
@@ -1697,10 +1697,10 @@ assetData["Keen"] = assetRecord[
 		assetAbility[
 			1,
 			"",
-			p["When you hold a weapon and sing a keen for those it has killed, roll +heart. On a strong hit, the wielder inflicts +1 harm when they ", i["Strike"], " or ", i["Clash"], ". If they roll a 1 on their action die when making a move to inflict harm, the magic is spent. On a weak hit, as above, but the voices of those who were slain join in your song; ", i["Endure Stress"], " (2 stress)."],
+			p["When you hold a weapon and sing a keen for those it has killed, roll +heart. On a strong hit, the wielder inflicts +1 harm when they ", i["Strike"], " or ", i["Clash"], ".", " If they roll a 1 on their action die when making a move to inflict harm, the magic is spent. On a weak hit, as above, but the voices of those who were slain join in your song; ", i["Endure Stress"], " (2 stress)."],
 			True
 		],
-		assetAbility[2, "", p["As above, and the wielder may also (one time only) add +1 and take +2 momentum on a hit when they ", i["Draw the Circle"], ", ", i["Enter the Fray"], ", or ", i["Battle"], "."]],
+		assetAbility[2, "", p["As above, and the wielder may also (one time only) add +1 and take +2 momentum on a hit when they ", i["Draw the Circle"], ",", " ", i["Enter the Fray"], ",", " or ", i["Battle"], "."]],
 		assetAbility[3, "", p["When you perform this ritual, add +1 and take +1 momentum on a hit."]]
 	},
 	{
@@ -1820,7 +1820,7 @@ assetData["Sway"] = assetRecord[
 			p["When you speak a person\[CloseCurlyQuote]s name three times to the wind, roll +wits. On a strong hit, the wind whispers of this person\[CloseCurlyQuote]s need. Envision what you hear (", i["Ask the Oracle"], " if unsure). If you use this information or fulfill this need when you ", i["Compel"], " them, you may reroll any dice (one time only). On a weak hit, as above, but this person\[CloseCurlyQuote]s need creates a troubling dilemma or complication; ", i["Endure Stress"], " (1 stress)."],
 			True
 		],
-		assetAbility[2, "", p["As above, and if you score a strong hit when you ", i["Compel"], ", you may also reroll any dice (one time only) when you ", i["Gather Information"], " from this person."]],
+		assetAbility[2, "", p["As above, and if you score a strong hit when you ", i["Compel"], ",", " you may also reroll any dice (one time only) when you ", i["Gather Information"], " from this person."]],
 		assetAbility[3, "", p["When you perform this ritual, add +1 and take +1 momentum on a hit."]]
 	},
 	{
@@ -1861,7 +1861,7 @@ assetData["Tether"] = assetRecord[
 		assetAbility[
 			1,
 			"",
-			p["When you commune with the spirits of a place, roll +heart. If you share a bond with someone there, add +1. On a strong hit, you are tethered. When you ", i["Undertake a Journey"], " to return, you may roll +spirit or +heart (instead of +wits), and take +1 momentum on a hit. When you ", i["Reach Your Destination"], ", take +2 momentum on a strong hit. The tether is lost if you perform this ritual elsewhere, or when you ", i["Face Desolation"], ". On a weak hit, as above, but the spirits reveal a disturbing aspect of the place; ", i["Endure Stress"], " (2 stress)."],
+			p["When you commune with the spirits of a place, roll +heart. If you share a bond with someone there, add +1. On a strong hit, you are tethered. When you ", i["Undertake a Journey"], " to return, you may roll +spirit or +heart (instead of +wits), and take +1 momentum on a hit. When you ", i["Reach Your Destination"], ",", " take +2 momentum on a strong hit. The tether is lost if you perform this ritual elsewhere, or when you ", i["Face Desolation"], ".", " On a weak hit, as above, but the spirits reveal a disturbing aspect of the place; ", i["Endure Stress"], " (2 stress)."],
 			True
 		],
 		assetAbility[2, "", p["As above, and you may also reroll any dice when you ", i["Sojourn"], " in the tethered place."]],
@@ -1908,7 +1908,7 @@ assetData["Visage"] = assetRecord[
 			p["When you paint yourself in blood and ash, roll +wits. On a strong hit, you may add +2 and take +1 momentum on a hit when you ", i["Secure an Advantage"], " or ", i["Compel"], " using fear or intimidation. If you roll a 1 on your action die when making a move aided by your visage, the magic is spent. On a weak hit, as above, but the blood must be your own; ", i["Endure Harm"], " (2 harm)."],
 			True
 		],
-		assetAbility[2, "", p["As above, and you may also add +1 when you ", i["Strike"], ", ", i["Clash"], ", or ", i["Battle"], "."]],
+		assetAbility[2, "", p["As above, and you may also add +1 when you ", i["Strike"], ",", " ", i["Clash"], ",", " or ", i["Battle"], "."]],
 		assetAbility[3, "", p["When you perform this ritual, add +1 and take +1 momentum on a hit."]]
 	},
 	{
@@ -1932,7 +1932,7 @@ assetData["Ward"] = assetRecord[
 			{
 				choice["when-a-foe-first-crosses-the-boundary-take-1-momentum", p["When a foe first crosses the boundary, take +1 momentum."]],
 				choice["when-you-first-inflict-harm-against-a-foe-within-the-boundary-inflict-1-harm", p["When you first inflict harm against a foe within the boundary, inflict +1 harm."]],
-				choice["your-ward-is-likely-ask-the-oracle-to-trap-a-foe-within-the-boundary", p["Your ward is \[OpenCurlyQuote]likely\[CloseCurlyQuote] (", i["Ask the Oracle"], ") to trap a foe within the boundary."]]
+				choice["your-ward-is-likely-ask-the-oracle-to-trap-a-foe-within-the-boundary", p["Your ward is \[OpenCurlyQuote]likely\[CloseCurlyQuote] (", i["Ask the Oracle"], ")", " to trap a foe within the boundary."]]
 			},
 			{}
 		],
