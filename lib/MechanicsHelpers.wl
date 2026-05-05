@@ -89,11 +89,9 @@ takeSpirit::usage = "takeSpirit is part of the internal MechanicsHelpers API use
 sufferSupply::usage = "sufferSupply is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
 takeSupply::usage = "takeSupply is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
 recover::usage = "recover is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
-addJourney::usage = "addJourney is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
-setCurrentJourney::usage = "setCurrentJourney is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
+beginJourney::usage = "beginJourney is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
 journey::usage = "journey is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
-journeys::usage = "journeys is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
-removeJourney::usage = "removeJourney is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
+endJourney::usage = "endJourney is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
 addFoe::usage = "addFoe is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
 foe::usage = "foe is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
 foes::usage = "foes is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
@@ -106,7 +104,7 @@ removeBond::usage = "removeBond is part of the internal MechanicsHelpers API use
 markExperience::usage = "markExperience is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
 beginScene::usage = "beginScene is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
 scene::usage = "scene is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
-removeScene::usage = "removeScene is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
+endScene::usage = "endScene is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
 markSceneCountdown::usage = "markSceneCountdown is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
 addDelve::usage = "addDelve is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
 setCurrentDelve::usage = "setCurrentDelve is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
@@ -172,9 +170,9 @@ symString[symbol_] := ToLowerCase[SymbolName[symbol]];
 
 stats = {Edge, Heart, Iron, Shadow, Wits, Health, Spirit, Supply};
 ranks = {Troublesome, Dangerous, Formidable, Extreme, Epic};
-debilities = {Wounded, Shaken, Unprepared, Encumbered, Maimed, Corrupted, Cursed, Tormented, Oathbreaker};
-permanentDebilities = {Maimed, Corrupted};
-recoverableConditions = {Wounded, Shaken, Unprepared, Encumbered};
+debilities = {"Wounded", "Shaken", "Unprepared", "Encumbered", "Maimed", "Corrupted", "Cursed", "Tormented", "Oathbreaker"};
+permanentDebilities = {"Maimed", "Corrupted"};
+recoverableConditions = {"Wounded", "Shaken", "Unprepared", "Encumbered"};
 delveThemes = {"Ancient", "Corrupted", "Fortified", "Hallowed", "Haunted", "Infested", "Ravaged", "Wild"};
 delveDomains = {"Barrow", "Cavern", "Frozen Cavern", "Icereach", "Mine", "Pass", "Ruin", "Sea Cave", "Shadowfen", "Stronghold", "Tanglewood", "Underkeep"};
 denizenSlotRanges = {
@@ -224,7 +222,7 @@ getIron[character_:$soloCharacter] := getAttr["iron", character];
 getShadow[character_:$soloCharacter] := getAttr["shadow", character];
 getWits[character_:$soloCharacter] := getAttr["wits", character];
 
-getDebilities[character_:$soloCharacter] := getAttr["debilities", character];
+getDebilities[character_:$soloCharacter] := normalizeCharacterDebilities[character];
 
 getMomentum[character_:$soloCharacter] := getAttr["momentum", character];
 getMomentumReset[character_:$soloCharacter] := Max[0, 2 - Length[getDebilities[character]]];
@@ -249,13 +247,41 @@ resourceBounds["spirit", _] := {0, 5};
 resourceBounds["supply", _] := {0, 5};
 resourceBounds["momentum", character_] := {-6, getMomentumMax[character]};
 
-recoveryBlockingDebility["health"] := Wounded;
-recoveryBlockingDebility["spirit"] := Shaken;
-recoveryBlockingDebility["supply"] := Unprepared;
+recoveryBlockingDebility["health"] := "Wounded";
+recoveryBlockingDebility["spirit"] := "Shaken";
+recoveryBlockingDebility["supply"] := "Unprepared";
 recoveryBlockingDebility[_] := None;
 
-debilityLabel[debility_] :=
+debilityLabel[debility_String] :=
+	debility;
+
+debilityLabel[debility_Symbol] :=
 	SymbolName[Unevaluated[debility]];
+
+debilityLabel[debility_] :=
+	ToString[Unevaluated[debility]];
+
+debilityToken[debility_] :=
+	ToLowerCase[
+		StringReplace[
+			StringTrim[debilityLabel[debility]],
+			RegularExpression["[^A-Za-z0-9]"] -> ""
+		]
+	];
+
+normalizeDebilityValue[debility_] := Module[
+	{token, matches},
+	token = debilityToken[debility];
+	matches = Select[debilities, debilityToken[#] === token &];
+	If[matches === {}, Missing["UnknownDebility", debility], First[matches]]
+];
+
+normalizeDebilityList[raw_] := Module[
+	{values, normalized},
+	values = If[ListQ[raw], raw, {}];
+	normalized = normalizeDebilityValue /@ values;
+	DeleteDuplicates[Cases[normalized, _String]]
+];
 
 ensureCharacterState[character_] :=
 	If[characterExistsQ[character],
@@ -497,6 +523,9 @@ reroll::badroll =
 
 reroll::actiondie =
 "ActionDie can only be rerolled in an action roll.";
+
+reroll::actiondieprogress =
+"The given roll is a progress roll. ActionDie can only be rerolled in an action roll.";
 
 reroll::empty =
 "No dice were specified for reroll.";
@@ -843,6 +872,15 @@ normalizeProgressObject[name_String, data_, defaultRank_?rankQ, defaultProgress_
 normalizeProgressObject[name_String, data_] :=
 	normalizeProgressObject[name, data, Dangerous, 0];
 
+normalizeJourneySlot[raw_] := Which[
+	raw === None,
+		None,
+	AssociationQ[raw],
+		normalizeProgressObject[Lookup[raw, "Name", "Journey"], raw],
+	True,
+		None
+];
+
 legacyProgressTrack[character_, name_String] := Module[
 	{legacy},
 	legacy = Lookup[$state[character], "progressTracks", <||>];
@@ -875,11 +913,9 @@ ensureCharacterCoreProgress[character_] := Module[
 		],
 		$state[character, "bondProgress"] = normalizeProgressObject["Bonds", $state[character, "bondProgress"], Epic, bondDefault]
 	];
-	If[!KeyExistsQ[$state[character], "journeys"] || !AssociationQ[$state[character, "journeys"]],
-		$state[character, "journeys"] = <||>
-	];
-	If[!KeyExistsQ[$state[character], "currentJourney"],
-		$state[character, "currentJourney"] = None
+	$state[character, "journey"] = normalizeJourneySlot[Lookup[$state[character], "journey", None]];
+	If[KeyExistsQ[$state[character], "journeys"] || KeyExistsQ[$state[character], "currentJourney"],
+		$state[character] = KeyDrop[$state[character], {"journeys", "currentJourney"}]
 	];
 	If[!KeyExistsQ[$state[character], "foes"] || !AssociationQ[$state[character, "foes"]],
 		$state[character, "foes"] = <||>
@@ -907,41 +943,40 @@ normalizeProgressObjectAssociation[character_, key_String] := Module[
 	normalized
 ];
 
+normalizeCharacterJourney[character_] := Module[
+	{ownedJourney},
+	If[ensureCharacterCoreProgress[character] === $Failed, Return[$Failed]];
+	ownedJourney = normalizeJourneySlot[Lookup[$state[character], "journey", None]];
+	$state[character, "journey"] = ownedJourney;
+	ownedJourney
+];
+
 journeyExistsQ[name_String, character_] := Module[
-	{ownedJourneys},
-	ownedJourneys = normalizeCharacterJourneys[character];
-	If[ownedJourneys === $Failed, Return[False]];
-	KeyExistsQ[ownedJourneys, name]
+	{ownedJourney},
+	ownedJourney = normalizeCharacterJourney[character];
+	If[ownedJourney === $Failed, Return[False]];
+	AssociationQ[ownedJourney] && ownedJourney["Name"] === name
 ];
 
 journeyByName[name_String, character_] := Module[
-	{ownedJourneys},
-	ownedJourneys = normalizeCharacterJourneys[character];
-	If[ownedJourneys === $Failed, Return[$Failed]];
-	Lookup[ownedJourneys, name, Missing["UnknownJourney", name]]
+	{ownedJourney},
+	ownedJourney = normalizeCharacterJourney[character];
+	If[ownedJourney === $Failed, Return[$Failed]];
+	If[AssociationQ[ownedJourney] && ownedJourney["Name"] === name,
+		ownedJourney,
+		Missing["UnknownJourney", name]
+	]
 ];
 
-currentJourneyName[character_] := Module[
-	{ownedJourneys, current},
-	ownedJourneys = normalizeCharacterJourneys[character];
-	If[ownedJourneys === $Failed, Return[$Failed]];
-	current = Lookup[$state[character], "currentJourney", None];
-	If[current === None,
+characterJourneyData[character_] := Module[
+	{ownedJourney},
+	ownedJourney = normalizeCharacterJourney[character];
+	If[ownedJourney === $Failed, Return[$Failed]];
+	If[!AssociationQ[ownedJourney],
 		Message[journey::nocurrent, character];
 		Return[$Failed]
 	];
-	If[!KeyExistsQ[ownedJourneys, current],
-		Message[journey::unknown, current, character];
-		Return[$Failed]
-	];
-	current
-];
-
-currentJourneyData[character_] := Module[
-	{current},
-	current = currentJourneyName[character];
-	If[current === $Failed, Return[$Failed]];
-	journeyByName[current, character]
+	ownedJourney
 ];
 
 foeExistsQ[name_String, character_] := Module[
@@ -1479,15 +1514,15 @@ progressTargetData[trackName_String, character_] := Module[
 			]
 		]
 	];
-	If[journeyExistsQ[trackName, character],
-		ownedJourney = journeyByName[trackName, character];
-		Return[
-			Association[
-				"Type" -> "Journey",
-				"Name" -> trackName,
-				"Rank" -> ownedJourney["Rank"],
-				"Progress" -> ownedJourney["Progress"]
-			]
+		If[journeyExistsQ[trackName, character],
+			ownedJourney = journeyByName[trackName, character];
+			Return[
+				Association[
+					"Type" -> "Journey",
+					"Name" -> ownedJourney["Name"],
+					"Rank" -> ownedJourney["Rank"],
+					"Progress" -> ownedJourney["Progress"]
+				]
 		]
 	];
 	If[foeExistsQ[trackName, character],
@@ -1596,7 +1631,7 @@ setTargetField[target_Association, "Progress", value_, character_] :=
 		"Scene",
 			$state[character, "scene", "Progress"] = value,
 		"Journey",
-			$state[character, "journeys", target["Name"], "Progress"] = value,
+			$state[character, "journey", "Progress"] = value,
 		"Foe",
 			$state[character, "foes", target["Name"], "Progress"] = value,
 		"Failures",
@@ -1619,7 +1654,7 @@ setTargetField[target_Association, "Rank", value_, character_] :=
 		"Scene",
 			$state[character, "scene", "Rank"] = value,
 		"Journey",
-			$state[character, "journeys", target["Name"], "Rank"] = value,
+			$state[character, "journey", "Rank"] = value,
 		"Foe",
 			$state[character, "foes", target["Name"], "Rank"] = value,
 		"Failures",
@@ -1713,8 +1748,7 @@ createCharacter[
 		"failures" -> makeProgressObject["Failures", Epic],
 		"bondProgress" -> makeProgressObject["Bonds", Epic, 0.25 Length[bonds]],
 		"bonds" -> bonds,
-		"journeys" -> <||>,
-		"currentJourney" -> None,
+		"journey" -> None,
 		"foes" -> <||>,
 		"delves" -> <||>,
 		"currentDelve" -> None,
@@ -1729,15 +1763,24 @@ createCharacter[
 createCharacter::badassets = "Could not create the character because one or more starting assets are invalid.";
 createCharacter::badvow = "Could not create the character because the starting vow is invalid. Use vow[name, Extreme | Epic] or {vowName, Extreme | Epic}.";
 
+normalizeCharacterDebilities[character_] := Module[
+	{normalized},
+	If[!ensureCharacterState[character], Return[$Failed]];
+	normalized = normalizeDebilityList[Lookup[$state[character], "debilities", {}]];
+	$state[character, "debilities"] = normalized;
+	normalized
+];
+
 normalizeCharacterForSheet[character_String] := Module[
 	{normalizers, normalized},
 	If[!ensureCharacterState[character], Return[$Failed]];
 	If[ensureCharacterCoreProgress[character] === $Failed, Return[$Failed]];
 	normalizers = {
+		normalizeCharacterDebilities,
 		normalizeCharacterAssets,
 		normalizeCharacterVows,
 		normalizeCharacterBonds,
-		normalizeCharacterJourneys,
+		normalizeCharacterJourney,
 		normalizeCharacterFoes,
 		normalizeCharacterDelves,
 		normalizeCharacterScene
@@ -1808,52 +1851,52 @@ clearDebilityState[debility_, character_ : $soloCharacter] := (
 );
 
 markWounded[character_ : $soloCharacter] :=
-	markDebilityState[Wounded, character];
+	markDebilityState["Wounded", character];
 
 clearWounded[character_ : $soloCharacter] :=
-	clearDebilityState[Wounded, character];
+	clearDebilityState["Wounded", character];
 
 markShaken[character_ : $soloCharacter] :=
-	markDebilityState[Shaken, character];
+	markDebilityState["Shaken", character];
 
 clearShaken[character_ : $soloCharacter] :=
-	clearDebilityState[Shaken, character];
+	clearDebilityState["Shaken", character];
 
 markUnprepared[character_ : $soloCharacter] :=
-	markDebilityState[Unprepared, character];
+	markDebilityState["Unprepared", character];
 
 clearUnprepared[character_ : $soloCharacter] :=
-	clearDebilityState[Unprepared, character];
+	clearDebilityState["Unprepared", character];
 
 markEncumbered[character_ : $soloCharacter] :=
-	markDebilityState[Encumbered, character];
+	markDebilityState["Encumbered", character];
 
 clearEncumbered[character_ : $soloCharacter] :=
-	clearDebilityState[Encumbered, character];
+	clearDebilityState["Encumbered", character];
 
 markMaimed[character_ : $soloCharacter] :=
-	markDebilityState[Maimed, character];
+	markDebilityState["Maimed", character];
 
 markCorrupted[character_ : $soloCharacter] :=
-	markDebilityState[Corrupted, character];
+	markDebilityState["Corrupted", character];
 
 markCursed[character_ : $soloCharacter] :=
-	markDebilityState[Cursed, character];
+	markDebilityState["Cursed", character];
 
 clearCursed[character_ : $soloCharacter] :=
-	clearDebilityState[Cursed, character];
+	clearDebilityState["Cursed", character];
 
 markTormented[character_ : $soloCharacter] :=
-	markDebilityState[Tormented, character];
+	markDebilityState["Tormented", character];
 
 clearTormented[character_ : $soloCharacter] :=
-	clearDebilityState[Tormented, character];
+	clearDebilityState["Tormented", character];
 
 markOathbreaker[character_ : $soloCharacter] :=
-	markDebilityState[Oathbreaker, character];
+	markDebilityState["Oathbreaker", character];
 
 clearOathbreaker[character_ : $soloCharacter] :=
-	clearDebilityState[Oathbreaker, character];
+	clearDebilityState["Oathbreaker", character];
 
 debility::invalid = "`1` is not an Ironsworn debility.";
 debility::marked = "`1` is already marked for character `2`.";
@@ -2470,6 +2513,10 @@ rarityDieSix[roll_Association, opts : OptionsPattern[]] := Module[
 		Message[rarityDieSix::badroll];
 		Return[$Failed]
 	];
+	If[Lookup[roll, "actionDie", Missing["NoActionDie"]] =!= 6,
+		Message[rarityDieSix::notSix, Lookup[roll, "actionDie", Missing["NoActionDie"]]];
+		Return[$Failed]
+	];
 	newRoll = Association[roll];
 	newRoll["result"] = "strongHit";
 	newRoll["rarityDie"] = Association[
@@ -2485,6 +2532,7 @@ rarityDieSix[roll_, opts : OptionsPattern[]] := (
 );
 
 rarityDieSix::badroll = "rarityDieSix can only be used on an action roll.";
+rarityDieSix::notSix = "rarityDieSix can only be used when the action die is 6, not `1`.";
 
 
 (* ::Subsection::Closed:: *)
@@ -2561,7 +2609,7 @@ reroll[roll_Association, dice_List, opts : OptionsPattern[]] := Module[
 	];
 
 	If[progressRollQ[roll] && MemberQ[selection, ActionDie],
-		Message[reroll::actiondie];
+		Message[reroll::actiondieprogress];
 		Return[$Failed]
 	];
 
@@ -2844,9 +2892,6 @@ progress::badrank = "`1` is not a valid progress rank.";
 (*Journey and foe management*)
 
 
-normalizeCharacterJourneys[character_] :=
-	normalizeProgressObjectAssociation[character, "journeys"];
-
 normalizeCharacterFoes[character_] :=
 	normalizeProgressObjectAssociation[character, "foes"];
 
@@ -2893,71 +2938,40 @@ removeProgressObjectFromCollection[
 	$state[character, collectionKey]
 ];
 
-addJourney[name_String, rank_?rankQ, character_ : $soloCharacter] :=
-	addProgressObjectToCollection[
-		"journeys",
-		normalizeCharacterJourneys,
-		Function[{objectName, objectCharacter}, Message[journey::duplicate, objectName, objectCharacter]],
-		name,
-		rank,
-		character
+beginJourney[name_String, rank_?rankQ, character_ : $soloCharacter] := Module[
+	{ownedJourney, object},
+	ownedJourney = normalizeCharacterJourney[character];
+	If[ownedJourney === $Failed, Return[$Failed]];
+	If[AssociationQ[ownedJourney],
+		Message[journey::duplicate, ownedJourney["Name"], character];
+		Return[$Failed]
 	];
+	object = makeProgressObject[name, rank];
+	$state[character, "journey"] = object;
+	object
+];
 
-addJourney[name_String, rank_, character_ : $soloCharacter] /; !rankQ[rank] := (
+beginJourney[name_String, rank_, character_ : $soloCharacter] /; !rankQ[rank] := (
 	Message[progress::badrank, rank];
 	$Failed
 );
 
-setCurrentJourney[name_String, character_ : $soloCharacter] := Module[
-	{ownedJourney},
-	ownedJourney = journeyByName[name, character];
-	If[!AssociationQ[ownedJourney],
-		Message[journey::unknown, name, character];
-		Return[$Failed]
-	];
-	$state[character, "currentJourney"] = name;
-	ownedJourney
-];
+journey[] :=
+	journey[$soloCharacter];
 
-journey[] := Module[
+journey[character_] := Module[
 	{ownedJourney},
-	ownedJourney = currentJourneyData[$soloCharacter];
+	ownedJourney = characterJourneyData[character];
 	If[ownedJourney === $Failed, Return[$Failed]];
 	ownedJourney
 ];
 
-journey[name_String] :=
-	journey[name, $soloCharacter];
-
-journey[name_String, character_] := Module[
+endJourney[character_ : $soloCharacter] := Module[
 	{ownedJourney},
-	ownedJourney = journeyByName[name, character];
-	If[!AssociationQ[ownedJourney],
-		Message[journey::unknown, name, character];
-		Return[$Failed]
-	];
-	ownedJourney
+	ownedJourney = characterJourneyData[character];
+	If[ownedJourney === $Failed, Return[$Failed]];
+	$state[character, "journey"] = None
 ];
-
-journeys[] :=
-	journeys[$soloCharacter];
-
-journeys[character_] := Module[
-	{ownedJourneys},
-	ownedJourneys = normalizeCharacterJourneys[character];
-	If[ownedJourneys === $Failed, Return[$Failed]];
-	ownedJourneys
-];
-
-removeJourney[name_String, character_ : $soloCharacter] :=
-	removeProgressObjectFromCollection[
-		"journeys",
-		normalizeCharacterJourneys,
-		Function[{objectName, objectCharacter}, Message[journey::unknown, objectName, objectCharacter]],
-		name,
-		character,
-		"currentJourney"
-	];
 
 addFoe[name_String, rank_?rankQ, character_ : $soloCharacter] :=
 	addProgressObjectToCollection[
@@ -3023,9 +3037,9 @@ bondProgress[character_] := Module[
 	track
 ];
 
-journey::duplicate = "Character `2` already has a journey named `1`.";
+journey::duplicate = "Character `2` already has a journey named `1`. Remove it before adding another.";
 journey::unknown = "Character `2` does not have a journey named `1`.";
-journey::nocurrent = "Character `1` does not have a current journey.";
+journey::nocurrent = "`1` does not have a journey.";
 foe::duplicate = "Character `2` already has a foe named `1`.";
 foe::unknown = "Character `2` does not have a foe named `1`.";
 
@@ -3136,10 +3150,10 @@ scene[character_] := Module[
 	ownedScene
 ];
 
-removeScene[] :=
-	removeScene[$soloCharacter];
+endScene[] :=
+	endScene[$soloCharacter];
 
-removeScene[character_] := Module[
+endScene[character_] := Module[
 	{ownedScene},
 	ownedScene = normalizeCharacterScene[character];
 	If[ownedScene === $Failed, Return[$Failed]];

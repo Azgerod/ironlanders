@@ -5,7 +5,7 @@
 
 
 (* ::Subtitle:: *)
-(*An implementation of Ironsworn mechanics*)
+(*An implementation of Ironsworn mec\[AliasDelimiter]hanics*)
 
 
 (* ::Chapter:: *)
@@ -39,7 +39,7 @@
 BeginPackage["IronLibrary`"];
 
 
-(* ::Section::Closed:: *)
+(* ::Section:: *)
 (*Public interface*)
 
 
@@ -48,7 +48,7 @@ BeginPackage["IronLibrary`"];
 
 
 (* ::Subsection::Closed:: *)
-(*Story/chapter management*)
+(*Stories and chapters*)
 
 
 beginStory::usage =
@@ -65,7 +65,7 @@ endChapter[Display -> False] suppresses the character sheet display.";
 
 
 (* ::Subsection::Closed:: *)
-(*Character management*)
+(*Characters*)
 
 
 setSoloCharacter::usage =
@@ -81,40 +81,100 @@ characterSheet[character] displays a Lodestar-style character sheet for the name
 
 
 (* ::Subsection::Closed:: *)
-(*Vow management*)
+(*Action rolls*)
 
 
-vow::usage =
-"vow[name, Extreme | Epic] creates a quiet starting vow spec.
-vow[name, Extreme | Epic, Threat -> {threatName, threatGoal}] creates a quiet starting vow spec with one attached threat.";
+actionRoll::usage =
+"actionRoll[stat] makes an action roll using stat for the solo character.
+actionRoll[stat, character] makes an action roll using stat for character.";
 
-addVow::usage =
-"addVow[name, rank] adds a vow to the solo character.
-addVow[name, rank, character] adds a vow to character.
-addVow[..., Threat -> {threatName, threatGoal}] adds a vow with one attached threat.";
-
-getVow::usage =
-"getVow[name] displays the vow named name for the solo character.
-getVow[name, character] displays the vow named name for character.";
-
-getVows::usage =
-"getVows[] displays all vows for the solo character.
-getVows[character] displays all vows for character.";
-
-removeVow::usage =
-"removeVow[name] removes the named vow from the solo character.
-removeVow[name, character] removes the named vow from character.";
-
-setThreat::usage =
-"setThreat[vowName, {threatName, threatGoal}] sets or replaces the threat attached to vowName for the solo character.
-setThreat[vowName, {threatName, threatGoal}, character] sets or replaces the threat attached to vowName for character.";
-
-removeThreat::usage =
-"removeThreat[vowName] removes the threat attached to vowName for the solo character.
-removeThreat[vowName, character] removes the threat attached to vowName for character.";
 
 (* ::Subsection::Closed:: *)
-(*Debility management*)
+(*Momentum burns*)
+
+
+burnMomentum::usage =
+"burnMomentum[roll] burns momentum for roll and returns the modified roll result.";
+
+
+(* ::Subsection::Closed:: *)
+(*Progress rolls*)
+
+
+progressRoll::usage =
+"progressRoll[track] makes a progress roll against track for the solo character.
+progressRoll[track, character] makes a progress roll against track for character.";
+
+
+(* ::Subsection::Closed:: *)
+(*Rerolls*)
+
+
+reroll::usage =
+"reroll[roll, die] rerolls die in roll and returns the modified roll.
+reroll[roll, {die1, die2, ...}] rerolls the specified dice in roll and returns the modified roll.
+
+Possible dice are ActionDie, ChallengeDice, LargerChallengeDie, and SmallerChallengeDie.
+
+ActionDie may only be used with action rolls. Challenge dice may be rerolled in action rolls and progress rolls.
+
+reroll[..., Display -> False] suppresses display.";
+
+
+(* ::Subsection::Closed:: *)
+(*Choices*)
+
+
+choose::usage =
+"choose[displayOutput, n] displays the nth choice from a previous move, outcome, or asset display output.
+choose[displayOutput, {n1, n2, ...}] displays multiple choices from a previous move, outcome, or asset display output.
+
+Typical usage is moveFunction[]; choose[%, n], or getAsset[name]; choose[%, n].";
+
+
+(* ::Subsection::Closed:: *)
+(*Resources*)
+
+
+sufferMomentum::usage =
+"sufferMomentum[n] adjusts the solo character's momentum by negative integer n.
+sufferMomentum[n, character] adjusts character's momentum by negative integer n.";
+
+takeMomentum::usage =
+"takeMomentum[n] adjusts the solo character's momentum by positive integer n.
+takeMomentum[n, character] adjusts character's momentum by positive integer n.";
+
+sufferHealth::usage =
+"sufferHealth[n] adjusts the solo character's health by negative integer n.
+sufferHealth[n, character] adjusts character's health by negative integer n.";
+
+takeHealth::usage =
+"takeHealth[n] adjusts the solo character's health by positive integer n.
+takeHealth[n, character] adjusts character's health by positive integer n.";
+
+sufferSpirit::usage =
+"sufferSpirit[n] adjusts the solo character's spirit by negative integer n.
+sufferSpirit[n, character] adjusts character's spirit by negative integer n.";
+
+takeSpirit::usage =
+"takeSpirit[n] adjusts the solo character's spirit by positive integer n.
+takeSpirit[n, character] adjusts character's spirit by positive integer n.";
+
+sufferSupply::usage =
+"sufferSupply[n] adjusts the solo character's supply by negative integer n.
+sufferSupply[n, character] adjusts character's supply by negative integer n.";
+
+takeSupply::usage =
+"takeSupply[n] adjusts the solo character's supply by positive integer n.
+takeSupply[n, character] adjusts character's supply by positive integer n.";
+
+recover::usage =
+"recover[] applies the Take a Hiatus recovery package to the solo character without advancing threats.
+recover[character] applies the Take a Hiatus recovery package to character without advancing threats.";
+
+
+(* ::Subsection::Closed:: *)
+(*Debilities*)
 
 
 markWounded::usage =
@@ -183,26 +243,17 @@ clearOathbreaker[character] clears Oathbreaker for character.";
 
 
 (* ::Subsection::Closed:: *)
-(*Asset management*)
+(*Experience*)
 
 
-IronLibrary`Expertise::usage =
-"Expertise is an asset field symbol for field rules.";
+markExperience::usage =
+"markExperience[n] adds n earned experience to the solo character.
+markExperience[n, character] adds n earned experience to character.";
 
-IronLibrary`GodsName::usage =
-"GodsName is an asset field symbol for the printed \"God's Name\" field.";
 
-IronLibrary`Stat::usage =
-"Stat is an asset field symbol for field rules.";
+(* ::Subsection::Closed:: *)
+(*Assets*)
 
-IronLibrary`TitleLineage::usage =
-"TitleLineage is an asset field symbol for the printed \"Title/Lineage\" field.";
-
-IronLibrary`Specialty::usage =
-"Specialty is an asset field symbol for field rules.";
-
-IronLibrary`Equipped::usage =
-"Equipped is an asset field symbol for field rules.";
 
 asset::usage =
 "asset[name] creates a quiet starting asset spec using the asset's printed default selected abilities.
@@ -261,68 +312,10 @@ removeAsset::usage =
 removeAsset[name, character] removes an owned asset from character without awarding experience.
 removeAsset[..., Display -> False] suppresses display.";
 
-(* ::Subsection::Closed:: *)
-(*Action roll*)
-
-
-actionRoll::usage =
-"actionRoll[stat] makes an action roll using stat for the solo character.
-actionRoll[stat, character] makes an action roll using stat for character.";
 
 
 (* ::Subsection::Closed:: *)
-(*Burn momentum*)
-
-
-burnMomentum::usage =
-"burnMomentum[roll] burns momentum for roll and returns the modified roll result.";
-
-
-(* ::Subsection::Closed:: *)
-(*Rarity die six conversion*)
-
-
-rarityDieSix::usage =
-"rarityDieSix[roll] displays a Rarity Die conversion to a strong hit and returns a copy of the action roll with a strong hit result.";
-
-
-(* ::Subsection::Closed:: *)
-(*Progress roll*)
-
-
-progressRoll::usage =
-"progressRoll[track] makes a progress roll against track for the solo character.
-progressRoll[track, character] makes a progress roll against track for character.";
-
-
-(* ::Subsection::Closed:: *)
-(*Reroll*)
-
-
-reroll::usage =
-"reroll[roll, die] rerolls die in roll and returns the modified roll.
-reroll[roll, {die1, die2, ...}] rerolls the specified dice in roll and returns the modified roll.
-
-Possible dice are ActionDie, ChallengeDice, LargerChallengeDie, and SmallerChallengeDie.
-
-ActionDie may only be used with action rolls. Challenge dice may be rerolled in action rolls and progress rolls.
-
-reroll[..., Display -> False] suppresses display.";
-
-
-(* ::Subsection::Closed:: *)
-(*Choice display*)
-
-
-choose::usage =
-"choose[displayOutput, n] displays the nth choice from a previous move, outcome, or asset display output.
-choose[displayOutput, {n1, n2, ...}] displays multiple choices from a previous move, outcome, or asset display output.
-
-Typical usage is moveFunction[]; choose[%, n], or getAsset[name]; choose[%, n].";
-
-
-(* ::Subsection::Closed:: *)
-(*Progress track management*)
+(*Progress tracks*)
 
 
 markProgress::usage =
@@ -348,33 +341,59 @@ raiseProgressRank[track, character] raises track rank by one step for character.
 
 
 (* ::Subsection::Closed:: *)
-(*Journey management*)
+(*Vows*)
 
 
-addJourney::usage =
-"addJourney[name, rank] adds a journey progress track for the solo character.
-addJourney[name, rank, character] adds a journey progress track for character.";
+vow::usage =
+"vow[name, Extreme | Epic] creates a quiet starting vow spec.
+vow[name, Extreme | Epic, Threat -> {threatName, threatGoal}] creates a quiet starting vow spec with one attached threat.";
 
-setCurrentJourney::usage =
-"setCurrentJourney[name] sets the current journey for the solo character.
-setCurrentJourney[name, character] sets the current journey for character.";
+addVow::usage =
+"addVow[name, rank] adds a vow to the solo character.
+addVow[name, rank, character] adds a vow to character.
+addVow[..., Threat -> {threatName, threatGoal}] adds a vow with one attached threat.";
 
-getJourney::usage =
-"getJourney[] displays the current journey for the solo character.
-getJourney[name] displays the named journey for the solo character.
-getJourney[name, character] displays the named journey for character.";
+getVow::usage =
+"getVow[name] displays the vow named name for the solo character.
+getVow[name, character] displays the vow named name for character.";
 
-getJourneys::usage =
-"getJourneys[] displays all journeys for the solo character.
-getJourneys[character] displays all journeys for character.";
+getVows::usage =
+"getVows[] displays all vows for the solo character.
+getVows[character] displays all vows for character.";
 
-removeJourney::usage =
-"removeJourney[name] removes the named journey from the solo character.
-removeJourney[name, character] removes the named journey from character.";
+removeVow::usage =
+"removeVow[name] removes the named vow from the solo character.
+removeVow[name, character] removes the named vow from character.";
+
+setThreat::usage =
+"setThreat[vowName, {threatName, threatGoal}] sets or replaces the threat attached to vowName for the solo character.
+setThreat[vowName, {threatName, threatGoal}, character] sets or replaces the threat attached to vowName for character.";
+
+removeThreat::usage =
+"removeThreat[vowName] removes the threat attached to vowName for the solo character.
+removeThreat[vowName, character] removes the threat attached to vowName for character.";
+
 
 
 (* ::Subsection::Closed:: *)
-(*Foe management*)
+(*Journeys*)
+
+
+beginJourney::usage =
+"beginJourney[name, rank] begins the journey progress track for the solo character.
+beginJourney[name, rank, character] begins the journey progress track for character.";
+
+getJourney::usage =
+"getJourney[] displays the journey for the solo character.
+getJourney[character] displays the journey for character.";
+
+endJourney::usage =
+"endJourney[] ends the journey for the solo character.
+endJourney[character] ends the journey for character.";
+
+
+(* ::Subsection::Closed:: *)
+(*Foes*)
 
 
 addFoe::usage =
@@ -395,56 +414,117 @@ removeFoe[name, character] removes the named foe from character.";
 
 
 (* ::Subsection::Closed:: *)
-(*Failure display*)
+(*Scenes*)
 
 
-getFailures::usage =
-"getFailures[] displays the failure progress track for the solo character.
-getFailures[character] displays the failure progress track for character.";
+beginScene::usage =
+"beginScene[name, rank] creates the active scene challenge for the solo character.
+beginScene[name, rank, character] creates the active scene challenge for character.";
 
-(* ::Subsection::Closed:: *)
-(*Resource management*)
+getScene::usage =
+"getScene[] displays the active scene challenge for the solo character.
+getScene[character] displays the active scene challenge for character.";
 
+endScene::usage =
+"endScene[] ends the active scene challenge for the solo character.
+endScene[character] ends the active scene challenge for character.";
 
-sufferMomentum::usage =
-"sufferMomentum[n] adjusts the solo character's momentum by negative integer n.
-sufferMomentum[n, character] adjusts character's momentum by negative integer n.";
-
-takeMomentum::usage =
-"takeMomentum[n] adjusts the solo character's momentum by positive integer n.
-takeMomentum[n, character] adjusts character's momentum by positive integer n.";
-
-sufferHealth::usage =
-"sufferHealth[n] adjusts the solo character's health by negative integer n.
-sufferHealth[n, character] adjusts character's health by negative integer n.";
-
-takeHealth::usage =
-"takeHealth[n] adjusts the solo character's health by positive integer n.
-takeHealth[n, character] adjusts character's health by positive integer n.";
-
-sufferSpirit::usage =
-"sufferSpirit[n] adjusts the solo character's spirit by negative integer n.
-sufferSpirit[n, character] adjusts character's spirit by negative integer n.";
-
-takeSpirit::usage =
-"takeSpirit[n] adjusts the solo character's spirit by positive integer n.
-takeSpirit[n, character] adjusts character's spirit by positive integer n.";
-
-sufferSupply::usage =
-"sufferSupply[n] adjusts the solo character's supply by negative integer n.
-sufferSupply[n, character] adjusts character's supply by negative integer n.";
-
-takeSupply::usage =
-"takeSupply[n] adjusts the solo character's supply by positive integer n.
-takeSupply[n, character] adjusts character's supply by positive integer n.";
-
-recover::usage =
-"recover[] applies the Take a Hiatus recovery package to the solo character without advancing threats.
-recover[character] applies the Take a Hiatus recovery package to character without advancing threats.";
+markSceneCountdown::usage =
+"markSceneCountdown[] marks 1 segment on the solo character's active scene countdown.
+markSceneCountdown[n] marks n segments on the solo character's active scene countdown.
+markSceneCountdown[n, character] marks n segments on character's active scene countdown.";
 
 
 (* ::Subsection::Closed:: *)
-(*Adding bonds*)
+(*Delves*)
+
+
+addDelve::usage =
+"addDelve[name, rank, themeOrThemes, domainOrDomains] adds a delve site for the solo character.
+addDelve[name, rank, themeOrThemes, domainOrDomains, denizens] adds a delve site with a 12-slot denizens matrix.
+addDelve[..., character] adds a delve site for character.
+
+themeOrThemes and domainOrDomains may be a string or a two-string list, but a delve cannot have both two themes and two domains.
+addDelve[..., Objective -> objective] records an optional objective string.";
+
+setCurrentDelve::usage =
+"setCurrentDelve[name] sets the current delve for the solo character.
+setCurrentDelve[name, character] sets the current delve for character.";
+
+getDelve::usage =
+"getDelve[] displays the current delve for the solo character.
+getDelve[name] displays the named delve for the solo character.
+getDelve[name, character] displays the named delve for character.";
+
+getDelves::usage =
+"getDelves[] displays all delves for the solo character.
+getDelves[character] displays all delves for character.";
+
+removeDelve::usage =
+"removeDelve[name] removes the named delve for the solo character.
+removeDelve[name, character] removes the named delve for character.";
+
+setDelveTheme::usage =
+"setDelveTheme[themeOrThemes] updates the current delve's theme cards.
+setDelveTheme[delveName, themeOrThemes] updates the named delve's theme cards for the solo character.
+setDelveTheme[delveName, themeOrThemes, character] updates the named delve's theme cards for character.";
+
+setDelveDomain::usage =
+"setDelveDomain[domainOrDomains] updates the current delve's domain cards.
+setDelveDomain[delveName, domainOrDomains] updates the named delve's domain cards for the solo character.
+setDelveDomain[delveName, domainOrDomains, character] updates the named delve's domain cards for character.";
+
+returnToSite::usage =
+"returnToSite[] rolls the return challenge dice for the current delve and returns the lower die value to clear manually.
+returnToSite[delveName] rolls for the named delve for the solo character.
+returnToSite[delveName, character] rolls for the named delve for character.";
+
+getRiskZone::usage =
+"getRiskZone[] displays the current delve's risk zone and returns its default rank.
+getRiskZone[delveName] displays the named delve's risk zone and returns its default rank for the solo character.
+getRiskZone[delveName, character] displays the named delve's risk zone and returns its default rank for character.";
+
+getDenizens::usage =
+"getDenizens[] displays the current delve's denizens matrix.
+getDenizens[delveName] displays the named delve's denizens matrix for the solo character.
+getDenizens[delveName, character] displays the named delve's denizens matrix for character.";
+
+rollDenizen::usage =
+"rollDenizen[] rolls on the current delve's denizens matrix.
+rollDenizen[delveName] rolls on the named delve's denizens matrix for the solo character.
+rollDenizen[delveName, character] rolls on the named delve's denizens matrix for character.";
+
+setDenizen::usage =
+"setDenizen[slot, name] sets slot in the current delve's denizens matrix.
+setDenizen[delveName, slot, name] sets slot in the named delve's denizens matrix for the solo character.
+setDenizen[delveName, slot, name, character] sets slot in the named delve's denizens matrix for character.";
+
+clearDenizen::usage =
+"clearDenizen[slot] clears slot in the current delve's denizens matrix.
+clearDenizen[delveName, slot] clears slot in the named delve's denizens matrix for the solo character.
+clearDenizen[delveName, slot, character] clears slot in the named delve's denizens matrix for character.";
+
+
+(* ::Subsection::Closed:: *)
+(*Rarities*)
+
+
+rarityDieSix::usage =
+"rarityDieSix[roll] displays a Rarity Die conversion to a strong hit and returns a copy of the action roll with a strong hit result. The action die must be 6.";
+
+addRarity::usage =
+"addRarity[assetName, rarityName] spends experience to augment an eligible owned asset for the solo character.
+addRarity[assetName, rarityName, character] spends experience to augment an eligible owned asset for character.
+addRarity[..., Display -> False] suppresses display.";
+
+removeRarity::usage =
+"removeRarity[assetName] removes a rarity from an owned asset for the solo character and awards 1 experience.
+removeRarity[assetName, character] removes a rarity from an owned asset for character and awards 1 experience.
+removeRarity[..., Display -> False] suppresses display.";
+
+
+(* ::Subsection::Closed:: *)
+(*Bonds*)
 
 
 addBond::usage =
@@ -461,12 +541,13 @@ removeBond[name, character] removes the named bond from character and clears one
 
 
 (* ::Subsection::Closed:: *)
-(*Mark experience*)
+(*Failures*)
 
 
-markExperience::usage =
-"markExperience[n] adds n earned experience to the solo character.
-markExperience[n, character] adds n earned experience to character.";
+getFailures::usage =
+"getFailures[] displays the failure progress track for the solo character.
+getFailures[character] displays the failure progress track for character.";
+
 
 
 (* ::Subsection::Closed:: *)
@@ -529,23 +610,6 @@ followAPath[actionRoll] displays the Follow a Path outcome corresponding to acti
 
 beginTheScene::usage =
 "beginTheScene[] displays the Begin the Scene move header.";
-
-beginScene::usage =
-"beginScene[name, rank] creates the active scene challenge for the solo character.
-beginScene[name, rank, character] creates the active scene challenge for character.";
-
-getScene::usage =
-"getScene[] displays the active scene challenge for the solo character.
-getScene[character] displays the active scene challenge for character.";
-
-removeScene::usage =
-"removeScene[] removes the active scene challenge for the solo character.
-removeScene[character] removes the active scene challenge for character.";
-
-markSceneCountdown::usage =
-"markSceneCountdown[] marks 1 segment on the solo character's active scene countdown.
-markSceneCountdown[n] marks n segments on the solo character's active scene countdown.
-markSceneCountdown[n, character] marks n segments on character's active scene countdown.";
 
 faceDangerScene::usage =
 "faceDangerScene[] displays the scene challenge version of the Face Danger move header.
@@ -708,71 +772,6 @@ faceASetback::usage =
 discoverASite::usage =
 "discoverASite[] displays the Discover a Site move header.";
 
-addDelve::usage =
-"addDelve[name, rank, themeOrThemes, domainOrDomains] adds a delve site for the solo character.
-addDelve[name, rank, themeOrThemes, domainOrDomains, denizens] adds a delve site with a 12-slot denizens matrix.
-addDelve[..., character] adds a delve site for character.
-
-themeOrThemes and domainOrDomains may be a string or a two-string list, but a delve cannot have both two themes and two domains.
-addDelve[..., Objective -> objective] records an optional objective string.";
-
-setCurrentDelve::usage =
-"setCurrentDelve[name] sets the current delve for the solo character.
-setCurrentDelve[name, character] sets the current delve for character.";
-
-getDelve::usage =
-"getDelve[] displays the current delve for the solo character.
-getDelve[name] displays the named delve for the solo character.
-getDelve[name, character] displays the named delve for character.";
-
-getDelves::usage =
-"getDelves[] displays all delves for the solo character.
-getDelves[character] displays all delves for character.";
-
-removeDelve::usage =
-"removeDelve[name] removes the named delve for the solo character.
-removeDelve[name, character] removes the named delve for character.";
-
-setDelveTheme::usage =
-"setDelveTheme[themeOrThemes] updates the current delve's theme cards.
-setDelveTheme[delveName, themeOrThemes] updates the named delve's theme cards for the solo character.
-setDelveTheme[delveName, themeOrThemes, character] updates the named delve's theme cards for character.";
-
-setDelveDomain::usage =
-"setDelveDomain[domainOrDomains] updates the current delve's domain cards.
-setDelveDomain[delveName, domainOrDomains] updates the named delve's domain cards for the solo character.
-setDelveDomain[delveName, domainOrDomains, character] updates the named delve's domain cards for character.";
-
-returnToSite::usage =
-"returnToSite[] rolls the return challenge dice for the current delve and returns the lower die value to clear manually.
-returnToSite[delveName] rolls for the named delve for the solo character.
-returnToSite[delveName, character] rolls for the named delve for character.";
-
-getRiskZone::usage =
-"getRiskZone[] displays the current delve's risk zone and returns its default rank.
-getRiskZone[delveName] displays the named delve's risk zone and returns its default rank for the solo character.
-getRiskZone[delveName, character] displays the named delve's risk zone and returns its default rank for character.";
-
-getDenizens::usage =
-"getDenizens[] displays the current delve's denizens matrix.
-getDenizens[delveName] displays the named delve's denizens matrix for the solo character.
-getDenizens[delveName, character] displays the named delve's denizens matrix for character.";
-
-rollDenizen::usage =
-"rollDenizen[] rolls on the current delve's denizens matrix.
-rollDenizen[delveName] rolls on the named delve's denizens matrix for the solo character.
-rollDenizen[delveName, character] rolls on the named delve's denizens matrix for character.";
-
-setDenizen::usage =
-"setDenizen[slot, name] sets slot in the current delve's denizens matrix.
-setDenizen[delveName, slot, name] sets slot in the named delve's denizens matrix for the solo character.
-setDenizen[delveName, slot, name, character] sets slot in the named delve's denizens matrix for character.";
-
-clearDenizen::usage =
-"clearDenizen[slot] clears slot in the current delve's denizens matrix.
-clearDenizen[delveName, slot] clears slot in the named delve's denizens matrix for the solo character.
-clearDenizen[delveName, slot, character] clears slot in the named delve's denizens matrix for character.";
-
 delveTheDepths::usage =
 "delveTheDepths[] displays the Delve the Depths move header.
 delveTheDepths[actionRoll] displays the Delve the Depths outcome corresponding to actionRoll.";
@@ -825,37 +824,10 @@ gainARarity::usage =
 wieldARarity::usage =
 "wieldARarity[] displays the Wield a Rarity move header.";
 
-addRarity::usage =
-"addRarity[assetName, rarityName] spends experience to augment an eligible owned asset for the solo character.
-addRarity[assetName, rarityName, character] spends experience to augment an eligible owned asset for character.
-addRarity[..., Display -> False] suppresses display.";
-
-removeRarity::usage =
-"removeRarity[assetName] removes a rarity from an owned asset for the solo character and awards 1 experience.
-removeRarity[assetName, character] removes a rarity from an owned asset for character and awards 1 experience.
-removeRarity[..., Display -> False] suppresses display.";
-
 
 (* ::Subsection::Closed:: *)
-(*Stats*)
+(*Stat symbols*)
 
-
-Health::usage =
-"Health is a stat.";
-
-Spirit::usage =
-"Spirit is a stat.";
-
-Supply::usage =
-"Supply is a stat";
-
-
-(* ::Subsection::Closed:: *)
-(*Option names and public symbols*)
-
-
-Name::usage =
-"Name is a public symbol reserved by IronLibrary and the asset field symbol for Name fields.";
 
 Edge::usage =
 "Edge is one of the five Ironsworn stats.";
@@ -872,64 +844,19 @@ Shadow::usage =
 Wits::usage =
 "Wits is one of the five Ironsworn stats.";
 
-Assets::usage =
-"Assets is a public symbol reserved by IronLibrary.";
-
-BackgroundVow::usage =
-"BackgroundVow is a public symbol reserved by IronLibrary.";
-
-Bonds::usage =
-"Bonds is a public symbol reserved by IronLibrary.";
-
-Adds::usage =
-"Adds is an option for actionRoll that specifies a list of named bonus rules.";
-
-ArcName::usage =
-"ArcName is an option for beginChapter that specifies the arc name to use for the current chapter.";
-
-Initiative::usage =
-"Initiative is a True/False option for endTheFight, which specifies whether the character has initiative.";
-
-Display::usage =
-"Display is an option that specifies whether a function should display its result.";
-
-Threat::usage =
-"Threat is an option for vow and addVow that specifies an attached threat as {threatName, threatGoal}.";
-
-Objective::usage =
-"Objective is an option for addDelve that specifies the site objective.";
-
 
 (* ::Subsection::Closed:: *)
-(*Debility symbols*)
+(*Resource symbols*)
 
 
-Wounded::usage =
-"Wounded is a debility.";
+Health::usage =
+"Health is a stat.";
 
-Shaken::usage =
-"Shaken is a debility.";
+Spirit::usage =
+"Spirit is a stat.";
 
-Unprepared::usage =
-"Unprepared is a debility.";
-
-Encumbered::usage =
-"Encumbered is a debility.";
-
-Maimed::usage =
-"Maimed is a permanent debility.";
-
-Corrupted::usage =
-"Corrupted is a permanent debility.";
-
-Cursed::usage =
-"Cursed is a debility.";
-
-Tormented::usage =
-"Tormented is a debility.";
-
-Oathbreaker::usage =
-"Oathbreaker is a burden debility.";
+Supply::usage =
+"Supply is a stat";
 
 
 (* ::Subsection::Closed:: *)
@@ -967,6 +894,59 @@ LargerChallengeDie::usage =
 
 SmallerChallengeDie::usage =
 "SmallerChallengeDie specifies the smaller challenge die for reroll. If the challenge dice are tied, the first challenge die is selected.";
+
+
+(* ::Subsection:: *)
+(*Option symbols*)
+
+
+Name::usage =
+"Name is a public symbol reserved by IronLibrary and the asset field symbol for Name fields.";
+
+Assets::usage =
+"Assets is a public symbol reserved by IronLibrary.";
+
+BackgroundVow::usage =
+"BackgroundVow is a public symbol reserved by IronLibrary.";
+
+Bonds::usage =
+"Bonds is a public symbol reserved by IronLibrary.";
+
+Adds::usage =
+"Adds is an option for actionRoll that specifies a list of named bonus rules.";
+
+ArcName::usage =
+"ArcName is an option for beginChapter that specifies the arc name to use for the current chapter.";
+
+Initiative::usage =
+"Initiative is a True/False option for endTheFight, which specifies whether the character has initiative.";
+
+Display::usage =
+"Display is an option that specifies whether a function should display its result.";
+
+Threat::usage =
+"Threat is an option for vow and addVow that specifies an attached threat as {threatName, threatGoal}.";
+
+Objective::usage =
+"Objective is an option for addDelve that specifies the site objective.";
+
+Expertise::usage =
+"Expertise is an asset field symbol for field rules.";
+
+GodsName::usage =
+"GodsName is an asset field symbol for the printed \"God's Name\" field.";
+
+Stat::usage =
+"Stat is an asset field symbol for field rules.";
+
+TitleLineage::usage =
+"TitleLineage is an asset field symbol for the printed \"Title/Lineage\" field.";
+
+Specialty::usage =
+"Specialty is an asset field symbol for field rules.";
+
+Equipped::usage =
+"Equipped is an asset field symbol for field rules.";
 
 
 (* ::Section::Closed:: *)
@@ -1007,7 +987,7 @@ $ContextPath = DeleteCases[
 $ContextPath = DeleteDuplicates[Prepend[$ContextPath, "IronLibrary`"]];
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Wrapper plumbing*)
 
 
@@ -1069,8 +1049,8 @@ publicStateStringCandidates[] := Module[
 	state = IronLibrary`MechanicsHelpers`getIronState[];
 	If[!AssociationQ[state], Return[{}]];
 	characters = stateCharacterNames[state];
-	collections = {"vows", "journeys", "foes", "delves"};
-	currentKeys = {"currentJourney", "currentDelve"};
+	collections = {"vows", "foes", "delves"};
+	currentKeys = {"currentDelve"};
 	Do[
 		data = state[character];
 		candidates = Join[
@@ -1232,7 +1212,7 @@ $publicStringNormalizationPreservePaths = <|
 	"vow" -> {{1}},
 	"addVow" -> {{1}},
 	"setThreat" -> {{2}},
-	"addJourney" -> {{1}},
+	"beginJourney" -> {{1}},
 	"addFoe" -> {{1}},
 	"addBond" -> {{1}},
 	"beginScene" -> {{1}},
@@ -1294,6 +1274,22 @@ soloCharacterForDisplay[] := Module[
 	IronLibrary`MechanicsHelpers`setSoloCharacter[First[characters]];
 	First[characters]
 ];
+
+emptyOwnedCollectionQ[collection_] :=
+	(AssociationQ[collection] || ListQ[collection]) && Length[collection] == 0;
+
+selectedCollectionCharacter[normalizedArgs_List] :=
+	Replace[
+		SelectFirst[Reverse[normalizedArgs], StringQ, Automatic],
+		Automatic :> soloCharacterForDisplay[]
+	];
+
+warnIfEmptyCollection[collection_, normalizedArgs_List, function_Symbol] :=
+	If[emptyOwnedCollectionQ[collection],
+		Message[MessageName[function, "empty"], selectedCollectionCharacter[normalizedArgs]];
+		True,
+		False
+	];
 
 displaySoloCharacterSheet[] := Module[{character},
 	character = soloCharacterForDisplay[];
@@ -1372,15 +1368,13 @@ $mechanicsPassThroughAPI = {
 	"sufferSupply",
 	"takeSupply",
 	"recover",
-	"addJourney",
-	"setCurrentJourney",
-	"removeJourney",
+	"endJourney",
 	"addFoe",
 	"removeFoe",
 	"addBond",
 	"removeBond",
 	"markExperience",
-	"removeScene",
+	"endScene",
 	"addDelve",
 	"setCurrentDelve",
 	"removeDelve",
@@ -1400,8 +1394,58 @@ installHelperWrappers["IronLibrary`MechanicsHelpers`", $mechanicsPassThroughAPI]
 displayMoveForPublic[moveKey_String] :=
 	IronLibrary`DisplayHelpers`displayMove[moveKey];
 
+actionRollAssociationQ[roll_Association] :=
+	KeyExistsQ[roll, "actionDie"] &&
+	KeyExistsQ[roll, "actionScore"] &&
+	KeyExistsQ[roll, "challengeDice"];
+
+progressRollAssociationQ[roll_Association] :=
+	KeyExistsQ[roll, "progressScore"] &&
+	KeyExistsQ[roll, "challengeDice"] &&
+	!KeyExistsQ[roll, "actionDie"];
+
+rollKindDescription[roll_Association] := Which[
+	actionRollAssociationQ[roll], "an action roll",
+	progressRollAssociationQ[roll], "a progress roll",
+	True, "an association that is not a recognized roll"
+];
+
+rollKindDescription[_] :=
+	"a non-roll argument";
+
+moveRollRequirement["Action", roll_Association] :=
+	actionRollAssociationQ[roll];
+
+moveRollRequirement["Progress", roll_Association] :=
+	progressRollAssociationQ[roll];
+
+moveRollRequirement[_, _] :=
+	False;
+
+moveRollExpectation[moveKey_String] :=
+	Lookup[$moveRollExpectations, moveKey, None];
+
+displayMoveForPublic[name_String, moveKey_String, expectedRoll_, roll_] := Module[
+	{actual},
+	If[expectedRoll =!= None && !moveRollRequirement[expectedRoll, roll],
+		actual = rollKindDescription[roll];
+		If[expectedRoll === "Action",
+			Message[displayMoveForPublic::badactionroll, name, actual],
+			Message[displayMoveForPublic::badprogressroll, name, actual]
+		];
+		Return[$Failed]
+	];
+	IronLibrary`DisplayHelpers`displayMove[moveKey, roll]
+];
+
 displayMoveForPublic[moveKey_String, roll_Association] :=
-	IronLibrary`DisplayHelpers`displayMove[moveKey, roll];
+	displayMoveForPublic[moveKey, moveKey, moveRollExpectation[moveKey], roll];
+
+displayMoveForPublic::badactionroll =
+"`1`[roll] requires an action roll, not `2`.";
+
+displayMoveForPublic::badprogressroll =
+"`1`[roll] requires a progress roll, not `2`.";
 
 installMoveHeaderWrapper[name_String, moveKey_String] :=
 	ToExpression[
@@ -1410,11 +1454,17 @@ installMoveHeaderWrapper[name_String, moveKey_String] :=
 		]
 	];
 
-installMoveRollWrapper[name_String, moveKey_String] := (
+installMoveRollWrapper[name_String, moveKey_String, expectedRoll_] := (
 	installMoveHeaderWrapper[name, moveKey];
 	ToExpression[
 		StringJoin[
-			"IronLibrary`", name, "[roll_Association] := IronLibrary`Private`displayMoveForPublic[\"", moveKey, "\", roll]"
+			"IronLibrary`", name, "[roll_] := IronLibrary`Private`displayMoveForPublic[\"",
+			name,
+			"\", \"",
+			moveKey,
+			"\", \"",
+			expectedRoll,
+			"\", roll]"
 		]
 	]
 );
@@ -1439,7 +1489,7 @@ $moveHeaderAPI = {
 	"wieldARarity"
 };
 
-$moveRollAPI = {
+$actionRollMoveAPI = {
 	"faceDanger",
 	"secureAnAdvantage",
 	"gatherInformation",
@@ -1448,20 +1498,16 @@ $moveRollAPI = {
 	"resupply",
 	"checkYourGear",
 	"undertakeAJourney",
-	"reachYourDestination",
 	"followAPath",
 	"faceDangerScene",
 	"secureAnAdvantageScene",
-	"finishTheScene",
 	"swearAnIronVow",
-	"fulfillYourVow",
 	"compel",
 	"sojourn",
 	"sojournFocus",
 	"forgeABond",
 	"testYourBond",
 	"drawTheCircle",
-	"writeYourEpilogue",
 	"enterTheFray",
 	"strike",
 	"clash",
@@ -1472,12 +1518,28 @@ $moveRollAPI = {
 	"endureStress",
 	"faceDesolation",
 	"delveTheDepths",
-	"locateYourObjective",
 	"escapeTheDepths"
 };
 
+$progressRollMoveAPI = {
+	"reachYourDestination",
+	"finishTheScene",
+	"fulfillYourVow",
+	"writeYourEpilogue",
+	"locateYourObjective"
+};
+
+$moveRollAPI = Join[$actionRollMoveAPI, $progressRollMoveAPI];
+$moveRollExpectations = Association[
+	Join[
+		Thread[$actionRollMoveAPI -> "Action"],
+		Thread[$progressRollMoveAPI -> "Progress"]
+	]
+];
+
 Scan[installMoveHeaderWrapper[#, #] &, $moveHeaderAPI];
-Scan[installMoveRollWrapper[#, #] &, $moveRollAPI];
+Scan[installMoveRollWrapper[#, #, "Action"] &, $actionRollMoveAPI];
+Scan[installMoveRollWrapper[#, #, "Progress"] &, $progressRollMoveAPI];
 
 choose[output_, selection_] :=
 	IronLibrary`DisplayHelpers`displayMoveChoice[output, selection];
@@ -1497,14 +1559,31 @@ Options[endTheFight] = {Initiative -> True};
 endTheFight[] :=
 	displayMoveForPublic["endTheFight"];
 
+endTheFightWithRoll[roll_, initiative_] := Module[
+	{transformed},
+	If[!moveRollRequirement["Progress", roll],
+		Message[displayMoveForPublic::badprogressroll, "endTheFight", rollKindDescription[roll]];
+		Return[$Failed]
+	];
+	transformed = endTheFightRoll[roll, initiative];
+	displayMoveForPublic["endTheFight", "endTheFight", "Progress", transformed]
+];
+
 endTheFight[roll_Association, opts : OptionsPattern[]] :=
-	displayMoveForPublic["endTheFight", endTheFightRoll[roll, OptionValue[Initiative]]];
+	endTheFightWithRoll[roll, OptionValue[Initiative]];
+
+endTheFight[roll_, opts : OptionsPattern[]] :=
+	endTheFightWithRoll[roll, OptionValue[Initiative]];
 
 learnFromYourFailures[] :=
 	displayMoveForPublic["learnFromYourFailures"];
 
-learnFromYourFailures[roll_Association] := Module[
+learnFromYourFailuresWithRoll[roll_] := Module[
 	{trackName, progressScore},
+	If[!moveRollRequirement["Progress", roll],
+		Message[displayMoveForPublic::badprogressroll, "learnFromYourFailures", rollKindDescription[roll]];
+		Return[$Failed]
+	];
 	trackName = Lookup[roll, "trackName", None];
 	progressScore = Lookup[roll, "progressScore", Missing["NoProgressScore"]];
 	If[trackName =!= "Failures",
@@ -1517,6 +1596,12 @@ learnFromYourFailures[roll_Association] := Module[
 	];
 	displayMoveForPublic["learnFromYourFailures", roll]
 ];
+
+learnFromYourFailures[roll_Association] :=
+	learnFromYourFailuresWithRoll[roll];
+
+learnFromYourFailures[roll_] :=
+	learnFromYourFailuresWithRoll[roll];
 
 learnFromYourFailures::badroll = "learnFromYourFailures[roll] requires a progress roll against Failures, not `1`.";
 learnFromYourFailures::threshold = "learnFromYourFailures[roll] requires the Failures progress score to be at least 6, not `1`.";
@@ -1620,10 +1705,11 @@ getVow[args___] := Module[{normalizedArgs, ownedVow},
 	ownedVow
 ];
 
-getVows[args___] := Module[{normalizedArgs, ownedVows},
+getVows[args___] := Module[{normalizedArgs, ownedVows, empty},
 	normalizedArgs = normalizePublicCallArguments["getVows", {args}];
 	ownedVows = IronLibrary`MechanicsHelpers`getVows @@ normalizedArgs;
-	If[AssociationQ[ownedVows], IronLibrary`DisplayHelpers`displayVowCards[ownedVows]];
+	empty = warnIfEmptyCollection[ownedVows, normalizedArgs, getVows];
+	If[AssociationQ[ownedVows] && !TrueQ[empty], IronLibrary`DisplayHelpers`displayVowCards[ownedVows]];
 	ownedVows
 ];
 
@@ -1683,10 +1769,11 @@ getAssetAbility[name_String, ability_Integer, character_] := Module[{normalizedA
 	]
 ];
 
-getAssets[args___] := Module[{normalizedArgs, ownedAssets},
+getAssets[args___] := Module[{normalizedArgs, ownedAssets, empty},
 	normalizedArgs = normalizePublicCallArguments["getAssets", {args}];
 	ownedAssets = IronLibrary`MechanicsHelpers`getAssets @@ normalizedArgs;
-	If[ListQ[ownedAssets], IronLibrary`DisplayHelpers`displayOwnedAssets[ownedAssets]];
+	empty = warnIfEmptyCollection[ownedAssets, normalizedArgs, getAssets];
+	If[ListQ[ownedAssets] && !TrueQ[empty], IronLibrary`DisplayHelpers`displayOwnedAssets[ownedAssets]];
 	ownedAssets
 ];
 
@@ -1697,18 +1784,18 @@ drawAssets[args___] := Module[{normalizedArgs, names},
 	names
 ];
 
+beginJourney[args___] := Module[{normalizedArgs, ownedJourney},
+	normalizedArgs = normalizePublicCallArguments["beginJourney", {args}];
+	ownedJourney = IronLibrary`MechanicsHelpers`beginJourney @@ normalizedArgs;
+	If[AssociationQ[ownedJourney], IronLibrary`DisplayHelpers`displayProgressObjectCard["Journey", ownedJourney]];
+	ownedJourney
+];
+
 getJourney[args___] := Module[{normalizedArgs, ownedJourney},
 	normalizedArgs = normalizePublicCallArguments["getJourney", {args}];
 	ownedJourney = IronLibrary`MechanicsHelpers`journey @@ normalizedArgs;
 	If[AssociationQ[ownedJourney], IronLibrary`DisplayHelpers`displayProgressObjectCard["Journey", ownedJourney]];
 	ownedJourney
-];
-
-getJourneys[args___] := Module[{normalizedArgs, ownedJourneys},
-	normalizedArgs = normalizePublicCallArguments["getJourneys", {args}];
-	ownedJourneys = IronLibrary`MechanicsHelpers`journeys @@ normalizedArgs;
-	If[AssociationQ[ownedJourneys], IronLibrary`DisplayHelpers`displayProgressObjectCards["Journey", ownedJourneys]];
-	ownedJourneys
 ];
 
 getFoe[args___] := Module[{normalizedArgs, ownedFoe},
@@ -1718,10 +1805,11 @@ getFoe[args___] := Module[{normalizedArgs, ownedFoe},
 	ownedFoe
 ];
 
-getFoes[args___] := Module[{normalizedArgs, ownedFoes},
+getFoes[args___] := Module[{normalizedArgs, ownedFoes, empty},
 	normalizedArgs = normalizePublicCallArguments["getFoes", {args}];
 	ownedFoes = IronLibrary`MechanicsHelpers`foes @@ normalizedArgs;
-	If[AssociationQ[ownedFoes], IronLibrary`DisplayHelpers`displayProgressObjectCards["Foe", ownedFoes]];
+	empty = warnIfEmptyCollection[ownedFoes, normalizedArgs, getFoes];
+	If[AssociationQ[ownedFoes] && !TrueQ[empty], IronLibrary`DisplayHelpers`displayProgressObjectCards["Foe", ownedFoes]];
 	ownedFoes
 ];
 
@@ -1735,6 +1823,7 @@ getFailures[args___] := Module[{normalizedArgs, track},
 getBonds[args___] := Module[{normalizedArgs, ownedBonds, track},
 	normalizedArgs = normalizePublicCallArguments["getBonds", {args}];
 	ownedBonds = IronLibrary`MechanicsHelpers`bonds @@ normalizedArgs;
+	warnIfEmptyCollection[ownedBonds, normalizedArgs, getBonds];
 	If[ListQ[ownedBonds],
 		track = IronLibrary`MechanicsHelpers`bondProgress @@ normalizedArgs;
 		IronLibrary`DisplayHelpers`displayBondList[ownedBonds, track]
@@ -1794,12 +1883,19 @@ getDelve[args___] := Module[{normalizedArgs, ownedDelve},
 	ownedDelve
 ];
 
-getDelves[args___] := Module[{normalizedArgs, ownedDelves},
+getDelves[args___] := Module[{normalizedArgs, ownedDelves, empty},
 	normalizedArgs = normalizePublicCallArguments["getDelves", {args}];
 	ownedDelves = IronLibrary`MechanicsHelpers`delves @@ normalizedArgs;
-	If[AssociationQ[ownedDelves], IronLibrary`DisplayHelpers`displayDelves[ownedDelves]];
+	empty = warnIfEmptyCollection[ownedDelves, normalizedArgs, getDelves];
+	If[AssociationQ[ownedDelves] && !TrueQ[empty], IronLibrary`DisplayHelpers`displayDelves[ownedDelves]];
 	ownedDelves
 ];
+
+getVows::empty = "`1` does not have any vows.";
+getAssets::empty = "`1` does not have any assets.";
+getFoes::empty = "`1` does not have any foes.";
+getBonds::empty = "`1` does not have any bonds.";
+getDelves::empty = "`1` does not have any delves.";
 
 getRiskZone[] :=
 	displayDelveRiskZone[IronLibrary`MechanicsHelpers`currentDelveData[]];
@@ -1980,6 +2076,8 @@ Clear[
 	installMoveRollWrapper,
 	$mechanicsPassThroughAPI,
 	$moveHeaderAPI,
+	$actionRollMoveAPI,
+	$progressRollMoveAPI,
 	$moveRollAPI,
 	$ironLibraryHelperDirectory
 ];

@@ -89,8 +89,14 @@ symbolNameLower[symbol_] := ToLowerCase[SymbolName[symbol]];
 
 progressRanks = {Troublesome, Dangerous, Formidable, Extreme, Epic};
 
-debilityLabel[debility_] :=
+debilityLabel[debility_String] :=
+	debility;
+
+debilityLabel[debility_Symbol] :=
 	SymbolName[Unevaluated[debility]];
+
+debilityLabel[debility_] :=
+	ToString[Unevaluated[debility]];
 
 momentumResetValue[characterData_Association] :=
 	Max[0, 2 - Length[Lookup[characterData, "debilities", {}]]];
@@ -740,11 +746,20 @@ displayRarityDieSix[roll_Association] :=
 		displayColumn[
 			{
 				header["Rarity Die", "Rolled 6"],
-				Item[d6Image[6], Alignment -> Center],
-				Item[Rotate[mainStyle["\[Rule]"], -(Pi/2)], Alignment -> Center],
-				Item[actionRollResultDisplay["strongHit", False], Alignment -> Center]
+				Item[
+					Grid[
+						{{
+							Item[d6Image[6], Alignment -> Center],
+							Item[mainStyle["\[Rule]"], Alignment -> Center],
+							Item[actionRollResultDisplay["strongHit", False], Alignment -> Center]
+						}},
+						Alignment -> {{Center, Center, Center}, {Center}},
+						Spacings -> {1.2, 0}
+					],
+					Alignment -> Center
+				]
 			},
-			{Automatic, rollHeaderBodyGap, 0.8, rollBodyResultGap},
+			{Automatic, rollHeaderBodyGap},
 			Center
 		]
 	];
@@ -1221,9 +1236,9 @@ sheetCharacterTextFitScale[] :=
 	$displayFrameContentWidth/(sheetCanvasWidth - 2 sheetPlotHorizontalInset);
 
 sheetDebilityGroups[] := {
-	"Conditions" -> {Wounded, Shaken, Unprepared, Encumbered},
-	"Burdens" -> {Cursed, Tormented, Oathbreaker},
-	"Banes" -> {Maimed, Corrupted}
+	"Conditions" -> {"Wounded", "Shaken", "Unprepared", "Encumbered"},
+	"Burdens" -> {"Cursed", "Tormented", "Oathbreaker"},
+	"Banes" -> {"Maimed", "Corrupted"}
 };
 
 sheetDebilityRowCount[] :=
@@ -1674,7 +1689,7 @@ sheetDebilityColumn[title_String, debilityList_List, active_List, {x_, y_}, widt
 
 sheetDebilitiesPanel[characterData_Association, topY_:950] := Module[
 	{active, x, width, gap, groups, colWidth, columnY},
-	active = Lookup[characterData, "debilities", {}];
+	active = debilityLabel /@ Lookup[characterData, "debilities", {}];
 	x = sheetMiddleX;
 	width = sheetMiddleWidth;
 	gap = 16;
@@ -2736,18 +2751,31 @@ menaceCornerPrimitives[x_, y_, width_, height_, tickCount_Integer, color_, frame
 	}
 ];
 
+countdownCornerBoxIndices[] :=
+	{1, 4, 7, 10};
+
+countdownCornerTickCount[countdown_, box_Integer] := Module[
+	{boxes, markedBoxes},
+	boxes = countdownCornerBoxIndices[];
+	If[!MemberQ[boxes, box], Return[None]];
+	markedBoxes = Take[boxes, UpTo[Clip[Round[N[countdown]], {0, Length[boxes]}]]];
+	If[MemberQ[markedBoxes, box], 4, 0]
+];
+
 Options[progressTrackPrimitives] = {
 	MenaceProgress -> None,
+	CountdownProgress -> None,
 	TrackFrameThickness -> Automatic,
 	JoinedLeftFrame -> False
 };
 
 progressTrackPrimitives[{x_, y_}, progress_, width_, height_, opts : OptionsPattern[]] := Module[
-	{boxWidth, totalTicks, menaceProgress, menaceTicks, color, frameThickness, joinedLeftFrame, boxPrimitives},
+	{boxWidth, totalTicks, menaceProgress, menaceTicks, countdownProgress, color, frameThickness, joinedLeftFrame, boxPrimitives},
 	boxWidth = width/10;
 	totalTicks = progressTickCount[progress];
 	menaceProgress = OptionValue[MenaceProgress];
 	menaceTicks = If[menaceProgress === None, None, progressTickCount[menaceProgress]];
+	countdownProgress = OptionValue[CountdownProgress];
 	color = GrayLevel[0.255];
 	frameThickness = Replace[OptionValue[TrackFrameThickness], Automatic :> sheetTrackFrameThickness];
 	joinedLeftFrame = TrueQ[OptionValue[JoinedLeftFrame]];
@@ -2774,6 +2802,21 @@ progressTrackPrimitives[{x_, y_}, progress_, width_, height_, opts : OptionsPatt
 						color,
 						frameThickness
 					]
+				],
+				With[{countdownTicks = If[countdownProgress === None, None, countdownCornerTickCount[countdownProgress, box]]},
+					If[
+						countdownTicks === None,
+						{},
+						menaceCornerPrimitives[
+							x + (box - 1) boxWidth,
+							y,
+							boxWidth,
+							height,
+							countdownTicks,
+							color,
+							frameThickness
+						]
+					]
 				]
 			],
 			{box, 10}
@@ -2788,6 +2831,7 @@ progressTrackPrimitives[{x_, y_}, progress_, width_, height_, opts : OptionsPatt
 
 Options[progressTrackGraphic] = {
 	MenaceProgress -> None,
+	CountdownProgress -> None,
 	TrackWidth -> Automatic,
 	TrackHeight -> Automatic,
 	TrackFrameThickness -> Automatic,
@@ -2813,6 +2857,7 @@ progressTrackGraphic[progress_, opts : OptionsPattern[]] := Module[
 			width,
 			height,
 			MenaceProgress -> OptionValue[MenaceProgress],
+			CountdownProgress -> OptionValue[CountdownProgress],
 			TrackFrameThickness -> frameThickness
 		],
 		PlotRange -> {{0, width}, {0, height}},
@@ -2923,14 +2968,18 @@ vowProgressSummary[vowData_Association] := Module[
 	progressTrackGraphic[vowData["Progress"], MenaceProgress -> menaceProgress]
 ];
 
-vowHeaderTitle[vowData_Association] :=
+rankedProgressSubtitle[rank_, type_String] :=
 	StringJoin[
-		ToString[vowData["Rank"]],
-		" Vow"
+		ToString[rank],
+		" ",
+		type
 	];
 
-vowHeaderSubtitle[vowData_Association] :=
+vowHeaderTitle[vowData_Association] :=
 	vowData["Name"];
+
+vowHeaderSubtitle[vowData_Association] :=
+	rankedProgressSubtitle[vowData["Rank"], "Vow"];
 
 vowThreatLabel[_Association] :=
 	"THREAT: ";
@@ -2990,6 +3039,30 @@ displayVowCards[vowData_List] :=
 	Print[displayVowListPanel[vowData]];
 
 
+displayFoeListGraphic[foeData_List] := Module[
+	{width, height, topY},
+	width = $displayFrameTrackWidth;
+	height = sheetSectionHeight[sheetVowRowsHeight[Length[foeData], width]];
+	topY = height;
+	Graphics[
+		sheetVowSectionPrimitives["Foes", foeData, "Foe", {0, topY}, width],
+		PlotRange -> {{0, width}, {0, height}},
+		ImagePadding -> 0,
+		ImageSize -> baseSize[width],
+		Background -> White
+	]
+];
+
+displayFoeListPanel[foeData_List] :=
+	ironFramed[scaleFinalGraphic[displayFoeListGraphic[foeData], White]];
+
+displayFoeCards[foeData_Association] :=
+	displayFoeCards[Values[foeData]];
+
+displayFoeCards[foeData_List] :=
+	Print[displayFoeListPanel[foeData]];
+
+
 progressTypeTitle["Vow"] := "Vow";
 progressTypeTitle["Threat"] := "Threat";
 progressTypeTitle["Delve"] := "Delve";
@@ -3000,8 +3073,24 @@ progressTypeTitle["Failures"] := "Failures";
 progressTypeTitle["Bonds"] := "Bonds";
 progressTypeTitle[other_] := ToString[other];
 
+progressTargetHeaderSubtitle[target_Association] :=
+	rankedProgressSubtitle[target["Rank"], progressTypeTitle[target["Type"]]];
+
+displayNamedProgressTargetCard[target_Association] :=
+	ironFramed[
+		Column[
+			{
+				header[target["Name"], progressTargetHeaderSubtitle[target]],
+				progressTrackGraphic[target["Progress"]]
+			},
+			Spacings -> 0.8,
+			Alignment -> Left
+		]
+	];
+
 displayProgressTargetCard[target_Association] := Module[
 	{rows, label, centeredTrackTypes},
+	If[MemberQ[{"Foe", "Journey"}, target["Type"]], Return[displayNamedProgressTargetCard[target]]];
 	label = If[target["Type"] === "Threat", "Menace", "Progress"];
 	centeredTrackTypes = {"Bonds", "Failures"};
 	rows = {
@@ -3038,6 +3127,12 @@ displayProgressObject[type_String, object_Association] :=
 
 displayProgressObjectCard[type_String, object_Association] :=
 	Print[displayProgressObject[type, object]];
+
+displayProgressObjectCards["Foe", objects_Association] :=
+	displayFoeCards[objects];
+
+displayProgressObjectCards["Foe", objects_List] :=
+	displayFoeCards[objects];
 
 displayProgressObjectCards[type_String, objects_Association] :=
 	displayProgressObjectCards[type, Values[objects]];
@@ -3083,9 +3178,8 @@ displaySceneCard[sceneData_Association] :=
 	ironFramed[
 		Column[
 			{
-				header["Scene", sceneData["Name"]],
-				progressSummary["Progress", sceneData["Rank"], sceneData["Progress"]],
-				sceneCountdownSummary[sceneData["Countdown"]]
+				header[sceneData["Name"], rankedProgressSubtitle[sceneData["Rank"], "Scene"]],
+				progressTrackGraphic[sceneData["Progress"], CountdownProgress -> sceneData["Countdown"]]
 			},
 			Spacings -> 0.8,
 			Alignment -> Left
@@ -3138,7 +3232,7 @@ displayDelveCard[delveData_Association] := Module[
 	objective = Lookup[delveData, "Objective", None];
 	denizenList = Lookup[delveData, "Denizens", emptyDenizenSlots[]];
 	rows = {
-		header["Delve", delveData["Name"]],
+		header[delveData["Name"], rankedProgressSubtitle[delveData["Rank"], "Delve"]],
 		subtitleStyle[delveCardSummary[delveData]]
 	};
 	If[objective =!= None,
@@ -3147,7 +3241,7 @@ displayDelveCard[delveData_Association] := Module[
 	rows = Join[
 		rows,
 		{
-			progressSummary["Progress", delveData["Rank"], delveData["Progress"]],
+			progressTrackGraphic[delveData["Progress"]],
 			subtitleStyle["Denizens"],
 			denizenMatrixGrid[denizenList]
 		}
