@@ -55,13 +55,13 @@ beginStory::usage =
 "beginStory[name] starts a new story using name as the story name. Call beginStory[name] before createCharacter to establish the reproducible seed for character creation draws.";
 
 beginChapter::usage =
-"beginChapter[] loads the state for the current chapter, seeds the random number generator, and displays the solo character sheet and owned assets.
-beginChapter[Display -> False] suppresses the character sheet and asset display.
+"beginChapter[] loads the state for the current chapter, seeds the random number generator, and displays the solo character sheet, owned assets, and current delve if any.
+beginChapter[Display -> False] suppresses those displays.
 beginChapter[ArcName -> arc] renames the current chapter as the first chapter of arc after loading its state.";
 
 endChapter::usage =
-"endChapter[] saves the state for the next chapter, creates the next chapter notebook, and displays the solo character sheet.
-endChapter[Display -> False] suppresses the character sheet display.";
+"endChapter[] saves the state for the next chapter, creates the next chapter notebook, and displays the solo character sheet, owned assets, and current delve if any.
+endChapter[Display -> False] suppresses those displays.";
 
 
 (* ::Subsection::Closed:: *)
@@ -72,8 +72,8 @@ setSoloCharacter::usage =
 "setSoloCharacter[character] sets the solo character to character.";
 
 createCharacter::usage =
-"createCharacter[name, {a1, a2, a3}, edge, heart, iron, shadow, wits, vow[...] | {vowName, Extreme | Epic}, {b1, b2, b3}] creates a character, sets it as the solo character, and displays the character sheet and starting assets. Starting assets may be asset name strings when the card has a printed default selected ability, or asset[...] specs.
-createCharacter[..., Display -> False] suppresses the character sheet and asset display.";
+"createCharacter[name, {a1, a2, a3}, edge, heart, iron, shadow, wits, vow[...] | {vowName, Extreme | Epic}, {b1, b2, b3}] creates a character, sets it as the solo character, and displays the character sheet, starting assets, and current delve if any. Starting assets may be asset name strings when the card has a printed default selected ability, or asset[...] specs.
+createCharacter[..., Display -> False] suppresses those displays.";
 
 characterSheet::usage =
 "characterSheet[] displays a Lodestar-style character sheet for the solo character.
@@ -103,7 +103,9 @@ burnMomentum::usage =
 
 progressRoll::usage =
 "progressRoll[track] makes a progress roll against track for the solo character.
-progressRoll[track, character] makes a progress roll against track for character.";
+progressRoll[track, character] makes a progress roll against track for character.
+progressRoll[CompanionHealth[assetName]] rolls against an owned companion's health.
+progressRoll[WarbandStrength | Wealth | SimulacrumHealth | Essence | Light] rolls against the matching owned asset track.";
 
 
 (* ::Subsection::Closed:: *)
@@ -114,9 +116,9 @@ reroll::usage =
 "reroll[roll, die] rerolls die in roll and returns the modified roll.
 reroll[roll, {die1, die2, ...}] rerolls the specified dice in roll and returns the modified roll.
 
-Possible dice are ActionDie, ChallengeDice, LargerChallengeDie, and SmallerChallengeDie.
+Possible dice are AllDice, ActionDie, ChallengeDice, LargerChallengeDie, and SmallerChallengeDie.
 
-ActionDie may only be used with action rolls. Challenge dice may be rerolled in action rolls and progress rolls.
+AllDice rerolls every die in an action roll, or both challenge dice in a progress roll. ActionDie may only be used with action rolls. Challenge dice may be rerolled in action rolls and progress rolls.
 
 reroll[..., Display -> False] suppresses display.";
 
@@ -257,18 +259,18 @@ markExperience[n, character] adds n earned experience to character.";
 
 asset::usage =
 "asset[name] creates a quiet starting asset spec using the asset's printed default selected abilities.
-asset[name, ability] creates a quiet starting asset spec with the selected ability index.
-asset[name, {ability1, ability2, ...}] creates a quiet starting asset spec with multiple selected abilities.
+asset[name, ability] creates a quiet starting asset spec with the selected ability index, only when the asset has no printed default selected ability.
+asset[name, {ability1, ability2, ...}] creates a quiet starting asset spec with multiple selected abilities, only when the asset has no printed default selected ability.
 asset[name, field -> value, ...] creates a quiet starting asset spec with custom field values such as Name -> \"Asha\".
-asset[name, abilityOrAbilities, field -> value, ...] includes custom field values with selected abilities.";
+asset[name, abilityOrAbilities, field -> value, ...] includes custom field values with selected abilities when starting ability selection is allowed.";
 
 getAsset::usage =
 "getAsset[name] displays the owned asset named name for the solo character, or the default reference card if the solo character does not own it.
 getAsset[name, character] displays the owned asset named name for character.";
 
 getAssetAbility::usage =
-"getAssetAbility[name, ability] displays one ability from an owned asset for the solo character.
-getAssetAbility[name, ability, character] displays one ability from an owned asset for character.";
+"getAssetAbility[name, ability] displays one selected ability from an owned asset for the solo character.
+getAssetAbility[name, ability, character] displays one selected ability from an owned asset for character.";
 
 getAssets::usage =
 "getAssets[] displays all owned assets for the solo character.
@@ -277,14 +279,14 @@ getAssets[character] displays all owned assets for character.";
 drawAssets::usage =
 "drawAssets[] displays three random reference asset cards and returns their canonical names.
 drawAssets[n] displays n random reference asset cards.
-drawAssets[n, category] draws from category, one of \"Path\", \"Companion\", \"Combat Talent\", or \"Ritual\".";
+drawAssets[n, category] draws from category, one of Companion, PathAsset, CombatTalent, or Ritual. The Wolfram Path symbol is also accepted for path assets.";
 
 addAsset::usage =
 "addAsset[name] spends 5 experience to add an asset to the solo character using the asset's printed default selected abilities and displays the updated card.
-addAsset[name, ability] spends 5 experience to add an asset with the selected ability index.
-addAsset[name, {ability1, ability2, ...}] spends 5 experience to add an asset with multiple selected abilities.
+addAsset[name, ability] spends 5 experience to add an asset with the selected ability index, only when the asset has no printed default selected ability.
+addAsset[name, {ability1, ability2, ...}] spends 5 experience to add an asset with multiple selected abilities, only when the asset has no printed default selected ability.
 addAsset[name, field -> value, ...] spends 5 experience to add an asset with custom field values such as Name -> \"Asha\".
-addAsset[name, abilityOrAbilities, field -> value, ...] includes custom field values with selected abilities.
+addAsset[name, abilityOrAbilities, field -> value, ...] includes custom field values with selected abilities when starting ability selection is allowed.
 Any addAsset form may include character before options.
 addAsset[..., Display -> False] suppresses display.";
 
@@ -293,13 +295,53 @@ upgradeAsset::usage =
 upgradeAsset[name, ability, character] spends 3 experience to mark ability on an owned asset for character.
 upgradeAsset[..., Display -> False] suppresses display.";
 
-setAssetTrack::usage =
-"setAssetTrack[assetName, value] sets an owned asset's track for the solo character, clamped to the printed track range.
-setAssetTrack[assetName, value, character] sets an owned asset's track for character.";
+sufferCompanionHealth::usage =
+"sufferCompanionHealth[assetName, n] adjusts an owned companion's health by negative integer n for the solo character.
+sufferCompanionHealth[assetName, n, character] adjusts an owned companion's health by negative integer n for character.";
 
-adjustAssetTrack::usage =
-"adjustAssetTrack[assetName, delta] adjusts an owned asset's track for the solo character, clamped to the printed track range.
-adjustAssetTrack[assetName, delta, character] adjusts an owned asset's track for character.";
+takeCompanionHealth::usage =
+"takeCompanionHealth[assetName, n] adjusts an owned companion's health by positive integer n for the solo character.
+takeCompanionHealth[assetName, n, character] adjusts an owned companion's health by positive integer n for character.";
+
+sufferWarbandStrength::usage =
+"sufferWarbandStrength[] subtracts 1 from the solo character's Commander warband strength.
+sufferWarbandStrength[character] subtracts 1 from character's Commander warband strength.";
+
+takeWarbandStrength::usage =
+"takeWarbandStrength[] adds 1 to the solo character's Commander warband strength.
+takeWarbandStrength[character] adds 1 to character's Commander warband strength.";
+
+sufferWealth::usage =
+"sufferWealth[] subtracts 1 from the solo character's Fortune Hunter wealth.
+sufferWealth[character] subtracts 1 from character's Fortune Hunter wealth.";
+
+takeWealth::usage =
+"takeWealth[n] adjusts the solo character's Fortune Hunter wealth by positive integer n.
+takeWealth[n, character] adjusts character's Fortune Hunter wealth by positive integer n.";
+
+sufferSimulacrumHealth::usage =
+"sufferSimulacrumHealth[n] adjusts the solo character's Awakening simulacrum health by negative integer n.
+sufferSimulacrumHealth[n, character] adjusts character's Awakening simulacrum health by negative integer n.";
+
+resetSimulacrumHealth::usage =
+"resetSimulacrumHealth[] resets the solo character's Awakening simulacrum health to 3, or 6 if ability 2 is marked.
+resetSimulacrumHealth[character] resets character's Awakening simulacrum health.";
+
+sufferEssence::usage =
+"sufferEssence[] subtracts 1 from the solo character's Invoke essence.
+sufferEssence[character] subtracts 1 from character's Invoke essence.";
+
+takeEssence::usage =
+"takeEssence[roll] adds roll's action die value to the solo character's Invoke essence on a hit.
+takeEssence[roll, character] adds roll's action die value to character's Invoke essence on a hit.";
+
+sufferLight::usage =
+"sufferLight[n] adjusts the solo character's Lightbearer light by negative integer n.
+sufferLight[n, character] adjusts character's Lightbearer light by negative integer n.";
+
+resetLight::usage =
+"resetLight[roll] resets the solo character's Lightbearer light to 3 on a weak hit or 6 on a strong hit.
+resetLight[roll, character] resets character's Lightbearer light from roll.";
 
 setIroncladArmor::usage =
 "setIroncladArmor[choice] chooses Unequipped, Lightly armored, or Geared for war for the solo character's Ironclad asset and displays the updated card.
@@ -444,12 +486,22 @@ addDelve::usage =
 addDelve[name, rank, themeOrThemes, domainOrDomains, denizens] adds a delve site with a 12-slot denizens matrix.
 addDelve[..., character] adds a delve site for character.
 
-themeOrThemes and domainOrDomains may be a string or a two-string list, but a delve cannot have both two themes and two domains.
+themeOrThemes and domainOrDomains must be a delve theme/domain symbol or a two-symbol list, but a delve cannot have both two themes and two domains.
 addDelve[..., Objective -> objective] records an optional objective string.";
 
-setCurrentDelve::usage =
-"setCurrentDelve[name] sets the current delve for the solo character.
-setCurrentDelve[name, character] sets the current delve for character.";
+beginDelve::usage =
+"beginDelve[name] sets the current delve for the solo character to an existing delve.
+beginDelve[name, character] sets the current delve for character to an existing delve.
+beginDelve[name, rank, themeOrThemes, domainOrDomains] creates a delve site for the solo character and sets it as current.
+beginDelve[name, rank, themeOrThemes, domainOrDomains, denizens] creates a delve site with a 12-slot denizens matrix and sets it as current.
+beginDelve[..., character] creates a delve site for character and sets it as current.
+
+themeOrThemes and domainOrDomains must be a delve theme/domain symbol or a two-symbol list, but a delve cannot have both two themes and two domains.
+beginDelve[..., Objective -> objective] records an optional objective string.";
+
+endDelve::usage =
+"endDelve[] clears the current delve for the solo character without removing the delve.
+endDelve[character] clears the current delve for character without removing the delve.";
 
 getDelve::usage =
 "getDelve[] displays the current delve for the solo character.
@@ -460,19 +512,17 @@ getDelves::usage =
 "getDelves[] displays all delves for the solo character.
 getDelves[character] displays all delves for character.";
 
-removeDelve::usage =
-"removeDelve[name] removes the named delve for the solo character.
-removeDelve[name, character] removes the named delve for character.";
-
 setDelveTheme::usage =
 "setDelveTheme[themeOrThemes] updates the current delve's theme cards.
 setDelveTheme[delveName, themeOrThemes] updates the named delve's theme cards for the solo character.
-setDelveTheme[delveName, themeOrThemes, character] updates the named delve's theme cards for character.";
+setDelveTheme[delveName, themeOrThemes, character] updates the named delve's theme cards for character.
+themeOrThemes must be a delve theme symbol or a two-symbol list.";
 
 setDelveDomain::usage =
 "setDelveDomain[domainOrDomains] updates the current delve's domain cards.
 setDelveDomain[delveName, domainOrDomains] updates the named delve's domain cards for the solo character.
-setDelveDomain[delveName, domainOrDomains, character] updates the named delve's domain cards for character.";
+setDelveDomain[delveName, domainOrDomains, character] updates the named delve's domain cards for character.
+domainOrDomains must be a delve domain symbol or a two-symbol list.";
 
 returnToSite::usage =
 "returnToSite[] rolls the return challenge dice for the current delve and returns the lower die value to clear manually.
@@ -484,25 +534,22 @@ getRiskZone::usage =
 getRiskZone[delveName] displays the named delve's risk zone and returns its default rank for the solo character.
 getRiskZone[delveName, character] displays the named delve's risk zone and returns its default rank for character.";
 
-getDenizens::usage =
-"getDenizens[] displays the current delve's denizens matrix.
-getDenizens[delveName] displays the named delve's denizens matrix for the solo character.
-getDenizens[delveName, character] displays the named delve's denizens matrix for character.";
-
 rollDenizen::usage =
 "rollDenizen[] rolls on the current delve's denizens matrix.
 rollDenizen[delveName] rolls on the named delve's denizens matrix for the solo character.
 rollDenizen[delveName, character] rolls on the named delve's denizens matrix for character.";
 
 setDenizen::usage =
-"setDenizen[slot, name] sets slot in the current delve's denizens matrix.
+"setDenizen[slotSymbol, name] sets slotSymbol in the current delve's denizens matrix.
 setDenizen[delveName, slot, name] sets slot in the named delve's denizens matrix for the solo character.
-setDenizen[delveName, slot, name, character] sets slot in the named delve's denizens matrix for character.";
+setDenizen[delveName, slot, name, character] sets slot in the named delve's denizens matrix for character.
+slot must be a denizen slot symbol, such as VeryCommon, Common1, Uncommon3, Rare2, or Unforeseen.";
 
 clearDenizen::usage =
-"clearDenizen[slot] clears slot in the current delve's denizens matrix.
+"clearDenizen[slotSymbol] clears slotSymbol in the current delve's denizens matrix.
 clearDenizen[delveName, slot] clears slot in the named delve's denizens matrix for the solo character.
-clearDenizen[delveName, slot, character] clears slot in the named delve's denizens matrix for character.";
+clearDenizen[delveName, slot, character] clears slot in the named delve's denizens matrix for character.
+slot must be a denizen slot symbol, such as VeryCommon, Common1, Uncommon3, Rare2, or Unforeseen.";
 
 
 (* ::Subsection::Closed:: *)
@@ -880,8 +927,162 @@ Epic::usage =
 
 
 (* ::Subsection::Closed:: *)
+(*Delve theme symbols*)
+
+
+Ancient::usage =
+"Ancient is a delve theme symbol.";
+
+Corrupted::usage =
+"Corrupted is a delve theme symbol.";
+
+Fortified::usage =
+"Fortified is a delve theme symbol.";
+
+Hallowed::usage =
+"Hallowed is a delve theme symbol.";
+
+Haunted::usage =
+"Haunted is a delve theme symbol.";
+
+Infested::usage =
+"Infested is a delve theme symbol.";
+
+Ravaged::usage =
+"Ravaged is a delve theme symbol.";
+
+Wild::usage =
+"Wild is a delve theme symbol.";
+
+
+(* ::Subsection::Closed:: *)
+(*Delve domain symbols*)
+
+
+Barrow::usage =
+"Barrow is a delve domain symbol.";
+
+Cavern::usage =
+"Cavern is a delve domain symbol.";
+
+FrozenCavern::usage =
+"FrozenCavern is the delve domain symbol for Frozen Cavern.";
+
+Icereach::usage =
+"Icereach is a delve domain symbol.";
+
+Mine::usage =
+"Mine is a delve domain symbol.";
+
+Pass::usage =
+"Pass is a delve domain symbol.";
+
+Ruin::usage =
+"Ruin is a delve domain symbol.";
+
+SeaCave::usage =
+"SeaCave is the delve domain symbol for Sea Cave.";
+
+Shadowfen::usage =
+"Shadowfen is a delve domain symbol.";
+
+Stronghold::usage =
+"Stronghold is a delve domain symbol.";
+
+Tanglewood::usage =
+"Tanglewood is a delve domain symbol.";
+
+Underkeep::usage =
+"Underkeep is a delve domain symbol.";
+
+
+(* ::Subsection::Closed:: *)
+(*Denizen slot symbols*)
+
+
+VeryCommon::usage =
+"VeryCommon is the denizen slot symbol for the Very Common 01-27 slot.";
+
+Common1::usage =
+"Common1 is the denizen slot symbol for the Common 28-41 slot.";
+
+Common2::usage =
+"Common2 is the denizen slot symbol for the Common 42-55 slot.";
+
+Common3::usage =
+"Common3 is the denizen slot symbol for the Common 56-69 slot.";
+
+Uncommon1::usage =
+"Uncommon1 is the denizen slot symbol for the Uncommon 70-75 slot.";
+
+Uncommon2::usage =
+"Uncommon2 is the denizen slot symbol for the Uncommon 76-81 slot.";
+
+Uncommon3::usage =
+"Uncommon3 is the denizen slot symbol for the Uncommon 82-87 slot.";
+
+Uncommon4::usage =
+"Uncommon4 is the denizen slot symbol for the Uncommon 88-93 slot.";
+
+Rare1::usage =
+"Rare1 is the denizen slot symbol for the Rare 94-95 slot.";
+
+Rare2::usage =
+"Rare2 is the denizen slot symbol for the Rare 96-97 slot.";
+
+Rare3::usage =
+"Rare3 is the denizen slot symbol for the Rare 98-99 slot.";
+
+Unforeseen::usage =
+"Unforeseen is the denizen slot symbol for the Unforeseen 00 slot.";
+
+
+(* ::Subsection::Closed:: *)
+(*Asset category symbols*)
+
+
+Companion::usage =
+"Companion is the asset category symbol for companion assets.";
+
+PathAsset::usage =
+"PathAsset is the asset category symbol for path assets.";
+
+CombatTalent::usage =
+"CombatTalent is the asset category symbol for combat talent assets.";
+
+Ritual::usage =
+"Ritual is the asset category symbol for ritual assets.";
+
+
+(* ::Subsection::Closed:: *)
+(*Asset track symbols*)
+
+
+CompanionHealth::usage =
+"CompanionHealth[assetName] is a progressRoll target for an owned companion's health track.";
+
+WarbandStrength::usage =
+"WarbandStrength is a progressRoll target for the Commander strength track.";
+
+Wealth::usage =
+"Wealth is a progressRoll target for the Fortune Hunter wealth track.";
+
+SimulacrumHealth::usage =
+"SimulacrumHealth is a progressRoll target for the Awakening health track.";
+
+Essence::usage =
+"Essence is a progressRoll target for the Invoke essence track.";
+
+Light::usage =
+"Light is a progressRoll target for the Lightbearer light track.";
+
+
+(* ::Subsection::Closed:: *)
 (*Reroll selection symbols*)
 
+
+AllDice::usage =
+"AllDice specifies every die for reroll. In an action roll, this rerolls the action die and both challenge dice. In a progress roll, this rerolls both challenge dice.";
 
 ActionDie::usage =
 "ActionDie specifies the action die for reroll.";
@@ -896,7 +1097,7 @@ SmallerChallengeDie::usage =
 "SmallerChallengeDie specifies the smaller challenge die for reroll. If the challenge dice are tied, the first challenge die is selected.";
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*Option symbols*)
 
 
@@ -1185,6 +1386,59 @@ publicStringCandidates[] :=
 publicStringCandidateMap[] :=
 	Association[publicStringCandidateRules[publicStringCandidates[]]];
 
+$denizenSlotSymbolRules = {
+	HoldPattern[IronLibrary`VeryCommon] -> 1,
+	HoldPattern[IronLibrary`Common1] -> 2,
+	HoldPattern[IronLibrary`Common2] -> 3,
+	HoldPattern[IronLibrary`Common3] -> 4,
+	HoldPattern[IronLibrary`Uncommon1] -> 5,
+	HoldPattern[IronLibrary`Uncommon2] -> 6,
+	HoldPattern[IronLibrary`Uncommon3] -> 7,
+	HoldPattern[IronLibrary`Uncommon4] -> 8,
+	HoldPattern[IronLibrary`Rare1] -> 9,
+	HoldPattern[IronLibrary`Rare2] -> 10,
+	HoldPattern[IronLibrary`Rare3] -> 11,
+	HoldPattern[IronLibrary`Unforeseen] -> 12
+};
+
+$denizenSlotSymbolNames = {
+	"VeryCommon",
+	"Common1",
+	"Common2",
+	"Common3",
+	"Uncommon1",
+	"Uncommon2",
+	"Uncommon3",
+	"Uncommon4",
+	"Rare1",
+	"Rare2",
+	"Rare3",
+	"Unforeseen"
+};
+
+denizenSlotNumber[slot_Symbol] := Module[{number},
+	number = Replace[Unevaluated[slot], $denizenSlotSymbolRules, {0}];
+	If[IntegerQ[number], number, $Failed]
+];
+
+denizenSlotNumber[_] :=
+	$Failed;
+
+denizenSlotSymbolQ[slot_] :=
+	IntegerQ[denizenSlotNumber[slot]];
+
+denizenSlotChoicesText[] :=
+	StringRiffle[$denizenSlotSymbolNames, ", "];
+
+denizenSlotArgument[function_Symbol, slot_] := Module[{slotNumber},
+	slotNumber = denizenSlotNumber[slot];
+	If[IntegerQ[slotNumber],
+		slotNumber,
+		Message[function::badslot, HoldForm[slot], denizenSlotChoicesText[]];
+		$Failed
+	]
+];
+
 normalizePublicString[s_String] :=
 	Lookup[publicStringCandidateMap[], publicStringMatchKey[s], s];
 
@@ -1202,6 +1456,9 @@ normalizePublicArgument[association_Association] :=
 
 normalizePublicArgument[list_List] :=
 	normalizePublicArgument /@ list;
+
+normalizePublicArgument[IronLibrary`CompanionHealth[name_String]] :=
+	IronLibrary`CompanionHealth[normalizePublicString[name]];
 
 normalizePublicArgument[other_] :=
 	other;
@@ -1225,9 +1482,16 @@ publicPreservedArgumentPaths["addDelve", args_List] :=
 		If[Length[args] >= 5 && ListQ[args[[5]]], {{5}}, {}]
 	];
 
+publicPreservedArgumentPaths["beginDelve", args_List] :=
+	If[
+		Length[args] >= 4,
+		publicPreservedArgumentPaths["addDelve", args],
+		{}
+	];
+
 publicPreservedArgumentPaths["setDenizen", args_List] :=
 	Which[
-		Length[args] >= 2 && IntegerQ[First[args]], {{2}},
+		Length[args] >= 2 && denizenSlotSymbolQ[First[args]], {{2}},
 		Length[args] >= 3, {{3}},
 		True, {}
 	];
@@ -1304,10 +1568,21 @@ displayCharacterAssets[character_String] := Module[{normalizedCharacter, ownedAs
 	ownedAssets
 ];
 
-displayCharacterSummary[character_String] := Module[{sheet},
+displayCharacterCurrentDelve[character_String] := Module[{normalizedCharacter, ownedDelve},
+	normalizedCharacter = normalizePublicString[character];
+	ownedDelve = IronLibrary`MechanicsHelpers`currentDelveDataQuiet[normalizedCharacter];
+	If[AssociationQ[ownedDelve],
+		IronLibrary`DisplayHelpers`displayDelve[ownedDelve],
+		None
+	]
+];
+
+displayCharacterSummary[character_String] := Module[{sheet, assets},
 	sheet = characterSheet[character];
 	If[sheet === $Failed, Return[$Failed]];
-	displayCharacterAssets[character]
+	assets = displayCharacterAssets[character];
+	displayCharacterCurrentDelve[character];
+	assets
 ];
 
 displaySoloCharacterSummary[] := Module[{character},
@@ -1335,12 +1610,6 @@ displayDelveRiskZone[delveData_] := Module[{zone},
 	zone["Rank"]
 ];
 
-displayDenizensFromDelve[delveData_] := Module[{denizenList},
-	If[!AssociationQ[delveData], Return[$Failed]];
-	denizenList = Lookup[delveData, "Denizens", {}];
-	IronLibrary`DisplayHelpers`displayDenizensMatrix[delveData["Name"], denizenList];
-	denizenList
-];
 
 
 (* ::Subsection::Closed:: *)
@@ -1369,8 +1638,18 @@ $mechanicsPassThroughAPI = {
 	"markOathbreaker",
 	"clearOathbreaker",
 	"asset",
-	"setAssetTrack",
-	"adjustAssetTrack",
+	"sufferCompanionHealth",
+	"takeCompanionHealth",
+	"sufferWarbandStrength",
+	"takeWarbandStrength",
+	"sufferWealth",
+	"takeWealth",
+	"sufferSimulacrumHealth",
+	"resetSimulacrumHealth",
+	"sufferEssence",
+	"takeEssence",
+	"sufferLight",
+	"resetLight",
 	"markProgress",
 	"clearProgress",
 	"resetProgress",
@@ -1386,11 +1665,8 @@ $mechanicsPassThroughAPI = {
 	"takeSupply",
 	"recover",
 	"markExperience",
-	"setCurrentDelve",
 	"setDelveTheme",
-	"setDelveDomain",
-	"setDenizen",
-	"clearDenizen"
+	"setDelveDomain"
 };
 
 installHelperWrappers["IronLibrary`MechanicsHelpers`", $mechanicsPassThroughAPI];
@@ -1662,7 +1938,7 @@ endChapter[opts : OptionsPattern[]] := Module[{state, result},
 		Return[$Failed]
 	];
 	result = IronLibrary`FileHelpers`endChapter[state];
-	If[AssociationQ[result] && TrueQ[OptionValue[Display]], displaySoloCharacterSheet[]];
+	If[AssociationQ[result] && TrueQ[OptionValue[Display]], displaySoloCharacterSummary[]];
 	result
 ];
 
@@ -1780,7 +2056,7 @@ getAsset[args___] := Module[{normalizedArgs, ownedAsset},
 
 getAssetAbility[name_String, ability_Integer] := Module[{normalizedName, ownedAsset},
 	normalizedName = normalizePublicString[name];
-	ownedAsset = IronLibrary`MechanicsHelpers`getAsset[normalizedName];
+	ownedAsset = IronLibrary`MechanicsHelpers`getAssetAbility[normalizedName, ability];
 	If[AssociationQ[ownedAsset],
 		IronLibrary`DisplayHelpers`displayAssetAbility[ownedAsset, ability],
 		ownedAsset
@@ -1789,7 +2065,7 @@ getAssetAbility[name_String, ability_Integer] := Module[{normalizedName, ownedAs
 
 getAssetAbility[name_String, ability_Integer, character_] := Module[{normalizedArgs, ownedAsset},
 	normalizedArgs = normalizePublicCallArguments["getAssetAbility", {name, ability, character}];
-	ownedAsset = IronLibrary`MechanicsHelpers`getAsset[First[normalizedArgs], Last[normalizedArgs]];
+	ownedAsset = IronLibrary`MechanicsHelpers`getAssetAbility[First[normalizedArgs], ability, Last[normalizedArgs]];
 	If[AssociationQ[ownedAsset],
 		IronLibrary`DisplayHelpers`displayAssetAbility[ownedAsset, ability],
 		ownedAsset
@@ -1987,6 +2263,15 @@ addDelve[args___] := Module[{normalizedArgs, ownedDelve},
 	ownedDelve
 ];
 
+Options[beginDelve] = Join[Options[IronLibrary`MechanicsHelpers`beginDelve], {Display -> True}];
+
+beginDelve[args___] := Module[{normalizedArgs, ownedDelve},
+	normalizedArgs = normalizePublicCallArguments["beginDelve", withoutDisplayOption[args]];
+	ownedDelve = IronLibrary`MechanicsHelpers`beginDelve @@ normalizedArgs;
+	If[AssociationQ[ownedDelve] && displayRequested[True, args], IronLibrary`DisplayHelpers`displayDelve[ownedDelve, "Began"]];
+	ownedDelve
+];
+
 getDelve[args___] := Module[{normalizedArgs, ownedDelve},
 	normalizedArgs = normalizePublicCallArguments["getDelve", {args}];
 	ownedDelve = IronLibrary`MechanicsHelpers`delve @@ normalizedArgs;
@@ -1994,17 +2279,13 @@ getDelve[args___] := Module[{normalizedArgs, ownedDelve},
 	ownedDelve
 ];
 
-Options[removeDelve] = {Display -> True};
+Options[endDelve] = {Display -> True};
 
-removeDelve[args___] := Module[{normalizedArgs, removedDelve, result},
-	normalizedArgs = normalizePublicCallArguments["removeDelve", withoutDisplayOption[args]];
-	removedDelve = IronLibrary`MechanicsHelpers`delve @@ normalizedArgs;
-	If[removedDelve === $Failed, Return[$Failed]];
-	result = IronLibrary`MechanicsHelpers`removeDelve @@ normalizedArgs;
-	If[result =!= $Failed && AssociationQ[removedDelve] && displayRequested[True, args],
-		IronLibrary`DisplayHelpers`displayDelve[removedDelve, "Removed"]
-	];
-	result
+endDelve[args___] := Module[{normalizedArgs, endedDelve},
+	normalizedArgs = normalizePublicCallArguments["endDelve", withoutDisplayOption[args]];
+	endedDelve = IronLibrary`MechanicsHelpers`endDelve @@ normalizedArgs;
+	If[AssociationQ[endedDelve] && displayRequested[True, args], IronLibrary`DisplayHelpers`displayDelve[endedDelve, "Ended"]];
+	endedDelve
 ];
 
 getDelves[args___] := Module[{normalizedArgs, ownedDelves, empty},
@@ -2039,22 +2320,63 @@ returnToSite[args___] := Module[{normalizedArgs, roll},
 	roll
 ];
 
-getDenizens[] :=
-	displayDenizensFromDelve[IronLibrary`MechanicsHelpers`currentDelveData[]];
-
-getDenizens[delveName_String] :=
-	displayDenizensFromDelve[IronLibrary`MechanicsHelpers`delve[normalizePublicString[delveName]]];
-
-getDenizens[delveName_String, character_] := Module[{normalizedArgs},
-	normalizedArgs = normalizePublicCallArguments["getDenizens", {delveName, character}];
-	displayDenizensFromDelve[IronLibrary`MechanicsHelpers`delve @@ normalizedArgs]
-];
-
 rollDenizen[args___] := Module[{normalizedArgs, roll},
 	normalizedArgs = normalizePublicCallArguments["rollDenizen", {args}];
 	roll = IronLibrary`MechanicsHelpers`rollDenizen @@ normalizedArgs;
 	If[AssociationQ[roll], IronLibrary`DisplayHelpers`displayDenizenRoll[roll["delveName"], roll]];
 	roll
+];
+
+Clear[IronLibrary`setDenizen, IronLibrary`clearDenizen];
+
+Options[setDenizen] = {};
+Options[clearDenizen] = {};
+
+IronLibrary`setDenizen::badslot =
+"Denizen slot must be one of `2`, not `1`.";
+
+IronLibrary`clearDenizen::badslot =
+"Denizen slot must be one of `2`, not `1`.";
+
+setDenizen[slot_, name_] := Module[{slotNumber, normalizedArgs},
+	slotNumber = denizenSlotArgument[setDenizen, slot];
+	If[slotNumber === $Failed, Return[$Failed]];
+	normalizedArgs = normalizePublicCallArguments["setDenizen", {slot, name}];
+	IronLibrary`MechanicsHelpers`setDenizen[slotNumber, normalizedArgs[[2]]]
+];
+
+setDenizen[delveName_String, slot_, name_] := Module[{slotNumber, normalizedArgs},
+	slotNumber = denizenSlotArgument[setDenizen, slot];
+	If[slotNumber === $Failed, Return[$Failed]];
+	normalizedArgs = normalizePublicCallArguments["setDenizen", {delveName, slot, name}];
+	IronLibrary`MechanicsHelpers`setDenizen[normalizedArgs[[1]], slotNumber, normalizedArgs[[3]]]
+];
+
+setDenizen[delveName_String, slot_, name_, character_] := Module[{slotNumber, normalizedArgs},
+	slotNumber = denizenSlotArgument[setDenizen, slot];
+	If[slotNumber === $Failed, Return[$Failed]];
+	normalizedArgs = normalizePublicCallArguments["setDenizen", {delveName, slot, name, character}];
+	IronLibrary`MechanicsHelpers`setDenizen[normalizedArgs[[1]], slotNumber, normalizedArgs[[3]], normalizedArgs[[4]]]
+];
+
+clearDenizen[slot_] := Module[{slotNumber},
+	slotNumber = denizenSlotArgument[clearDenizen, slot];
+	If[slotNumber === $Failed, Return[$Failed]];
+	IronLibrary`MechanicsHelpers`clearDenizen[slotNumber]
+];
+
+clearDenizen[delveName_String, slot_] := Module[{slotNumber, normalizedArgs},
+	slotNumber = denizenSlotArgument[clearDenizen, slot];
+	If[slotNumber === $Failed, Return[$Failed]];
+	normalizedArgs = normalizePublicCallArguments["clearDenizen", {delveName, slot}];
+	IronLibrary`MechanicsHelpers`clearDenizen[normalizedArgs[[1]], slotNumber]
+];
+
+clearDenizen[delveName_String, slot_, character_] := Module[{slotNumber, normalizedArgs},
+	slotNumber = denizenSlotArgument[clearDenizen, slot];
+	If[slotNumber === $Failed, Return[$Failed]];
+	normalizedArgs = normalizePublicCallArguments["clearDenizen", {delveName, slot, character}];
+	IronLibrary`MechanicsHelpers`clearDenizen[normalizedArgs[[1]], slotNumber, normalizedArgs[[3]]]
 ];
 
 

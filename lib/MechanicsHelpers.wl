@@ -56,18 +56,27 @@ markOathbreaker::usage = "markOathbreaker is part of the internal MechanicsHelpe
 clearOathbreaker::usage = "clearOathbreaker is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
 asset::usage = "asset is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
 getAsset::usage = "getAsset is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
+getAssetAbility::usage = "getAssetAbility is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
 getAssets::usage = "getAssets is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
 drawAssets::usage = "drawAssets is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
 addAsset::usage = "addAsset is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
 upgradeAsset::usage = "upgradeAsset is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
-setAssetTrack::usage = "setAssetTrack is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
-adjustAssetTrack::usage = "adjustAssetTrack is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
 setIroncladArmor::usage = "setIroncladArmor is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
 removeAsset::usage = "removeAsset is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
 companion::usage = "companion is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
 companions::usage = "companions is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
-setCompanionHealth::usage = "setCompanionHealth is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
-adjustCompanionHealth::usage = "adjustCompanionHealth is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
+sufferCompanionHealth::usage = "sufferCompanionHealth is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
+takeCompanionHealth::usage = "takeCompanionHealth is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
+sufferWarbandStrength::usage = "sufferWarbandStrength is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
+takeWarbandStrength::usage = "takeWarbandStrength is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
+sufferWealth::usage = "sufferWealth is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
+takeWealth::usage = "takeWealth is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
+sufferSimulacrumHealth::usage = "sufferSimulacrumHealth is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
+resetSimulacrumHealth::usage = "resetSimulacrumHealth is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
+sufferEssence::usage = "sufferEssence is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
+takeEssence::usage = "takeEssence is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
+sufferLight::usage = "sufferLight is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
+resetLight::usage = "resetLight is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
 addRarity::usage = "addRarity is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
 removeRarity::usage = "removeRarity is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
 actionRoll::usage = "actionRoll is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
@@ -107,7 +116,8 @@ scene::usage = "scene is part of the internal MechanicsHelpers API used by IronL
 endScene::usage = "endScene is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
 markSceneCountdown::usage = "markSceneCountdown is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
 addDelve::usage = "addDelve is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
-setCurrentDelve::usage = "setCurrentDelve is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
+beginDelve::usage = "beginDelve is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
+endDelve::usage = "endDelve is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
 delve::usage = "delve is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
 delves::usage = "delves is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
 removeDelve::usage = "removeDelve is part of the internal MechanicsHelpers API used by IronLibrary.wl.";
@@ -198,6 +208,27 @@ statValueQ[input_Integer] := 0 <= input <= 5;
 debilityQ[input_] := MemberQ[debilities, input];
 delveThemeQ[input_String] := MemberQ[delveThemes, input];
 delveDomainQ[input_String] := MemberQ[delveDomains, input];
+
+delveCardSymbolName[name_String] :=
+	StringReplace[name, WhitespaceCharacter .. -> ""];
+
+delveThemeSymbolMap[] :=
+	AssociationThread[delveCardSymbolName /@ delveThemes, delveThemes];
+
+delveDomainSymbolMap[] :=
+	AssociationThread[delveCardSymbolName /@ delveDomains, delveDomains];
+
+delveThemeSymbolLabels[] :=
+	Keys[delveThemeSymbolMap[]];
+
+delveDomainSymbolLabels[] :=
+	Keys[delveDomainSymbolMap[]];
+
+delveCardNameFromSymbol[card_Symbol, "Theme"] :=
+	Lookup[delveThemeSymbolMap[], SymbolName[Unevaluated[card]], Missing["UnknownDelveTheme", card]];
+
+delveCardNameFromSymbol[card_Symbol, "Domain"] :=
+	Lookup[delveDomainSymbolMap[], SymbolName[Unevaluated[card]], Missing["UnknownDelveDomain", card]];
 
 
 (* ::Subsubsection::Closed:: *)
@@ -336,11 +367,11 @@ adjustBoundedAttr[attr_String, n_Integer, character_] := Module[
 	clamped
 ];
 
-IronLibrary`state::nochar = "No character named `1` exists in the current state.";
-IronLibrary`state::blocked = "Cannot increase `1` while `2` is marked for character `3`.";
-IronLibrary`state::clamped = "`1` for character `2` was clamped from `3` to `4`.";
-IronLibrary`state::supplyzero = "Supply has reached zero for character `1`.";
-IronLibrary`state::momentummin = "Momentum has reached its minimum for character `1`.";
+IronLibrary`state::nochar = "No one named `1` exists in the current state.";
+IronLibrary`state::blocked = "Cannot increase `1` while `2` is marked for `3`.";
+IronLibrary`state::clamped = "`1` for `2` was clamped from `3` to `4`.";
+IronLibrary`state::supplyzero = "Supply has reached zero for `1`.";
+IronLibrary`state::momentummin = "Momentum has reached its minimum for `1`.";
 
 
 (* ::Subsubsection::Closed:: *)
@@ -478,6 +509,7 @@ rerollSelectionQ[ActionDie] := True;
 rerollSelectionQ[ChallengeDice] := True;
 rerollSelectionQ[LargerChallengeDie] := True;
 rerollSelectionQ[SmallerChallengeDie] := True;
+rerollSelectionQ[AllDice] := True;
 rerollSelectionQ[_] := False;
 
 challengeDieIndex[LargerChallengeDie, challengeDice_List] :=
@@ -495,7 +527,7 @@ normalizeRerollSelection[dice_List] :=
 rerollChallengeDieIndices[selection_List, challengeDice_List] := Module[{indices},
 	indices = {};
 
-	If[MemberQ[selection, ChallengeDice],
+	If[MemberQ[selection, ChallengeDice] || MemberQ[selection, AllDice],
 		indices = Join[indices, {1, 2}]
 	];
 
@@ -516,7 +548,7 @@ rerollChallengeDieIndices[selection_List, challengeDice_List] := Module[{indices
 ];
 
 IronLibrary`reroll::baddie =
-"`1` is not a valid reroll selection. Use ActionDie, ChallengeDice, LargerChallengeDie, or SmallerChallengeDie.";
+"`1` is not a valid reroll selection. Use AllDice, ActionDie, ChallengeDice, LargerChallengeDie, or SmallerChallengeDie.";
 
 IronLibrary`reroll::badroll =
 "`1` is not an action roll or progress roll association.";
@@ -548,6 +580,25 @@ assetNames[] :=
 assetCategories[] :=
 	DeleteDuplicates[Lookup[Values[assetDataAssociation[]], "Category"]];
 
+assetCategorySymbolMap[] :=
+	<|
+		"Companion" -> "Companion",
+		"Path" -> "Path",
+		"PathAsset" -> "Path",
+		"CombatTalent" -> "Combat Talent",
+		"Ritual" -> "Ritual"
+	|>;
+
+assetCategorySymbolLabels[] :=
+	{"Companion", "PathAsset", "CombatTalent", "Ritual"};
+
+assetCategoryFromSymbol[category_Symbol] :=
+	Lookup[
+		assetCategorySymbolMap[],
+		SymbolName[Unevaluated[category]],
+		Missing["UnknownAssetCategory", category]
+	];
+
 assetRecord[name_String] :=
 	Lookup[assetDataAssociation[], name, Missing["UnknownAsset", name]];
 
@@ -559,6 +610,9 @@ assetAbilityIndices[record_Association] :=
 
 defaultAssetAbilities[record_Association] :=
 	Lookup[record, "DefaultAbilities", {}];
+
+defaultAssetAbilityLabel[record_Association] :=
+	StringRiffle[ToString /@ defaultAssetAbilities[record], ", "];
 
 assetFieldKeys[record_Association] :=
 	Keys[Lookup[record, "Fields", <||>]];
@@ -657,11 +711,18 @@ normalizeAssetFields[fieldSpec_, record_Association] := Module[
 	Join[blankFields, normalizedFields]
 ];
 
-makeOwnedAsset[name_String, abilitySpec_, fields_] := Module[
+makeOwnedAsset[name_String, abilitySpec_, fields_] :=
+	makeOwnedAsset[name, abilitySpec, fields, abilitySpec =!= Automatic];
+
+makeOwnedAsset[name_String, abilitySpec_, fields_, explicitAbilitySelection_] := Module[
 	{record, abilities, normalizedFields},
 	record = assetRecord[name];
 	If[!AssociationQ[record],
 		Message[IronLibrary`asset::unknown, name];
+		Return[$Failed]
+	];
+	If[TrueQ[explicitAbilitySelection] && defaultAssetAbilities[record] =!= {},
+		Message[IronLibrary`asset::defaultability, record["Name"], defaultAssetAbilityLabel[record]];
 		Return[$Failed]
 	];
 	abilities = normalizeAbilitySelection[abilitySpec, record];
@@ -678,14 +739,16 @@ makeOwnedAsset[name_String, abilitySpec_, fields_] := Module[
 	];
 
 makeStarterAssetSpec[name_String, abilitySpec_, fields_] := Module[
-	{owned},
-	owned = makeOwnedAsset[name, abilitySpec, fields];
+	{explicitAbilitySelection, owned},
+	explicitAbilitySelection = abilitySpec =!= Automatic;
+	owned = makeOwnedAsset[name, abilitySpec, fields, explicitAbilitySelection];
 	If[owned === $Failed, Return[$Failed]];
 	StarterAssetSpec[
 		Association[
 			"Name" -> owned["Name"],
 			"Abilities" -> owned["Abilities"],
-			"Fields" -> owned["Fields"]
+			"Fields" -> owned["Fields"],
+			"ExplicitAbilitySelection" -> explicitAbilitySelection
 		]
 	]
 ];
@@ -697,7 +760,12 @@ ownedAssetFromSpec[name_String] :=
 	makeOwnedAsset[name, Automatic, <||>];
 
 ownedAssetFromSpec[StarterAssetSpec[data_Association]] :=
-	makeOwnedAsset[data["Name"], data["Abilities"], Lookup[data, "Fields", <||>]];
+	makeOwnedAsset[
+		data["Name"],
+		data["Abilities"],
+		Lookup[data, "Fields", <||>],
+		Lookup[data, "ExplicitAbilitySelection", True]
+	];
 
 ownedAssetFromSpec[other_] := (
 	Message[IronLibrary`asset::badasset, other];
@@ -791,25 +859,107 @@ availableExperience[character_] :=
 assetTrackDefinition[record_Association, trackName_String] :=
 	Lookup[Lookup[record, "Tracks", <||>], trackName, Missing["UnknownTrack", trackName]];
 
-soleAssetTrackContext[record_Association, assetName_String] := Module[
-	{trackDefinitions, trackNames, trackName},
-	trackDefinitions = Lookup[record, "Tracks", <||>];
-	trackNames = Keys[trackDefinitions];
-	Which[
-		Length[trackNames] == 0,
-			Message[IronLibrary`asset::notrack, assetName];
-			$Failed,
-		Length[trackNames] > 1,
-			Message[IronLibrary`asset::multitrack, assetName, StringRiffle[trackNames, ", "]];
-			$Failed,
-		True,
-			trackName = First[trackNames];
-			Association["Name" -> trackName, "Definition" -> trackDefinitions[trackName]]
+clampAssetTrackValue[trackDef_Association, value_Integer] :=
+	Clip[value, {trackDef["Min"], trackDef["Max"]}];
+
+$companionHealthTrackName = "health";
+$warbandStrengthAssetName = "Commander";
+$warbandStrengthTrackName = "strength";
+$wealthAssetName = "Fortune Hunter";
+$wealthTrackName = "wealth";
+$simulacrumHealthAssetName = "Awakening";
+$simulacrumHealthTrackName = "health";
+$essenceAssetName = "Invoke";
+$essenceTrackName = "essence";
+$lightAssetName = "Lightbearer";
+$lightTrackName = "light";
+
+assetTrackDefinitionForOwned[record_Association, owned_Association, trackName_String] := Module[
+	{trackDef},
+	trackDef = assetTrackDefinition[record, trackName];
+	If[!AssociationQ[trackDef],
+		Message[IronLibrary`asset::track, trackName, Lookup[record, "Name", "Asset"]];
+		Return[$Failed]
+	];
+	If[
+		Lookup[record, "Name", ""] === $simulacrumHealthAssetName &&
+			trackName === $simulacrumHealthTrackName &&
+			MemberQ[Lookup[owned, "Abilities", {}], 2],
+		Association[trackDef, "Max" -> 6],
+		trackDef
 	]
 ];
 
-clampAssetTrackValue[trackDef_Association, value_Integer] :=
-	Clip[value, {trackDef["Min"], trackDef["Max"]}];
+ownedAssetTrackContext[assetName_String, trackName_String, character_] := Module[
+	{context, trackDef},
+	context = ownedAssetContext[assetName, character];
+	If[context === $Failed, Return[$Failed]];
+	trackDef = assetTrackDefinitionForOwned[context["Record"], context["Owned"], trackName];
+	If[trackDef === $Failed, Return[$Failed]];
+	Association[context, "TrackName" -> trackName, "TrackDefinition" -> trackDef]
+];
+
+ownedCompanionHealthContext[assetName_String, character_] := Module[
+	{context, trackDef},
+	context = ownedCompanionContext[assetName, character];
+	If[context === $Failed, Return[$Failed]];
+	trackDef = assetTrackDefinitionForOwned[context["Record"], context["Owned"], $companionHealthTrackName];
+	If[trackDef === $Failed, Return[$Failed]];
+	Association[context, "TrackName" -> $companionHealthTrackName, "TrackDefinition" -> trackDef]
+];
+
+assetTrackCurrentValue[context_Association] := Module[
+	{tracks, trackName, trackDef},
+	trackName = context["TrackName"];
+	trackDef = context["TrackDefinition"];
+	tracks = ownedAssetTracks[context["Record"], context["Owned"]];
+	Lookup[tracks, trackName, Lookup[trackDef, "Default", 0]]
+];
+
+setOwnedAssetTrackValue[context_Association, value_Integer, character_] := Module[
+	{trackName, tracks, updated, clamped},
+	trackName = context["TrackName"];
+	tracks = ownedAssetTracks[context["Record"], context["Owned"]];
+	clamped = clampAssetTrackValue[context["TrackDefinition"], value];
+	tracks[trackName] = clamped;
+	updated = Association[context["Owned"]];
+	updated["Tracks"] = tracks;
+	replaceOwnedAsset[character, context["Index"], updated];
+	clamped
+];
+
+adjustOwnedAssetTrackValue[context_Association, delta_Integer, character_] :=
+	setOwnedAssetTrackValue[context, assetTrackCurrentValue[context] + delta, character];
+
+adjustNamedAssetTrack[assetName_String, trackName_String, delta_Integer, character_] := Module[
+	{context},
+	context = ownedAssetTrackContext[assetName, trackName, character];
+	If[context === $Failed, Return[$Failed]];
+	adjustOwnedAssetTrackValue[context, delta, character]
+];
+
+setNamedAssetTrack[assetName_String, trackName_String, value_Integer, character_] := Module[
+	{context},
+	context = ownedAssetTrackContext[assetName, trackName, character];
+	If[context === $Failed, Return[$Failed]];
+	setOwnedAssetTrackValue[context, value, character]
+];
+
+trackSuffer[adjuster_, n_Integer?Negative, character_] :=
+	adjuster[n, character];
+
+trackSuffer[_, n_, _] := (
+	Message[IronLibrary`resource::badsuffer, n];
+	$Failed
+);
+
+trackTake[adjuster_, n_Integer?Positive, character_] :=
+	adjuster[n, character];
+
+trackTake[_, n_, _] := (
+	Message[IronLibrary`resource::badtake, n];
+	$Failed
+);
 
 $ironcladArmorAssetName = "Ironclad";
 $ironcladArmorFieldName = "Equipped";
@@ -1200,28 +1350,67 @@ threatLocationByName[threatName_String, character_] := Module[
 (* ::Subsection::Closed:: *)
 (*Delve and scene normalization helpers*)
 
-normalizeDelveCards[cards_String, kind_String] :=
-	normalizeDelveCards[{cards}, kind];
+normalizeDelveCardSymbols[cards : {__Symbol}, "Theme"] /; 1 <= Length[cards] <= 2 := Module[
+	{normalized, invalid},
+	normalized = delveCardNameFromSymbol[#, "Theme"] & /@ cards;
+	invalid = Pick[cards, MissingQ /@ normalized];
+	If[invalid =!= {},
+		Message[IronLibrary`delve::badtheme, First[invalid], StringRiffle[delveThemeSymbolLabels[], ", "]];
+		Return[$Failed]
+	];
+	normalized
+];
 
-normalizeDelveCards[cards : {__String}, "Theme"] /; 1 <= Length[cards] <= 2 := Module[
+normalizeDelveCardSymbols[cards : {__Symbol}, "Domain"] /; 1 <= Length[cards] <= 2 := Module[
+	{normalized, invalid},
+	normalized = delveCardNameFromSymbol[#, "Domain"] & /@ cards;
+	invalid = Pick[cards, MissingQ /@ normalized];
+	If[invalid =!= {},
+		Message[IronLibrary`delve::baddomain, First[invalid], StringRiffle[delveDomainSymbolLabels[], ", "]];
+		Return[$Failed]
+	];
+	normalized
+];
+
+normalizeDelveCards[card_Symbol, kind_String] :=
+	normalizeDelveCards[{card}, kind];
+
+normalizeDelveCards[cards : {__Symbol}, kind_String] :=
+	normalizeDelveCardSymbols[cards, kind];
+
+normalizeStoredDelveCards[cards_String, kind_String] :=
+	normalizeStoredDelveCards[{cards}, kind];
+
+normalizeStoredDelveCards[card_Symbol, kind_String] :=
+	normalizeDelveCards[{card}, kind];
+
+normalizeStoredDelveCards[cards : {__String}, "Theme"] /; 1 <= Length[cards] <= 2 := Module[
 	{invalid},
 	invalid = Select[cards, !delveThemeQ[#] &];
 	If[invalid =!= {},
-		Message[IronLibrary`delve::badtheme, First[invalid], StringRiffle[delveThemes, ", "]];
+		Message[IronLibrary`delve::badtheme, First[invalid], StringRiffle[delveThemeSymbolLabels[], ", "]];
 		Return[$Failed]
 	];
 	cards
 ];
 
-normalizeDelveCards[cards : {__String}, "Domain"] /; 1 <= Length[cards] <= 2 := Module[
+normalizeStoredDelveCards[cards : {__String}, "Domain"] /; 1 <= Length[cards] <= 2 := Module[
 	{invalid},
 	invalid = Select[cards, !delveDomainQ[#] &];
 	If[invalid =!= {},
-		Message[IronLibrary`delve::baddomain, First[invalid], StringRiffle[delveDomains, ", "]];
+		Message[IronLibrary`delve::baddomain, First[invalid], StringRiffle[delveDomainSymbolLabels[], ", "]];
 		Return[$Failed]
 	];
 	cards
 ];
+
+normalizeStoredDelveCards[cards : {__Symbol}, kind_String] :=
+	normalizeDelveCards[cards, kind];
+
+normalizeStoredDelveCards[_, kind_String] := (
+	Message[IronLibrary`delve::badcards, kind];
+	$Failed
+);
 
 normalizeDelveCards[_, kind_String] := (
 	Message[IronLibrary`delve::badcards, kind];
@@ -1297,14 +1486,14 @@ normalizeOwnedDelve[delve_Association] /;
 	KeyExistsQ[delve, "Progress"] := Module[
 	{themes, domains, objective, denizenList, normalized},
 	themes = Which[
-		KeyExistsQ[delve, "Themes"], normalizeDelveCards[delve["Themes"], "Theme"],
-		KeyExistsQ[delve, "Theme"], normalizeDelveCards[delve["Theme"], "Theme"],
+		KeyExistsQ[delve, "Themes"], normalizeStoredDelveCards[delve["Themes"], "Theme"],
+		KeyExistsQ[delve, "Theme"], normalizeStoredDelveCards[delve["Theme"], "Theme"],
 		True, $Failed
 	];
 	If[themes === $Failed, Return[$Failed]];
 	domains = Which[
-		KeyExistsQ[delve, "Domains"], normalizeDelveCards[delve["Domains"], "Domain"],
-		KeyExistsQ[delve, "Domain"], normalizeDelveCards[delve["Domain"], "Domain"],
+		KeyExistsQ[delve, "Domains"], normalizeStoredDelveCards[delve["Domains"], "Domain"],
+		KeyExistsQ[delve, "Domain"], normalizeStoredDelveCards[delve["Domain"], "Domain"],
 		True, $Failed
 	];
 	If[domains === $Failed, Return[$Failed]];
@@ -1564,6 +1753,75 @@ progressTargetData[trackName_String, character_] := Module[
 	$Failed
 ];
 
+assetTrackProgressTargetData[assetName_String, trackName_String, targetName_String, character_] := Module[
+	{context},
+	context = ownedAssetTrackContext[assetName, trackName, character];
+	If[context === $Failed, Return[$Failed]];
+	Association[
+		"Type" -> "AssetTrack",
+		"Name" -> targetName,
+		"Asset" -> assetName,
+		"Track" -> trackName,
+		"Progress" -> assetTrackCurrentValue[context]
+	]
+];
+
+assetTrackProgressTargetData[IronLibrary`CompanionHealth[assetName_String], character_] := Module[
+	{context},
+	context = ownedCompanionHealthContext[assetName, character];
+	If[context === $Failed, Return[$Failed]];
+	Association[
+		"Type" -> "AssetTrack",
+		"Name" -> StringJoin[assetName, " Health"],
+		"Asset" -> assetName,
+		"Track" -> $companionHealthTrackName,
+		"Progress" -> assetTrackCurrentValue[context]
+	]
+];
+
+assetTrackProgressTargetData[target_Symbol, character_] :=
+	Switch[
+		SymbolName[Unevaluated[target]],
+		"WarbandStrength",
+			assetTrackProgressTargetData[
+				$warbandStrengthAssetName,
+				$warbandStrengthTrackName,
+				"Warband Strength",
+				character
+			],
+		"Wealth",
+			assetTrackProgressTargetData[
+				$wealthAssetName,
+				$wealthTrackName,
+				"Wealth",
+				character
+			],
+		"SimulacrumHealth",
+			assetTrackProgressTargetData[
+				$simulacrumHealthAssetName,
+				$simulacrumHealthTrackName,
+				"Simulacrum Health",
+				character
+			],
+		"Essence",
+			assetTrackProgressTargetData[
+				$essenceAssetName,
+				$essenceTrackName,
+				"Essence",
+				character
+			],
+		"Light",
+			assetTrackProgressTargetData[
+				$lightAssetName,
+				$lightTrackName,
+				"Light",
+				character
+			],
+		_,
+			Message[IronLibrary`markProgress::notrack, ToString[Unevaluated[target]], character];
+			$Failed
+	];
+
 
 
 markVowProgress[vowName_String, n_Integer, character_] := Module[
@@ -1803,7 +2061,7 @@ setSoloCharacter[character_String] := Module[{},
 	$soloCharacter = character
 ];
 
-IronLibrary`setSoloCharacter::nochar = "No character named `1` exists in the current state.";
+IronLibrary`setSoloCharacter::nochar = "No one named `1` exists in the current state.";
 
 
 (* ::Subsection::Closed:: *)
@@ -1899,8 +2157,8 @@ clearOathbreaker[character_ : $soloCharacter] :=
 	clearDebilityState["Oathbreaker", character];
 
 IronLibrary`debility::invalid = "`1` is not an Ironsworn debility.";
-IronLibrary`debility::marked = "`1` is already marked for character `2`.";
-IronLibrary`debility::unmarked = "`1` is not marked for character `2`.";
+IronLibrary`debility::marked = "`1` is already marked for `2`.";
+IronLibrary`debility::unmarked = "`1` is not marked for `2`.";
 IronLibrary`debility::permanent = "`1` is permanent and cannot be cleared.";
 
 
@@ -2002,9 +2260,9 @@ clearThreatProgress[vowName_String, character_ : $soloCharacter] := Module[
 IronLibrary`vow::badstarter = "`1` is not a valid vow spec. Use vow[name, Extreme | Epic] or {vowName, Extreme | Epic}.";
 IronLibrary`vow::badbackgroundrank = "Background vow rank must be Extreme or Epic, not `1`.";
 IronLibrary`vow::badthreat = "`1` is not a valid threat spec. Use Threat -> {threatName, threatGoal}.";
-IronLibrary`vow::nochar = "No character named `1` exists in the current state.";
-IronLibrary`vow::unknown = "Character `2` does not have a vow named `1`.";
-IronLibrary`vow::duplicate = "Character `2` already has a vow named `1`.";
+IronLibrary`vow::nochar = "No one named `1` exists in the current state.";
+IronLibrary`vow::unknown = "`2` does not have a vow named `1`.";
+IronLibrary`vow::duplicate = "`2` already has a vow named `1`.";
 IronLibrary`vow::nothreat = "Vow `1` does not have an attached threat.";
 
 
@@ -2036,6 +2294,23 @@ getAsset[name_String, character_ : $soloCharacter] := Module[
 	context["Owned"]
 ];
 
+getAssetAbility[name_String, ability_Integer, character_ : $soloCharacter] := Module[
+	{context, valid, recordName},
+	context = ownedAssetContext[name, character];
+	If[context === $Failed, Return[$Failed]];
+	valid = assetAbilityIndices[context["Record"]];
+	recordName = context["Record", "Name"];
+	If[!MemberQ[valid, ability],
+		Message[IronLibrary`asset::badability, ability, recordName, Length[valid]];
+		Return[$Failed]
+	];
+	If[!MemberQ[Lookup[context["Owned"], "Abilities", {}], ability],
+		Message[IronLibrary`asset::unselected, ability, recordName];
+		Return[$Failed]
+	];
+	context["Owned"]
+];
+
 getAssets[] :=
 	getAssets[$soloCharacter];
 
@@ -2049,7 +2324,7 @@ getAssets[character_] := Module[
 drawAssets[] :=
 	drawAssets[3];
 
-drawAssets[category_String] :=
+drawAssets[category_Symbol] :=
 	drawAssets[3, category];
 
 drawAssets[n_Integer?Positive] :=
@@ -2065,13 +2340,14 @@ drawAssets[n_Integer?Positive, All] := Module[
 	names
 ];
 
-drawAssets[n_Integer?Positive, category_String] := Module[
-	{pool, names},
-	If[!MemberQ[assetCategories[], category],
-		Message[IronLibrary`asset::badcategory, category, StringRiffle[assetCategories[], ", "]];
+drawAssets[n_Integer?Positive, category_Symbol] := Module[
+	{categoryName, pool, names},
+	categoryName = assetCategoryFromSymbol[category];
+	If[MissingQ[categoryName],
+		Message[IronLibrary`asset::badcategory, category, StringRiffle[assetCategorySymbolLabels[], ", "]];
 		Return[$Failed]
 	];
-	pool = Select[assetNames[], assetRecord[#]["Category"] === category &];
+	pool = Select[assetNames[], assetRecord[#]["Category"] === categoryName &];
 	If[n > Length[pool],
 		Message[IronLibrary`asset::drawcount, n, Length[pool]];
 		Return[$Failed]
@@ -2164,40 +2440,6 @@ upgradeAsset[name_String, ability_Integer, character_, opts : OptionsPattern[]] 
 	updated
 ];
 
-setAssetTrack[assetName_String, value_Integer, character_ : $soloCharacter] := Module[
-	{context, record, owned, trackContext, trackName, trackDef, tracks, updated, clamped},
-	context = ownedAssetContext[assetName, character];
-	If[context === $Failed, Return[$Failed]];
-	record = context["Record"];
-	owned = context["Owned"];
-	trackContext = soleAssetTrackContext[record, assetName];
-	If[trackContext === $Failed, Return[$Failed]];
-	trackName = trackContext["Name"];
-	trackDef = trackContext["Definition"];
-	tracks = ownedAssetTracks[record, owned];
-	clamped = clampAssetTrackValue[trackDef, value];
-	tracks[trackName] = clamped;
-	updated = Association[owned];
-	updated["Tracks"] = tracks;
-	replaceOwnedAsset[character, context["Index"], updated];
-	clamped
-];
-
-adjustAssetTrack[assetName_String, delta_Integer, character_ : $soloCharacter] := Module[
-	{context, record, owned, trackContext, trackName, trackDef, tracks, current},
-	context = ownedAssetContext[assetName, character];
-	If[context === $Failed, Return[$Failed]];
-	record = context["Record"];
-	owned = context["Owned"];
-	trackContext = soleAssetTrackContext[record, assetName];
-	If[trackContext === $Failed, Return[$Failed]];
-	trackName = trackContext["Name"];
-	trackDef = trackContext["Definition"];
-	tracks = ownedAssetTracks[record, owned];
-	current = Lookup[tracks, trackName, Lookup[trackDef, "Default", 0]];
-	setAssetTrack[assetName, current + delta, character]
-];
-
 Options[setIroncladArmor] = {Display -> False};
 
 setIroncladArmor[choice_, opts : OptionsPattern[]] :=
@@ -2256,37 +2498,162 @@ companions[character_] := Module[
 	companionAssets
 ];
 
-Options[setCompanionHealth] = {Display -> False};
+sufferCompanionHealth[name_String, n_] :=
+	sufferCompanionHealth[name, n, $soloCharacter];
 
-setCompanionHealth[name_String, value_Integer, opts : OptionsPattern[]] :=
-	setCompanionHealth[name, value, $soloCharacter, opts];
+sufferCompanionHealth[name_String, n_, character_String] :=
+	trackSuffer[
+		Function[{delta, useCharacter},
+			Module[{context},
+				context = ownedCompanionHealthContext[name, useCharacter];
+				If[context === $Failed, Return[$Failed]];
+				adjustOwnedAssetTrackValue[context, delta, useCharacter]
+			]
+		],
+		n,
+		character
+	];
 
-setCompanionHealth[name_String, value_Integer, character_, opts : OptionsPattern[]] := Module[
-	{context, clamped},
-	context = ownedCompanionContext[name, character];
+takeCompanionHealth[name_String, n_] :=
+	takeCompanionHealth[name, n, $soloCharacter];
+
+takeCompanionHealth[name_String, n_, character_String] :=
+	trackTake[
+		Function[{delta, useCharacter},
+			Module[{context},
+				context = ownedCompanionHealthContext[name, useCharacter];
+				If[context === $Failed, Return[$Failed]];
+				adjustOwnedAssetTrackValue[context, delta, useCharacter]
+			]
+		],
+		n,
+		character
+	];
+
+sufferWarbandStrength[] :=
+	sufferWarbandStrength[$soloCharacter];
+
+sufferWarbandStrength[character_String] :=
+	adjustNamedAssetTrack[$warbandStrengthAssetName, $warbandStrengthTrackName, -1, character];
+
+takeWarbandStrength[] :=
+	takeWarbandStrength[$soloCharacter];
+
+takeWarbandStrength[character_String] :=
+	adjustNamedAssetTrack[$warbandStrengthAssetName, $warbandStrengthTrackName, 1, character];
+
+sufferWealth[] :=
+	sufferWealth[$soloCharacter];
+
+sufferWealth[character_String] :=
+	adjustNamedAssetTrack[$wealthAssetName, $wealthTrackName, -1, character];
+
+takeWealth[n_] :=
+	takeWealth[n, $soloCharacter];
+
+takeWealth[n_, character_String] :=
+	trackTake[
+		Function[{delta, useCharacter},
+			adjustNamedAssetTrack[$wealthAssetName, $wealthTrackName, delta, useCharacter]
+		],
+		n,
+		character
+	];
+
+sufferSimulacrumHealth[n_] :=
+	sufferSimulacrumHealth[n, $soloCharacter];
+
+sufferSimulacrumHealth[n_, character_String] :=
+	trackSuffer[
+		Function[{delta, useCharacter},
+			adjustNamedAssetTrack[$simulacrumHealthAssetName, $simulacrumHealthTrackName, delta, useCharacter]
+		],
+		n,
+		character
+	];
+
+resetSimulacrumHealth[] :=
+	resetSimulacrumHealth[$soloCharacter];
+
+resetSimulacrumHealth[character_String] := Module[
+	{context, max},
+	context = ownedAssetTrackContext[$simulacrumHealthAssetName, $simulacrumHealthTrackName, character];
 	If[context === $Failed, Return[$Failed]];
-	clamped = setAssetTrack[name, value, character];
-	If[clamped === $Failed, Return[$Failed]];
-	clamped
+	max = context["TrackDefinition"]["Max"];
+	setOwnedAssetTrackValue[context, max, character]
 ];
 
-Options[adjustCompanionHealth] = {Display -> False};
+sufferEssence[] :=
+	sufferEssence[$soloCharacter];
 
-adjustCompanionHealth[name_String, delta_Integer, opts : OptionsPattern[]] :=
-	adjustCompanionHealth[name, delta, $soloCharacter, opts];
+sufferEssence[character_String] :=
+	adjustNamedAssetTrack[$essenceAssetName, $essenceTrackName, -1, character];
 
-adjustCompanionHealth[name_String, delta_Integer, character_, opts : OptionsPattern[]] := Module[
-	{context, trackContext, trackName, trackDef, tracks, current},
-	context = ownedCompanionContext[name, character];
-	If[context === $Failed, Return[$Failed]];
-	trackContext = soleAssetTrackContext[context["Record"], name];
-	If[trackContext === $Failed, Return[$Failed]];
-	trackName = trackContext["Name"];
-	trackDef = trackContext["Definition"];
-	tracks = ownedAssetTracks[context["Record"], context["Owned"]];
-	current = Lookup[tracks, trackName, Lookup[trackDef, "Default", 0]];
-	setCompanionHealth[name, current + delta, character, opts]
+takeEssence[roll_Association] :=
+	takeEssence[roll, Lookup[roll, "character", $soloCharacter]];
+
+takeEssence[roll_Association, character_String] := Module[
+	{value},
+	If[!actionRollQ[roll],
+		Message[IronLibrary`assetTrack::badactionroll, "takeEssence"];
+		Return[$Failed]
+	];
+	If[Lookup[roll, "result", Missing["NoResult"]] === "miss",
+		Message[IronLibrary`assetTrack::miss, "takeEssence"];
+		Return[$Failed]
+	];
+	value = Lookup[roll, "actionDie", Missing["NoActionDie"]];
+	If[!IntegerQ[value],
+		Message[IronLibrary`assetTrack::badactionroll, "takeEssence"];
+		Return[$Failed]
+	];
+	adjustNamedAssetTrack[$essenceAssetName, $essenceTrackName, value, character]
 ];
+
+takeEssence[roll_, character_ : $soloCharacter] := (
+	Message[IronLibrary`assetTrack::badactionroll, "takeEssence"];
+	$Failed
+);
+
+sufferLight[n_] :=
+	sufferLight[n, $soloCharacter];
+
+sufferLight[n_, character_String] :=
+	trackSuffer[
+		Function[{delta, useCharacter},
+			adjustNamedAssetTrack[$lightAssetName, $lightTrackName, delta, useCharacter]
+		],
+		n,
+		character
+	];
+
+resetLight[roll_Association] :=
+	resetLight[roll, Lookup[roll, "character", $soloCharacter]];
+
+resetLight[roll_Association, character_String] := Module[
+	{value},
+	If[!actionRollQ[roll],
+		Message[IronLibrary`assetTrack::badactionroll, "resetLight"];
+		Return[$Failed]
+	];
+	value = Switch[
+		Lookup[roll, "result", Missing["NoResult"]],
+		"weakHit", 3,
+		"strongHit", 6,
+		"miss",
+			Message[IronLibrary`assetTrack::miss, "resetLight"];
+			Return[$Failed],
+		_,
+			Message[IronLibrary`assetTrack::badactionroll, "resetLight"];
+			Return[$Failed]
+	];
+	setNamedAssetTrack[$lightAssetName, $lightTrackName, value, character]
+];
+
+resetLight[roll_, character_ : $soloCharacter] := (
+	Message[IronLibrary`assetTrack::badactionroll, "resetLight"];
+	$Failed
+);
 
 normalizeRarityName[rarity_String] := Module[
 	{trimmed},
@@ -2363,7 +2730,8 @@ removeRarity[assetName_String, character_, opts : OptionsPattern[]] := Module[
 ];
 
 IronLibrary`asset::unknown = "Unknown asset `1`. Use the exact canonical asset name.";
-IronLibrary`asset::nodefault = "Asset `1` has no printed default selected ability. Use asset[`1`, abilityIndex].";
+IronLibrary`asset::nodefault = "Asset `1` has no printed default selected ability. Choose a starting ability with asset[`1`, abilityIndex] or addAsset[`1`, abilityIndex].";
+IronLibrary`asset::defaultability = "Asset `1` has printed default starting ability `2`; add it without choosing a starting ability.";
 IronLibrary`asset::badability = "Ability `1` is not available for asset `2`. Valid ability indices are 1 through `3`.";
 IronLibrary`asset::badabilities = "Asset `1` requires a non-empty integer ability selection.";
 IronLibrary`asset::dupeability = "Ability `1` was selected more than once for asset `2`.";
@@ -2371,18 +2739,17 @@ IronLibrary`asset::badfield = "Field `1` is not defined for asset `2`.";
 IronLibrary`asset::badfields = "Fields for asset `1` must be trailing rules keyed by asset field symbols, such as Name -> \"Asha\". String field keys are not supported.";
 IronLibrary`asset::badasset = "`1` is not a valid asset spec. Use asset[name], asset[name, abilityOrAbilities], or asset[name, abilityOrAbilities, field -> value, ...].";
 IronLibrary`asset::badaddasset = "`1` is not a valid addAsset call. Use addAsset[name, ...] directly; addAsset[asset[...]] is not supported.";
-IronLibrary`asset::badstoredassets = "The stored assets for character `1` could not be migrated to structured asset state.";
-IronLibrary`asset::nochar = "No character named `1` exists in the current state.";
-IronLibrary`asset::notowned = "Character `2` does not own asset `1`.";
-IronLibrary`asset::duplicate = "Character `2` already owns asset `1`.";
-IronLibrary`asset::xp = "Character `1` needs `2` available experience, but only has `3`.";
+IronLibrary`asset::badstoredassets = "The stored assets for `1` could not be migrated to structured asset state.";
+IronLibrary`asset::nochar = "No one named `1` exists in the current state.";
+IronLibrary`asset::notowned = "`2` does not own asset `1`.";
+IronLibrary`asset::duplicate = "`2` already owns asset `1`.";
+IronLibrary`asset::xp = "`1` needs `2` available experience, but only has `3`.";
 IronLibrary`asset::selected = "Ability `1` is already selected for asset `2`.";
+IronLibrary`asset::unselected = "Ability `1` is not selected for asset `2`.";
 IronLibrary`asset::track = "Track `1` is not defined for asset `2`.";
-IronLibrary`asset::notrack = "Asset `1` does not have a track.";
-IronLibrary`asset::multitrack = "Asset `1` has multiple tracks (`2`); specify track handling before updating it.";
-IronLibrary`asset::badcategory = "Unknown asset category `1`. Use one of: `2`.";
+IronLibrary`asset::badcategory = "Unknown asset category symbol `1`. Use one of: `2`.";
 IronLibrary`asset::drawcount = "Cannot draw `1` distinct assets from a pool of `2`.";
-IronLibrary`asset::baddraw = "`1` is not a valid drawAssets call.";
+IronLibrary`asset::baddraw = "`1` is not a valid drawAssets call. Use a category symbol such as Companion, PathAsset, CombatTalent, or Ritual.";
 IronLibrary`asset::badrarity = "Rarity name must be a non-empty string, not `1`.";
 IronLibrary`asset::raritycompanion = "Companion asset `1` cannot be augmented with a rarity.";
 IronLibrary`asset::noraritycost = "Asset `1` is not eligible for rarity augmentation.";
@@ -2390,6 +2757,8 @@ IronLibrary`asset::rarityduplicate = "Asset `1` already has rarity `2`.";
 IronLibrary`asset::norarity = "Asset `1` does not have a rarity to remove.";
 IronLibrary`asset::notcompanion = "Asset `1` is not a companion.";
 IronLibrary`asset::badironcladarmor = "Ironclad armor choice `1` is not valid. Use \"Unequipped\", \"Lightly armored\", or \"Geared for war\".";
+IronLibrary`assetTrack::badactionroll = "`1` requires an action roll.";
+IronLibrary`assetTrack::miss = "`1` cannot be used on a miss.";
 
 
 (* ::Subsection::Closed:: *)
@@ -2544,9 +2913,14 @@ Options[progressRoll] = {Display -> False};
 progressRoll[track_String, opts : OptionsPattern[]] :=
 	progressRoll[track, $soloCharacter, opts];
 
-progressRoll[track_String, character_String, opts : OptionsPattern[]] := Module[
-	{target, progressScore, challengeDice, die1, die2, roll},
-	target = progressTargetData[track, character];
+progressRoll[target_Symbol, opts : OptionsPattern[]] :=
+	progressRoll[target, $soloCharacter, opts];
+
+progressRoll[target : IronLibrary`CompanionHealth[_String], opts : OptionsPattern[]] :=
+	progressRoll[target, $soloCharacter, opts];
+
+makeProgressRoll[target_Association, character_] := Module[
+	{progressScore, challengeDice, die1, die2, roll},
 	If[target === $Failed, Return[$Failed]];
 	progressScore = Floor[target["Progress"]];
 	challengeDice = {die1, die2} = rollChallengeDice[];
@@ -2559,6 +2933,27 @@ progressRoll[track_String, character_String, opts : OptionsPattern[]] := Module[
 		"result" -> progressRollResult[challengeDice, progressScore]
 	];
 	roll
+];
+
+progressRoll[track_String, character_String, opts : OptionsPattern[]] := Module[
+	{target},
+	target = progressTargetData[track, character];
+	If[target === $Failed, Return[$Failed]];
+	makeProgressRoll[target, character]
+];
+
+progressRoll[target_Symbol, character_String, opts : OptionsPattern[]] := Module[
+	{trackTarget},
+	trackTarget = assetTrackProgressTargetData[target, character];
+	If[trackTarget === $Failed, Return[$Failed]];
+	makeProgressRoll[trackTarget, character]
+];
+
+progressRoll[target : IronLibrary`CompanionHealth[_String], character_String, opts : OptionsPattern[]] := Module[
+	{trackTarget},
+	trackTarget = assetTrackProgressTargetData[target, character];
+	If[trackTarget === $Failed, Return[$Failed]];
+	makeProgressRoll[trackTarget, character]
 ];
 
 
@@ -2633,7 +3028,7 @@ reroll[roll_Association, dice_List, opts : OptionsPattern[]] := Module[
 
 		actionDie =
 			If[
-				MemberQ[selection, ActionDie],
+				MemberQ[selection, ActionDie] || MemberQ[selection, AllDice],
 				rollActionDie[],
 				oldActionDie
 			];
@@ -2881,10 +3276,10 @@ raiseProgressRank[track_String, character_ : $soloCharacter] :=
 		raiseTargetRank[#1, #2] &
 	];
 
-IronLibrary`markProgress::notrack = "No vow, threat, delve, scene, journey, foe, failures, or bonds track named `1` exists for character `2`.";
+IronLibrary`markProgress::notrack = "No progress track named `1` exists for `2`.";
 IronLibrary`progress::badunits = "Progress units must be a non-negative integer, got `1`.";
-IronLibrary`progress::clamped = "Progress for `1` on character `2` was clamped from `3` to `4`.";
-IronLibrary`progress::epic = "Progress track `1` for character `2` is already Epic and cannot be raised.";
+IronLibrary`progress::clamped = "Progress for `1` on `2` was clamped from `3` to `4`.";
+IronLibrary`progress::epic = "Progress track `1` for `2` is already Epic and cannot be raised.";
 IronLibrary`progress::badrank = "`1` is not a valid progress rank.";
 
 
@@ -3037,11 +3432,11 @@ bondProgress[character_] := Module[
 	track
 ];
 
-IronLibrary`journey::duplicate = "Character `2` already has a journey named `1`. Remove it before adding another.";
-IronLibrary`journey::unknown = "Character `2` does not have a journey named `1`.";
+IronLibrary`journey::duplicate = "`2` already has a journey named `1`. Remove it before adding another.";
+IronLibrary`journey::unknown = "`2` does not have a journey named `1`.";
 IronLibrary`journey::nocurrent = "`1` does not have a journey.";
-IronLibrary`foe::duplicate = "Character `2` already has a foe named `1`.";
-IronLibrary`foe::unknown = "Character `2` does not have a foe named `1`.";
+IronLibrary`foe::duplicate = "`2` already has a foe named `1`.";
+IronLibrary`foe::unknown = "`2` does not have a foe named `1`.";
 
 
 (* ::Subsection::Closed:: *)
@@ -3104,9 +3499,9 @@ removeBond[name_String, character_ : $soloCharacter] := Module[
 	updated
 ];
 
-IronLibrary`bond::nochar = "No character named `1` exists in the current state.";
-IronLibrary`bond::duplicate = "Character `2` already has a bond with `1`.";
-IronLibrary`bond::unknown = "Character `2` does not have a bond with `1`.";
+IronLibrary`bond::nochar = "No one named `1` exists in the current state.";
+IronLibrary`bond::duplicate = "`2` already has a bond with `1`.";
+IronLibrary`bond::unknown = "`2` does not have a bond with `1`.";
 
 
 (* ::Subsection::Closed:: *)
@@ -3198,11 +3593,11 @@ markSceneCountdown[n_Integer?Negative, character_ : $soloCharacter] := (
 	$Failed
 );
 
-IronLibrary`scene::nochar = "No character named `1` exists in the current state.";
-IronLibrary`scene::active = "Character `1` already has an active scene named `2`.";
-IronLibrary`scene::none = "Character `1` does not have an active scene.";
+IronLibrary`scene::nochar = "No one named `1` exists in the current state.";
+IronLibrary`scene::active = "`1` already has an active scene named `2`.";
+IronLibrary`scene::none = "`1` does not have an active scene.";
 IronLibrary`scene::filled = "Scene countdown for `1` is filled.";
-IronLibrary`scene::clamped = "Scene countdown for `1` on character `2` was clamped from `3` to `4`.";
+IronLibrary`scene::clamped = "Scene countdown for `1` on `2` was clamped from `3` to `4`.";
 IronLibrary`scene::badcount = "Scene countdown marks must be a non-negative integer, got `1`.";
 
 
@@ -3240,11 +3635,43 @@ addDelve[name_String, rank_, ___] /; !rankQ[rank] := (
 	$Failed
 );
 
-setCurrentDelve[name_String, character_ : $soloCharacter] := Module[
+beginDelve[name_String, character_ : $soloCharacter] := Module[
 	{ownedDelve},
 	ownedDelve = requireDelve[name, character];
 	If[ownedDelve === $Failed, Return[$Failed]];
 	$state[character, "currentDelve"] = name;
+	ownedDelve
+];
+
+Options[beginDelve] = Options[addDelve];
+
+beginDelve[name_String, rank_?rankQ, themeSpec_, domainSpec_, opts : OptionsPattern[]] :=
+	beginDelve[name, rank, themeSpec, domainSpec, Automatic, $soloCharacter, opts];
+
+beginDelve[name_String, rank_?rankQ, themeSpec_, domainSpec_, character_String, opts : OptionsPattern[]] :=
+	beginDelve[name, rank, themeSpec, domainSpec, Automatic, character, opts];
+
+beginDelve[name_String, rank_?rankQ, themeSpec_, domainSpec_, denizenSpec_List, opts : OptionsPattern[]] :=
+	beginDelve[name, rank, themeSpec, domainSpec, denizenSpec, $soloCharacter, opts];
+
+beginDelve[name_String, rank_?rankQ, themeSpec_, domainSpec_, denizenSpec_, character_String, opts : OptionsPattern[]] := Module[
+	{ownedDelve},
+	ownedDelve = addDelve[name, rank, themeSpec, domainSpec, denizenSpec, character, opts];
+	If[ownedDelve === $Failed, Return[$Failed]];
+	$state[character, "currentDelve"] = name;
+	ownedDelve
+];
+
+beginDelve[name_String, rank_, ___] /; !rankQ[rank] := (
+	Message[IronLibrary`progress::badrank, rank];
+	$Failed
+);
+
+endDelve[character_ : $soloCharacter] := Module[
+	{ownedDelve},
+	ownedDelve = currentDelveData[character];
+	If[ownedDelve === $Failed, Return[$Failed]];
+	$state[character, "currentDelve"] = None;
 	ownedDelve
 ];
 
@@ -3452,13 +3879,13 @@ clearDenizen[delveName_String, slot_Integer] :=
 clearDenizen[delveName_String, slot_Integer, character_] :=
 	setDenizen[delveName, slot, None, character];
 
-IronLibrary`delve::nochar = "No character named `1` exists in the current state.";
-IronLibrary`delve::nocurrent = "Character `1` does not have a current delve.";
-IronLibrary`delve::unknown = "Character `2` does not have a delve named `1`.";
-IronLibrary`delve::duplicate = "Character `2` already has a delve named `1`.";
-IronLibrary`delve::badtheme = "Unknown delve theme `1`. Use one of: `2`.";
-IronLibrary`delve::baddomain = "Unknown delve domain `1`. Use one of: `2`.";
-IronLibrary`delve::badcards = "Delve `1` cards must be a string or a one- or two-string list.";
+IronLibrary`delve::nochar = "No one named `1` exists in the current state.";
+IronLibrary`delve::nocurrent = "`1` does not have a current delve.";
+IronLibrary`delve::unknown = "`2` does not have a delve named `1`.";
+IronLibrary`delve::duplicate = "`2` already has a delve named `1`.";
+IronLibrary`delve::badtheme = "Unknown delve theme symbol `1`. Use one of: `2`.";
+IronLibrary`delve::baddomain = "Unknown delve domain symbol `1`. Use one of: `2`.";
+IronLibrary`delve::badcards = "Delve `1` cards must be a symbol or a one- or two-symbol list.";
 IronLibrary`delve::toomanycards = "A delve can have two themes or two domains, but not both.";
 IronLibrary`delve::badobjective = "Delve objective must be None or a string, not `1`.";
 IronLibrary`delve::baddenizens = "Denizens must be a 12-item list of strings or None.";
