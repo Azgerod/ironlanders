@@ -183,7 +183,7 @@ oracleRoll[tableName_String, table_Association] := Module[{roll},
 
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Shared display primitives*)
 
 
@@ -297,9 +297,23 @@ Gu9I4nrXvXgA9u9F4mmjPNuG727vH69va\ndy98LrK9/XpoLV8plTs927TjcXyPWtcady/ULmbxbmu3s
 U4gzakT33zW76zq5v/J84e3ZcxwE4/7nQE/SdLd/jzOZB\nFC3nb991tdAX9C3vO9ZsHux5qWJVpvpd07esb8xmnLkcZzb37GRfBtUzfcv7\nxs9jB4vtuOt5v2SVLg3zTN/p+8ZsDnunEb1n2//alr0VfIYyStB3fN9h58Vi\nNuM9ZRqzOa7v2u158dxmkX7fmMFZmM1x\
 fYOTkxPx/GYN9L3eHMFp0NMlZ7MJ\n3zjrWjq/WeLo6MiMy9DZ7O6OM5tN+AboX9J5zgJwjR6djOfObH4SZzab8h3M\n8lcvtzrutYEe19/DjdGdzUtJOh7HNzHueb/3PUaKvj+JX7sSkp7NUQIzQzoP\neSet2RwlcK9J5yO3pDybowY+mxPPTZ7wZ6TEbB4lMFfE8zTBd\
 Gezsy85m0cN\n3JPc30b17PyZldnMYPTGf7vRtU8=\n"], "Byte", ColorSpace -> "RGB", Interleaving -> True];
+$cancelledDieOpacity = 0.45;
+
+dimCancelledDie[die_Image] :=
+	SetAlphaChannel[die, ImageMultiply[AlphaChannel[die], $cancelledDieOpacity]];
+
+dieCanvas[die_Image, 0] :=
+	die;
+
+dieCanvas[die_Image, padding_] :=
+	ImagePad[die, padding, Transparent];
+
+cancelledDieCanvas[die_Image] :=
+	dimCancelledDie[die];
+
 cancelledDieOverlay[die_Image, size_?NumericQ, position_List] :=
 	ImageCompose[
-		die,
+		cancelledDieCanvas[die],
 		Rasterize[
 			Style["\[Times]", $displayInk, FontSize -> baseFontSize[size]],
 			Background -> None
@@ -307,14 +321,15 @@ cancelledDieOverlay[die_Image, size_?NumericQ, position_List] :=
 		Scaled[position]
 	];
 
-numberedDieImage[base_Image, label_, labelPosition_List, cancelled_, cancelSize_?NumericQ, cancelPosition_List] := Module[
-	{die},
+numberedDieImage[base_Image, label_, labelPosition_List, cancelled_, cancelSize_?NumericQ, cancelPosition_List, canvasPadding_:0] := Module[
+	{die, canvas},
 	die = ImageCompose[
 		base,
 		Rasterize[dieStyle[label], Background -> None],
 		Scaled[labelPosition]
 	];
-	If[cancelled, cancelledDieOverlay[die, cancelSize, cancelPosition], die]
+	canvas = dieCanvas[die, canvasPadding];
+	If[cancelled, cancelledDieOverlay[canvas, cancelSize, cancelPosition], canvas]
 ];
 
 Options[d6Image] = {Cancelled -> False};
@@ -324,8 +339,9 @@ d6Image[n_Integer /; 1 <= n <= 6, opts : OptionsPattern[]] := Module[{die},
 		n,
 		{0.36 - If[n == 4, 0.01, 0], 0.42},
 		OptionValue[Cancelled],
-		110,
-		{0.5, 0.81}
+		150,
+		{0.5, 0.81},
+		20
 	];
 	scaleFinalImage[die]
 ];
@@ -366,19 +382,20 @@ $outcomeLabels = Association["miss" -> "Miss", "weakHit" -> "Weak Hit", "strongH
 actionRollResultDisplay[result_String, match_] := Module[
 	{color, label},
 	color = Lookup[$outcomeColors, result, $displayMutedInk];
-	label = ToUpperCase[Lookup[$outcomeLabels, result]];
+	label = actionRollResultLabel[result, match];
 	displayText[
-		StringJoin[label, If[match, " (MATCH)", ""]],
+		label,
 		$displaySansFont,
-		42,
+		34,
 		Bold,
 		color,
-		FontTracking -> "Wide"
+		FontTracking -> "Wide",
+		TextAlignment -> Right
 	]
 ];
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*Math column*)
 
 
@@ -412,9 +429,9 @@ rollColumn[actionScore_, challengeDice_List, challengeDiceCancelled_:Automatic, 
 		Automatic :> ConstantArray[False, Length[challengeDice]]
 	];
 	entries = Join[
-		{rollColumnEntry[actionScore, 0, scoreCircle[actionScore]]},
+		{rollColumnEntry[actionScore, 0, compactRollImage[scoreCircle[actionScore]]]},
 		MapThread[
-			rollColumnEntry[#1, 1, d10Image[#1, Cancelled -> #2]] &,
+			rollColumnEntry[#1, 1, compactRollImage[d10Image[#1, Cancelled -> #2]]] &,
 			{challengeDice, cancelled}
 		]
 	];
@@ -471,31 +488,104 @@ offsetX[expr_, dx_] := Pane[expr, ImageMargins -> {{Max[dx, 0], Max[-dx, 0]}, {0
 mathDieRow[actionDie_Integer, actionDieCancelled_, momentum_] :=
 	{
 		Pane[
-			offsetX[d6Image[actionDie, Cancelled -> actionDieCancelled], mathDieXOffset],
+			offsetX[compactRollImage[d6Image[actionDie, Cancelled -> actionDieCancelled]], mathDieXOffset],
 			{mathCoreWidth, Automatic},
 			Alignment -> Left
 		],
 		If[actionDieCancelled, mathLabel[StringJoin["Momentum ", ToString[momentum]]], Spacer[0]]
 	};
 
-mathColumn[actionDie_Integer, statValue_Integer, adds_Association, actionScore_Integer, actionDieCancelled_, momentum_, statReason_] := Module[
+mathColumn[actionDie_Integer, statValue_Integer, adds_Association, actionScore_Integer, actionDieCancelled_, momentum_, statReason_] :=
+	compactMathColumn[actionDie, statValue, adds, actionScore, actionDieCancelled, momentum, statReason];
+
+compactRollImageScale = 0.66;
+
+compactRollImage[image_Image] :=
+	ImageResize[image, Scaled[compactRollImageScale]];
+
+compactMathCoreWidth :=
+	scaled[104];
+
+compactMathOperatorWidth :=
+	scaled[18];
+
+compactMathValueWidth :=
+	scaled[56];
+
+compactMathOpValueGap :=
+	scaled[3];
+
+compactMathReasonGap :=
+	scaled[0];
+
+compactMathDieAddGap :=
+	scaled[0];
+
+compactMathDieXOffset :=
+	scaled[0];
+
+compactMathOperator[x_] :=
+	displayText[x, $displaySansFont, 30, Bold];
+
+compactMathValue[x_] :=
+	displayText[x, $displaySansFont, 30, Bold];
+
+compactMathLabel[x_] :=
+	displayText[ToString[x], $displaySansFont, 20, Plain, GrayLevel[0.35]];
+
+compactMathCore[op_, value_] :=
+	Pane[
+		Row[
+			{
+				Pane[compactMathOperator[op], {compactMathOperatorWidth, Automatic}, Alignment -> Left],
+				Pane[compactMathValue[value], {compactMathValueWidth, Automatic}, Alignment -> Left]
+			},
+			Spacer[compactMathOpValueGap]
+		],
+		{compactMathCoreWidth, Automatic},
+		Alignment -> Left
+	];
+
+compactMathLabelPane[x_] :=
+	Row[{compactMathLabel[x]}];
+
+compactMathTermRow[op_, value_, source_] :=
+	{compactMathCore[op, value], compactMathLabelPane[source]};
+
+compactMathResultRow[actionScore_] :=
+	{compactMathCore["=", actionScore], Spacer[0]};
+
+compactMathDieRow[actionDie_Integer, actionDieCancelled_, momentum_] :=
+	{
+		Pane[
+			offsetX[
+				compactRollImage[d6Image[actionDie, Cancelled -> actionDieCancelled]],
+				compactMathDieXOffset
+			],
+			{compactMathCoreWidth, Automatic},
+			Alignment -> Left
+		],
+		If[actionDieCancelled, compactMathLabelPane[StringJoin["Momentum ", ToString[momentum]]], Spacer[0]]
+	};
+
+compactMathColumn[actionDie_Integer, statValue_Integer, adds_Association, actionScore_Integer, actionDieCancelled_, momentum_, statReason_] := Module[
 	{termRows, rows, dividerPosition, blankRow, dieGapRow},
-	blankRow = {Spacer[{0, 4}], Spacer[{0, 4}]};
-	dieGapRow = {Spacer[{0, mathDieAddGap}], Spacer[{0, mathDieAddGap}]};
+	blankRow = {Spacer[{0, 2}], Spacer[{0, 2}]};
+	dieGapRow = {Spacer[{0, compactMathDieAddGap}], Spacer[{0, compactMathDieAddGap}]};
 	termRows = Join[
-		{mathTermRow["+", statValue, statReason]},
-		KeyValueMap[mathTermRow["+", #2, #1] &, adds]
+		{compactMathTermRow["+", statValue, statReason]},
+		KeyValueMap[compactMathTermRow["+", #2, #1] &, adds]
 	];
 	rows = Join[
-		{mathDieRow[actionDie, actionDieCancelled, momentum], dieGapRow},
+		{compactMathDieRow[actionDie, actionDieCancelled, momentum], dieGapRow},
 		termRows,
-		{blankRow, blankRow, mathResultRow[actionScore]}
+		{blankRow, compactMathResultRow[actionScore]}
 	];
-	dividerPosition = 2 + Length[termRows] + 2;
+	dividerPosition = 2 + Length[termRows] + 1;
 	Grid[
 		rows,
 		Alignment -> {{Left, Left}},
-		Spacings -> {mathReasonGap, 0.6},
+		Spacings -> {compactMathReasonGap, 0.35},
 		Dividers -> {False, {dividerPosition -> rollFrameStyle}}
 	]
 ];
@@ -567,33 +657,92 @@ characterSheetFramed[x_] :=
 (*Action roll display*)
 
 
-actionRollCard[title_String, subtitle_String, roll_Association] :=
-	ironFramed[
-		Grid[
+actionRollResultLabel[result_String, match_] := Module[
+	{label},
+	label = ToUpperCase[Lookup[$outcomeLabels, result]];
+	StringJoin[label, If[match, " (MATCH)", ""]]
+];
+
+rollDisplayDiceColumnWidth :=
+	Max[
+		First[ImageDimensions[compactRollImage[scoreCircle[10]]]],
+		First[ImageDimensions[compactRollImage[d10Image[10]]]]
+	];
+
+rollDisplaySideWidth :=
+	Max[1, (displayFrameBodyWidth - rollDisplayDiceColumnWidth)/2];
+
+rollDisplaySideSlot[content_, horizontalAlignment_] :=
+	Pane[
+		Pane[
+			content,
+			{rollDisplaySideWidth, Automatic},
+			Alignment -> {Center, Center}
+		],
+		{displayFrameBodyWidth, Automatic},
+		Alignment -> {horizontalAlignment, Center}
+	];
+
+rollDiceResultBody[score_, challengeDice_List, challengeDiceCancelled_, result_String, match_] :=
+	Pane[
+		Overlay[
 			{
-				{Item[header[title, subtitle], Alignment -> Left], SpanFromLeft},
-				{
-					Item[
-						mathColumn[
-							roll["actionDie"],
-							roll["statValue"],
-							roll["adds"],
-							roll["actionScore"],
-							roll["actionDieCancelled"],
-							roll["momentum"],
-							Capitalize[symbolNameLower[roll["stat"]]]
-						],
-						Alignment -> Left
-					],
-					Item[rollColumn[roll["actionScore"], roll["challengeDice"], Automatic, Right], Alignment -> Right]
-				},
-				{Item[actionRollResultDisplay[roll["result"], roll["match"]], Alignment -> Center], SpanFromLeft}
+				Pane[
+					rollColumn[score, challengeDice, challengeDiceCancelled, Center],
+					{displayFrameBodyWidth, Automatic},
+					Alignment -> {Center, Center}
+				],
+				rollDisplaySideSlot[
+					actionRollResultDisplay[result, match],
+					Right
+				]
 			},
-			Dividers -> {None, {False, False, False, False}},
-			Alignment -> {{Left, Right}, {Top, Top, Bottom}},
-			Spacings -> {2, {Automatic, rollHeaderBodyGap, rollBodyResultGap}},
-			FrameStyle -> None
-		]
+			Alignment -> Center
+		],
+		{displayFrameBodyWidth, Automatic},
+		Alignment -> Center
+	];
+
+actionRollBody[roll_Association] :=
+	Pane[
+		Overlay[
+			{
+				rollDisplaySideSlot[
+					compactMathColumn[
+						roll["actionDie"],
+						roll["statValue"],
+						roll["adds"],
+						roll["actionScore"],
+						roll["actionDieCancelled"],
+						roll["momentum"],
+						Capitalize[symbolNameLower[roll["stat"]]]
+					],
+					Left
+				],
+				Pane[
+					rollColumn[roll["actionScore"], roll["challengeDice"], Automatic, Center],
+					{displayFrameBodyWidth, Automatic},
+					Alignment -> {Center, Center}
+				],
+				rollDisplaySideSlot[
+					actionRollResultDisplay[roll["result"], roll["match"]],
+					Right
+				]
+			},
+			Alignment -> Center
+		],
+		{displayFrameBodyWidth, Automatic},
+		Alignment -> Center
+	];
+
+actionRollCard[title_String, subtitle_String, roll_Association] :=
+	displayColumn[
+		{
+			header[title, subtitle],
+			Item[actionRollBody[roll], Alignment -> Center]
+		},
+		{Automatic, rollHeaderBodyGap},
+		Center
 	];
 
 displayActionRoll[roll_Association] :=
@@ -607,33 +756,30 @@ displayActionRoll[roll_Association] :=
 momentumBurnMatch[burn_Association] :=
 	If[AllTrue[burn["challengeDiceCancelled"], !# &], burn["match"], False];
 
+momentumBurnBody[burn_Association] :=
+	rollDiceResultBody[
+		burn["actionScore"],
+		burn["challengeDice"],
+		burn["challengeDiceCancelled"],
+		burn["result"],
+		momentumBurnMatch[burn]
+	];
+
 displayMomentumBurn[burn_Association] :=
 	Print[
-		ironFramed[
-			Column[
-				{
-					Item[
-						header[
-							"Momentum Burn",
-							StringJoin[ToString[burn["momentum"]], " \[Rule] ", ToString[burn["momentumReset"]]]
-						],
-						Alignment -> Left
-					],
-					Item[
-						rollColumn[
-							burn["actionScore"],
-							burn["challengeDice"],
-							burn["challengeDiceCancelled"]
-						],
-						Alignment -> Center
-					],
-					Item[
-						actionRollResultDisplay[burn["result"], momentumBurnMatch[burn]],
-						Alignment -> Center
-					]
-				},
-				Spacings -> {2, {Automatic, rollHeaderBodyGap, rollBodyResultGap}}
-			]
+		displayColumn[
+			{
+				header[
+					"Momentum Burn",
+					StringJoin[ToString[burn["momentum"]], " \[Rule] ", ToString[burn["momentumReset"]]]
+				],
+				Item[
+					momentumBurnBody[burn],
+					Alignment -> Center
+				]
+			},
+			{Automatic, rollHeaderBodyGap},
+			Center
 		]
 	];
 
@@ -643,16 +789,16 @@ displayMomentumBurn[burn_Association] :=
 
 
 progressRollCard[title_String, subtitle_String, score_, challengeDice_List, result_String, match_] :=
-	ironFramed[
-		Grid[
-			{
-				{Item[header[title, subtitle], Alignment -> Left]},
-				{rollColumn[score, challengeDice, {False, False}]},
-				{Item[actionRollResultDisplay[result, match], Alignment -> Center]}
-			},
-			Alignment -> {{Center}, {Center, Top, Center}},
-			Spacings -> {2, {Automatic, rollHeaderBodyGap, rollBodyResultGap}}
-		]
+	displayColumn[
+		{
+			header[title, subtitle],
+			Item[
+				rollDiceResultBody[score, challengeDice, {False, False}, result, match],
+				Alignment -> Center
+			]
+		},
+		{Automatic, rollHeaderBodyGap},
+		Center
 	];
 
 displayProgressRoll[roll_Association] :=
@@ -697,7 +843,7 @@ displayOracleRoll[table_String, dice_List, match_, outcome_] :=
 
 oracleDiceDisplay[{d1_, d2_}] :=
 	Grid[
-		{{Item[d10Image[d1], Alignment -> Right], Item[d10Image[d2], Alignment -> Left]}},
+		{{Item[compactRollImage[d10Image[d1]], Alignment -> Right], Item[compactRollImage[d10Image[d2]], Alignment -> Left]}},
 		Alignment -> {{Right, Left}, Center},
 		Spacings -> {0, 0}
 	];
@@ -733,7 +879,7 @@ displayReturnToSiteRoll[roll_Association] :=
 		displayGrid[
 			{
 				{Item[header["Return to Site", roll["delveName"]], Alignment -> Left]},
-				{Item[Column[d10Image /@ ReverseSort[roll["challengeDice"]], Spacings -> 0], Alignment -> Center]},
+				{Item[Column[compactRollImage /@ (d10Image /@ ReverseSort[roll["challengeDice"]]), Spacings -> 0], Alignment -> Center]},
 				{Item[mainStyle[StringJoin["Lower die: ", ToString[roll["lowerDie"]]]], Alignment -> Center]}
 			},
 			Alignment -> {{Center}, {Center, Top, Center}},
@@ -749,7 +895,7 @@ displayRarityDieSix[roll_Association] :=
 				Item[
 					Grid[
 						{{
-							Item[d6Image[6], Alignment -> Center],
+							Item[compactRollImage[d6Image[6]], Alignment -> Center],
 							Item[mainStyle["\[Rule]"], Alignment -> Center],
 							Item[actionRollResultDisplay["strongHit", False], Alignment -> Center]
 						}},
@@ -1766,19 +1912,19 @@ displayCharacterSheet[character_String, characterData_Association] := Module[{},
 ];
 
 displayCharacterSheet[args___] := (
-	Message[displayCharacterSheet::badargs, HoldForm[displayCharacterSheet[args]]];
+	Message[IronLibrary`displayCharacterSheet::badargs, HoldForm[displayCharacterSheet[args]]];
 	$Failed
 );
 
-displayCharacterSheet::badargs = "displayCharacterSheet is a display helper API and expects displayCharacterSheet[character, characterData].";
+IronLibrary`displayCharacterSheet::badargs = "displayCharacterSheet is a display helper API and expects displayCharacterSheet[character, characterData].";
 
-displayAssetCard::badtext =
+IronLibrary`displayAssetCard::badtext =
 "Asset ability text must use p, paras, or choiceSection. Raw string ability text is not accepted: `1`.";
 
-displayAssetCard::badchoice =
+IronLibrary`displayAssetCard::badchoice =
 "Asset choices must use choice[key, text] or choiceGroup[label, choices]. Raw choice item is not accepted: `1`.";
 
-displayAssetAbility::badability =
+IronLibrary`displayAssetAbility::badability =
 "Ability `1` is not available for asset `2`. Valid ability indices are 1 through `3`.";
 
 
@@ -2023,7 +2169,7 @@ assetNormalizeChoice[choice_Association, index_Integer] /; KeyExistsQ[choice, "T
 ];
 
 assetNormalizeChoice[choice_, _] := (
-	Message[displayAssetCard::badchoice, HoldForm[choice]];
+	Message[IronLibrary`displayAssetCard::badchoice, HoldForm[choice]];
 	$Failed
 );
 
@@ -2061,7 +2207,7 @@ assetAbilitySectionsFromMoveSection[section_Association, fields_Association:<||>
 	|>;
 
 assetAbilitySections[text_String, fields_Association:<||>] := (
-	Message[displayAssetCard::badtext, text];
+	Message[IronLibrary`displayAssetCard::badtext, text];
 	$Failed
 );
 
@@ -2520,7 +2666,7 @@ assetCardExpression[owned_Association, status_:None] := Module[
 	{record},
 	record = assetDefinition[owned["Name"]];
 	If[!AssociationQ[record],
-		Message[asset::unknown, owned["Name"]];
+		Message[IronLibrary`asset::unknown, owned["Name"]];
 		Return[$Failed]
 	];
 	assetCardExpression[
@@ -2537,12 +2683,12 @@ assetAbilityCardExpression[owned_Association, ability_Integer, status_:Automatic
 	{record, abilityDef, selectedAbilities, fields, row, statusText},
 	record = assetDefinition[owned["Name"]];
 	If[!AssociationQ[record],
-		Message[asset::unknown, owned["Name"]];
+		Message[IronLibrary`asset::unknown, owned["Name"]];
 		Return[$Failed]
 	];
 	abilityDef = assetAbilityDefinition[record, ability];
 	If[!AssociationQ[abilityDef],
-		Message[displayAssetAbility::badability, ability, record["Name"], Length[Lookup[record, "Abilities", {}]]];
+		Message[IronLibrary`displayAssetAbility::badability, ability, record["Name"], Length[Lookup[record, "Abilities", {}]]];
 		Return[$Failed]
 	];
 	selectedAbilities = Lookup[owned, "Abilities", {}];
@@ -2606,7 +2752,7 @@ assetReferenceCard[name_String] := Module[
 	{record, fields},
 	record = assetDefinition[name];
 	If[!AssociationQ[record],
-		Message[asset::unknown, name];
+		Message[IronLibrary`asset::unknown, name];
 		Return[$Failed]
 	];
 	fields = assetFieldsWithDefaults[<||>, record];
@@ -2639,7 +2785,7 @@ displayAssetReference[name_String] := Module[
 	{record, card},
 	record = assetDefinition[name];
 	If[!AssociationQ[record],
-		Message[asset::unknown, name];
+		Message[IronLibrary`asset::unknown, name];
 		Return[$Failed]
 	];
 	card = assetReferenceCard[name];
@@ -3400,21 +3546,21 @@ displayIndexedChoice[data_Association, selection_] := Module[
 	indices = choiceSelectionIndices[selection];
 
 	If[indices === $Failed,
-		Message[displayMoveChoice::badselection, selection];
+		Message[IronLibrary`displayMoveChoice::badselection, selection];
 		Return[$Failed]
 	];
 
 	choices = Lookup[data, "Choices", {}];
 
 	If[choices === {},
-		Message[displayMoveChoice::nochoices, Lookup[data, "Subtitle", "the previous output"]];
+		Message[IronLibrary`displayMoveChoice::nochoices, Lookup[data, "Subtitle", "the previous output"]];
 		Return[$Failed]
 	];
 
 	invalid = Select[indices, # < 1 || # > Length[choices] &];
 
 	If[invalid =!= {},
-		Message[displayMoveChoice::badindex, First[invalid], Length[choices]];
+		Message[IronLibrary`displayMoveChoice::badindex, First[invalid], Length[choices]];
 		Return[$Failed]
 	];
 
@@ -3429,20 +3575,20 @@ displayMoveChoice[AssetDisplayOutput[data_Association], selection_] :=
 	displayIndexedChoice[data, selection];
 
 displayMoveChoice[output_, selection_] := (
-	Message[displayMoveChoice::badoutput, output];
+	Message[IronLibrary`displayMoveChoice::badoutput, output];
 	$Failed
 );
 
-displayMoveChoice::badselection =
+IronLibrary`displayMoveChoice::badselection =
 "`1` is not a valid choice selection. Use an integer or a non-empty list of integers.";
 
-displayMoveChoice::nochoices =
+IronLibrary`displayMoveChoice::nochoices =
 "`1` does not expose any choices.";
 
-displayMoveChoice::badindex =
+IronLibrary`displayMoveChoice::badindex =
 "Choice `1` is not available. Valid choices are 1 through `2`.";
 
-displayMoveChoice::badoutput =
+IronLibrary`displayMoveChoice::badoutput =
 "`1` is not a choice-bearing display output. Use a value returned by a move or asset display function.";
 
 
@@ -3453,12 +3599,12 @@ displayMoveChoice::badoutput =
 oracleTableByName[tableName_String] := Module[
 	{table},
 	If[!KeyExistsQ[oracles, tableName],
-		Message[oracle::unknown, tableName];
+		Message[IronLibrary`oracle::unknown, tableName];
 		Return[$Failed]
 	];
 	table = oracles[tableName];
 	If[!AssociationQ[table],
-		Message[oracle::unknown, tableName];
+		Message[IronLibrary`oracle::unknown, tableName];
 		Return[$Failed]
 	];
 	table
@@ -3868,7 +4014,7 @@ displayOracleQuery[tableName_String] := displayNamedOracleQuery[tableName];
 displayOracleQuery["Yes/No", odds_String] := oracleRollByName["Yes/No: " <> odds];
 displayOracleQuery["Yes/No", yesOutcome_String, noOutcome_String] := oracleRoll["Yes/No", yesNo[yesOutcome, noOutcome]];
 
-oracle::unknown = "Unknown oracle table `1`.";
+IronLibrary`oracle::unknown = "Unknown oracle table `1`.";
 
 
 (* ::Subsection::Closed:: *)

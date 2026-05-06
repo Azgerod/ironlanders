@@ -286,7 +286,7 @@ normalizeDebilityList[raw_] := Module[
 ensureCharacterState[character_] :=
 	If[characterExistsQ[character],
 		True,
-		Message[state::nochar, character];
+		Message[IronLibrary`state::nochar, character];
 		False
 	];
 
@@ -299,7 +299,7 @@ setBoundedAttr[attr_String, value_Integer, character_] := Module[
 	bounds = resourceBounds[attr, character];
 	clamped = clampValue[value, bounds];
 	If[value =!= clamped,
-		Message[state::clamped, resourceLabel[attr], character, value, clamped]
+		Message[IronLibrary`state::clamped, resourceLabel[attr], character, value, clamped]
 	];
 	$state[character, attr] = clamped
 ];
@@ -317,30 +317,30 @@ adjustBoundedAttr[attr_String, n_Integer, character_] := Module[
 	current = getAttr[attr, character];
 	block = recoveryBlockingDebility[attr];
 	If[n > 0 && block =!= None && MemberQ[getDebilities[character], block],
-		Message[state::blocked, resourceLabel[attr], debilityLabel[block], character];
+		Message[IronLibrary`state::blocked, resourceLabel[attr], debilityLabel[block], character];
 		Return[current]
 	];
 	requested = current + n;
 	bounds = resourceBounds[attr, character];
 	clamped = clampValue[requested, bounds];
 	If[requested =!= clamped,
-		Message[state::clamped, resourceLabel[attr], character, requested, clamped]
+		Message[IronLibrary`state::clamped, resourceLabel[attr], character, requested, clamped]
 	];
 	$state[character, attr] = clamped;
 	If[attr === "supply" && current > 0 && clamped === 0,
-		Message[state::supplyzero, character]
+		Message[IronLibrary`state::supplyzero, character]
 	];
 	If[attr === "momentum" && clamped === -6 && (current > -6 || requested < -6),
-		Message[state::momentummin, character]
+		Message[IronLibrary`state::momentummin, character]
 	];
 	clamped
 ];
 
-state::nochar = "No character named `1` exists in the current state.";
-state::blocked = "Cannot increase `1` while `2` is marked for character `3`.";
-state::clamped = "`1` for character `2` was clamped from `3` to `4`.";
-state::supplyzero = "Supply has reached zero for character `1`.";
-state::momentummin = "Momentum has reached its minimum for character `1`.";
+IronLibrary`state::nochar = "No character named `1` exists in the current state.";
+IronLibrary`state::blocked = "Cannot increase `1` while `2` is marked for character `3`.";
+IronLibrary`state::clamped = "`1` for character `2` was clamped from `3` to `4`.";
+IronLibrary`state::supplyzero = "Supply has reached zero for character `1`.";
+IronLibrary`state::momentummin = "Momentum has reached its minimum for character `1`.";
 
 
 (* ::Subsubsection::Closed:: *)
@@ -421,7 +421,7 @@ normalizeActionAdds[adds_List] /; actionAddsQ[adds] :=
 	Association[adds];
 
 normalizeActionAdds[adds_] := (
-	Message[actionRoll::badadds, adds];
+	Message[IronLibrary`actionRoll::badadds, adds];
 	$Failed
 );
 
@@ -515,22 +515,22 @@ rerollChallengeDieIndices[selection_List, challengeDice_List] := Module[{indices
 	DeleteDuplicates[indices]
 ];
 
-reroll::baddie =
+IronLibrary`reroll::baddie =
 "`1` is not a valid reroll selection. Use ActionDie, ChallengeDice, LargerChallengeDie, or SmallerChallengeDie.";
 
-reroll::badroll =
+IronLibrary`reroll::badroll =
 "`1` is not an action roll or progress roll association.";
 
-reroll::actiondie =
+IronLibrary`reroll::actiondie =
 "ActionDie can only be rerolled in an action roll.";
 
-reroll::actiondieprogress =
+IronLibrary`reroll::actiondieprogress =
 "The given roll is a progress roll. ActionDie can only be rerolled in an action roll.";
 
-reroll::empty =
+IronLibrary`reroll::empty =
 "No dice were specified for reroll.";
 
-reroll::badchallenge =
+IronLibrary`reroll::badchallenge =
 "Could not determine which challenge die to reroll from selection `1`.";
 
 
@@ -573,7 +573,7 @@ normalizeAbilitySelection[Automatic, record_Association] := Module[
 	{defaults},
 	defaults = defaultAssetAbilities[record];
 	If[defaults === {},
-		Message[asset::nodefault, record["Name"]];
+		Message[IronLibrary`asset::nodefault, record["Name"]];
 		Return[$Failed]
 	];
 	defaults
@@ -587,19 +587,19 @@ normalizeAbilitySelection[abilities_List, record_Association] /; VectorQ[abiliti
 	valid = assetAbilityIndices[record];
 	duplicates = DeleteDuplicates[Cases[Tally[abilities], {ability_, count_} /; count > 1 :> ability]];
 	If[duplicates =!= {},
-		Message[asset::dupeability, First[duplicates], record["Name"]];
+		Message[IronLibrary`asset::dupeability, First[duplicates], record["Name"]];
 		Return[$Failed]
 	];
 	invalid = Select[abilities, !MemberQ[valid, #] &];
 	If[invalid =!= {},
-		Message[asset::badability, First[invalid], record["Name"], Length[valid]];
+		Message[IronLibrary`asset::badability, First[invalid], record["Name"], Length[valid]];
 		Return[$Failed]
 	];
 	Sort[abilities]
 ];
 
 normalizeAbilitySelection[_, record_Association] := (
-	Message[asset::badabilities, record["Name"]];
+	Message[IronLibrary`asset::badabilities, record["Name"]];
 	$Failed
 );
 
@@ -644,13 +644,13 @@ normalizeAssetFields[fieldSpec_, record_Association] := Module[
 	keys = assetFieldKeys[record];
 	fields = assetFieldAssociation[fieldSpec];
 	If[fields === $Failed,
-		Message[asset::badfields, record["Name"]];
+		Message[IronLibrary`asset::badfields, record["Name"]];
 		Return[$Failed]
 	];
 	normalizedFields = normalizeAssetFieldKeys[fields, keys];
 	invalid = Cases[Keys[normalizedFields], Missing["UnknownField", key_] :> key];
 	If[invalid =!= {},
-		Message[asset::badfield, First[invalid], record["Name"]];
+		Message[IronLibrary`asset::badfield, First[invalid], record["Name"]];
 		Return[$Failed]
 	];
 	blankFields = AssociationThread[keys -> ConstantArray["", Length[keys]]];
@@ -661,7 +661,7 @@ makeOwnedAsset[name_String, abilitySpec_, fields_] := Module[
 	{record, abilities, normalizedFields},
 	record = assetRecord[name];
 	If[!AssociationQ[record],
-		Message[asset::unknown, name];
+		Message[IronLibrary`asset::unknown, name];
 		Return[$Failed]
 	];
 	abilities = normalizeAbilitySelection[abilitySpec, record];
@@ -700,7 +700,7 @@ ownedAssetFromSpec[StarterAssetSpec[data_Association]] :=
 	makeOwnedAsset[data["Name"], data["Abilities"], Lookup[data, "Fields", <||>]];
 
 ownedAssetFromSpec[other_] := (
-	Message[asset::badasset, other];
+	Message[IronLibrary`asset::badasset, other];
 	$Failed
 );
 
@@ -713,7 +713,7 @@ ownedAssetQ[owned_Association] :=
 normalizeCharacterAssets[character_] := Module[
 	{rawAssets, normalizedAssets},
 	If[!characterExistsQ[character],
-		Message[asset::nochar, character];
+		Message[IronLibrary`asset::nochar, character];
 		Return[$Failed]
 	];
 	rawAssets = Lookup[$state[character], "assets", {}];
@@ -723,7 +723,7 @@ normalizeCharacterAssets[character_] := Module[
 	];
 	normalizedAssets = ownedAssetFromSpec /@ rawAssets;
 	If[MemberQ[normalizedAssets, $Failed],
-		Message[asset::badstoredassets, character];
+		Message[IronLibrary`asset::badstoredassets, character];
 		Return[$Failed]
 	];
 	$state[character, "assets"] = normalizedAssets
@@ -733,14 +733,14 @@ ownedAssetContext[assetName_String, character_] := Module[
 	{record, ownedAssets, positions, index},
 	record = assetRecord[assetName];
 	If[!AssociationQ[record],
-		Message[asset::unknown, assetName];
+		Message[IronLibrary`asset::unknown, assetName];
 		Return[$Failed]
 	];
 	ownedAssets = normalizeCharacterAssets[character];
 	If[ownedAssets === $Failed, Return[$Failed]];
 	positions = Flatten @ Position[Lookup[ownedAssets, "Name", Missing["NoName"]], assetName];
 	If[positions === {},
-		Message[asset::notowned, assetName, character];
+		Message[IronLibrary`asset::notowned, assetName, character];
 		Return[$Failed]
 	];
 	index = First[positions];
@@ -767,7 +767,7 @@ requireExperience[character_, cost_Integer] := Module[
 	{available},
 	available = availableExperience[character];
 	If[available < cost,
-		Message[asset::xp, character, cost, available];
+		Message[IronLibrary`asset::xp, character, cost, available];
 		Return[False]
 	];
 	True
@@ -778,7 +778,7 @@ ownedCompanionContext[assetName_String, character_] := Module[
 	context = ownedAssetContext[assetName, character];
 	If[context === $Failed, Return[$Failed]];
 	If[Lookup[context["Record"], "Category", ""] =!= "Companion",
-		Message[asset::notcompanion, assetName];
+		Message[IronLibrary`asset::notcompanion, assetName];
 		Return[$Failed]
 	];
 	context
@@ -797,10 +797,10 @@ soleAssetTrackContext[record_Association, assetName_String] := Module[
 	trackNames = Keys[trackDefinitions];
 	Which[
 		Length[trackNames] == 0,
-			Message[asset::notrack, assetName];
+			Message[IronLibrary`asset::notrack, assetName];
 			$Failed,
 		Length[trackNames] > 1,
-			Message[asset::multitrack, assetName, StringRiffle[trackNames, ", "]];
+			Message[IronLibrary`asset::multitrack, assetName, StringRiffle[trackNames, ", "]];
 			$Failed,
 		True,
 			trackName = First[trackNames];
@@ -890,7 +890,7 @@ legacyProgressTrack[character_, name_String] := Module[
 ensureCharacterCoreProgress[character_] := Module[
 	{legacyFailures, legacyBonds, legacyVows, bondDefault},
 	If[!characterExistsQ[character],
-		Message[state::nochar, character];
+		Message[IronLibrary`state::nochar, character];
 		Return[$Failed]
 	];
 	legacyFailures = legacyProgressTrack[character, "Failures"];
@@ -973,7 +973,7 @@ characterJourneyData[character_] := Module[
 	ownedJourney = normalizeCharacterJourney[character];
 	If[ownedJourney === $Failed, Return[$Failed]];
 	If[!AssociationQ[ownedJourney],
-		Message[journey::nocurrent, character];
+		Message[IronLibrary`journey::nocurrent, character];
 		Return[$Failed]
 	];
 	ownedJourney
@@ -1021,7 +1021,7 @@ normalizeThreatSpec[threatData_Association] /; threatAssociationQ[threatData] :=
 	threatData;
 
 normalizeThreatSpec[other_] := (
-	Message[vow::badthreat, other];
+	Message[IronLibrary`vow::badthreat, other];
 	$Failed
 );
 
@@ -1043,7 +1043,7 @@ backgroundVowRankQ[rank_] :=
 makeStarterVowSpec[name_String, rank_?rankQ, threatSpec_] := Module[
 	{normalizedVow},
 	If[!backgroundVowRankQ[rank],
-		Message[vow::badbackgroundrank, rank];
+		Message[IronLibrary`vow::badbackgroundrank, rank];
 		Return[$Failed]
 	];
 	normalizedVow = makeOwnedVow[name, rank, threatSpec];
@@ -1056,14 +1056,14 @@ ownedVowFromSpec[StarterVowSpec[data_Association]] /; ownedVowQ[data] :=
 
 ownedVowFromSpec[{name_String, rank_?rankQ}] := Module[{},
 	If[!backgroundVowRankQ[rank],
-		Message[vow::badbackgroundrank, rank];
+		Message[IronLibrary`vow::badbackgroundrank, rank];
 		Return[$Failed]
 	];
 	makeOwnedVow[name, rank, None]
 ];
 
 ownedVowFromSpec[other_] := (
-	Message[vow::badstarter, other];
+	Message[IronLibrary`vow::badstarter, other];
 	$Failed
 );
 
@@ -1131,7 +1131,7 @@ legacyProgressTrackVows[character_] := Module[
 normalizeCharacterVows[character_] := Module[
 	{rawVows, normalized},
 	If[!characterExistsQ[character],
-		Message[vow::nochar, character];
+		Message[IronLibrary`vow::nochar, character];
 		Return[$Failed]
 	];
 	rawVows = Lookup[$state[character], "vows", <||>];
@@ -1170,12 +1170,12 @@ threatByVowName[vowName_String, character_] := Module[
 	{ownedVow, ownedThreat},
 	ownedVow = vowByName[vowName, character];
 	If[!AssociationQ[ownedVow],
-		Message[vow::unknown, vowName, character];
+		Message[IronLibrary`vow::unknown, vowName, character];
 		Return[$Failed]
 	];
 	ownedThreat = Lookup[ownedVow, "Threat", None];
 	If[ownedThreat === None,
-		Message[vow::nothreat, vowName];
+		Message[IronLibrary`vow::nothreat, vowName];
 		Return[$Failed]
 	];
 	ownedThreat
@@ -1207,7 +1207,7 @@ normalizeDelveCards[cards : {__String}, "Theme"] /; 1 <= Length[cards] <= 2 := M
 	{invalid},
 	invalid = Select[cards, !delveThemeQ[#] &];
 	If[invalid =!= {},
-		Message[delve::badtheme, First[invalid], StringRiffle[delveThemes, ", "]];
+		Message[IronLibrary`delve::badtheme, First[invalid], StringRiffle[delveThemes, ", "]];
 		Return[$Failed]
 	];
 	cards
@@ -1217,20 +1217,20 @@ normalizeDelveCards[cards : {__String}, "Domain"] /; 1 <= Length[cards] <= 2 := 
 	{invalid},
 	invalid = Select[cards, !delveDomainQ[#] &];
 	If[invalid =!= {},
-		Message[delve::baddomain, First[invalid], StringRiffle[delveDomains, ", "]];
+		Message[IronLibrary`delve::baddomain, First[invalid], StringRiffle[delveDomains, ", "]];
 		Return[$Failed]
 	];
 	cards
 ];
 
 normalizeDelveCards[_, kind_String] := (
-	Message[delve::badcards, kind];
+	Message[IronLibrary`delve::badcards, kind];
 	$Failed
 );
 
 validateDelveCardPair[themes_List, domains_List] :=
 	If[Length[themes] == 2 && Length[domains] == 2,
-		Message[delve::toomanycards];
+		Message[IronLibrary`delve::toomanycards];
 		$Failed,
 		True
 	];
@@ -1254,14 +1254,14 @@ normalizeDenizens[denizenSpec_List] /; Length[denizenSpec] == 12 := Module[
 	{normalized},
 	normalized = normalizeDenizenSlot /@ denizenSpec;
 	If[MemberQ[normalized, $Failed],
-		Message[delve::baddenizens];
+		Message[IronLibrary`delve::baddenizens];
 		Return[$Failed]
 	];
 	normalized
 ];
 
 normalizeDenizens[_] := (
-	Message[delve::baddenizens];
+	Message[IronLibrary`delve::baddenizens];
 	$Failed
 );
 
@@ -1273,7 +1273,7 @@ makeDelve[name_String, rank_?rankQ, themeSpec_, domainSpec_, objective_, denizen
 	If[domains === $Failed, Return[$Failed]];
 	If[validateDelveCardPair[themes, domains] === $Failed, Return[$Failed]];
 	If[!(objective === None || StringQ[objective]),
-		Message[delve::badobjective, objective];
+		Message[IronLibrary`delve::badobjective, objective];
 		Return[$Failed]
 	];
 	denizenList = normalizeDenizens[denizenSpec];
@@ -1332,7 +1332,7 @@ ownedDelveQ[delve_Association] :=
 normalizeCharacterDelves[character_] := Module[
 	{rawDelves, normalized},
 	If[!characterExistsQ[character],
-		Message[delve::nochar, character];
+		Message[IronLibrary`delve::nochar, character];
 		Return[$Failed]
 	];
 	rawDelves = Lookup[$state[character], "delves", <||>];
@@ -1369,7 +1369,7 @@ requireDelve[delveName_String, character_] := Module[
 	{ownedDelve},
 	ownedDelve = delveByName[delveName, character];
 	If[!AssociationQ[ownedDelve],
-		Message[delve::unknown, delveName, character];
+		Message[IronLibrary`delve::unknown, delveName, character];
 		Return[$Failed]
 	];
 	ownedDelve
@@ -1381,11 +1381,11 @@ currentDelveName[character_] := Module[
 	If[ownedDelves === $Failed, Return[$Failed]];
 	current = Lookup[$state[character], "currentDelve", None];
 	If[current === None,
-		Message[delve::nocurrent, character];
+		Message[IronLibrary`delve::nocurrent, character];
 		Return[$Failed]
 	];
 	If[!KeyExistsQ[ownedDelves, current],
-		Message[delve::unknown, current, character];
+		Message[IronLibrary`delve::unknown, current, character];
 		Return[$Failed]
 	];
 	current
@@ -1422,7 +1422,7 @@ withCurrentDelve[handler_] := Module[
 normalizeCharacterScene[character_] := Module[
 	{rawScene, normalized},
 	If[!characterExistsQ[character],
-		Message[scene::nochar, character];
+		Message[IronLibrary`scene::nochar, character];
 		Return[$Failed]
 	];
 	rawScene = Lookup[$state[character], "scene", None];
@@ -1560,7 +1560,7 @@ progressTargetData[trackName_String, character_] := Module[
 			]
 		]
 	];
-	Message[markProgress::notrack, trackName, character];
+	Message[IronLibrary`markProgress::notrack, trackName, character];
 	$Failed
 ];
 
@@ -1669,7 +1669,7 @@ setTargetProgress[target_Association, value_, character_] := Module[
 	{clamped},
 	clamped = clampValue[value, {0, 10}];
 	If[!TrueQ[value == clamped],
-		Message[progress::clamped, target["Name"], character, value, clamped]
+		Message[IronLibrary`progress::clamped, target["Name"], character, value, clamped]
 	];
 	If[setTargetField[target, "Progress", clamped, character] === $Failed, Return[$Failed]];
 	clamped
@@ -1699,7 +1699,7 @@ raiseTargetRank[target_Association, character_] := Module[
 	{rank},
 	rank = nextRank[target["Rank"]];
 	If[rank === Missing["NoHigherRank"],
-		Message[progress::epic, target["Name"], character];
+		Message[IronLibrary`progress::epic, target["Name"], character];
 		Return[$Failed]
 	];
 	setTargetRank[target, rank, character]
@@ -1724,12 +1724,12 @@ createCharacter[
 	ensureStateInitialized[];
 	ownedAssets = ownedAssetFromSpec /@ assetSpecs;
 	If[MemberQ[ownedAssets, $Failed],
-		Message[createCharacter::badassets];
+		Message[IronLibrary`createCharacter::badassets];
 		Return[$Failed]
 	];
 	startingVow = ownedVowFromSpec[vowSpec];
 	If[startingVow === $Failed,
-		Message[createCharacter::badvow];
+		Message[IronLibrary`createCharacter::badvow];
 		Return[$Failed]
 	];
 	character = Association[
@@ -1760,8 +1760,8 @@ createCharacter[
 	$soloCharacter = name;
 	$state[name]
 ];
-createCharacter::badassets = "Could not create the character because one or more starting assets are invalid.";
-createCharacter::badvow = "Could not create the character because the starting vow is invalid. Use vow[name, Extreme | Epic] or {vowName, Extreme | Epic}.";
+IronLibrary`createCharacter::badassets = "Could not create the character because one or more starting assets are invalid.";
+IronLibrary`createCharacter::badvow = "Could not create the character because the starting vow is invalid. Use vow[name, Extreme | Epic] or {vowName, Extreme | Epic}.";
 
 normalizeCharacterDebilities[character_] := Module[
 	{normalized},
@@ -1797,13 +1797,13 @@ normalizeCharacterForSheet[character_String] := Module[
 
 setSoloCharacter[character_String] := Module[{},
 	If[!AssociationQ[$state] || !KeyExistsQ[$state, character],
-		Message[setSoloCharacter::nochar, character];
+		Message[IronLibrary`setSoloCharacter::nochar, character];
 		Return[$Failed]
 	];
 	$soloCharacter = character
 ];
 
-setSoloCharacter::nochar = "No character named `1` exists in the current state.";
+IronLibrary`setSoloCharacter::nochar = "No character named `1` exists in the current state.";
 
 
 (* ::Subsection::Closed:: *)
@@ -1815,7 +1815,7 @@ markDebilityState[debility_?debilityQ, character_ : $soloCharacter] := Module[
 	If[!ensureCharacterState[character], Return[$Failed]];
 	current = getDebilities[character];
 	If[MemberQ[current, debility],
-		Message[debility::marked, debilityLabel[debility], character];
+		Message[IronLibrary`debility::marked, debilityLabel[debility], character];
 		Return[current]
 	];
 	$state[character, "debilities"] = Append[current, debility];
@@ -1824,7 +1824,7 @@ markDebilityState[debility_?debilityQ, character_ : $soloCharacter] := Module[
 ];
 
 markDebilityState[debility_, character_ : $soloCharacter] := (
-	Message[debility::invalid, debility];
+	Message[IronLibrary`debility::invalid, debility];
 	$Failed
 );
 
@@ -1832,12 +1832,12 @@ clearDebilityState[debility_?debilityQ, character_ : $soloCharacter] := Module[
 	{current},
 	If[!ensureCharacterState[character], Return[$Failed]];
 	If[MemberQ[permanentDebilities, debility],
-		Message[debility::permanent, debilityLabel[debility]];
+		Message[IronLibrary`debility::permanent, debilityLabel[debility]];
 		Return[$Failed]
 	];
 	current = getDebilities[character];
 	If[!MemberQ[current, debility],
-		Message[debility::unmarked, debilityLabel[debility], character];
+		Message[IronLibrary`debility::unmarked, debilityLabel[debility], character];
 		Return[current]
 	];
 	$state[character, "debilities"] = DeleteCases[current, debility];
@@ -1846,7 +1846,7 @@ clearDebilityState[debility_?debilityQ, character_ : $soloCharacter] := Module[
 ];
 
 clearDebilityState[debility_, character_ : $soloCharacter] := (
-	Message[debility::invalid, debility];
+	Message[IronLibrary`debility::invalid, debility];
 	$Failed
 );
 
@@ -1898,10 +1898,10 @@ markOathbreaker[character_ : $soloCharacter] :=
 clearOathbreaker[character_ : $soloCharacter] :=
 	clearDebilityState["Oathbreaker", character];
 
-debility::invalid = "`1` is not an Ironsworn debility.";
-debility::marked = "`1` is already marked for character `2`.";
-debility::unmarked = "`1` is not marked for character `2`.";
-debility::permanent = "`1` is permanent and cannot be cleared.";
+IronLibrary`debility::invalid = "`1` is not an Ironsworn debility.";
+IronLibrary`debility::marked = "`1` is already marked for character `2`.";
+IronLibrary`debility::unmarked = "`1` is not marked for character `2`.";
+IronLibrary`debility::permanent = "`1` is permanent and cannot be cleared.";
 
 
 (* ::Subsection::Closed:: *)
@@ -1914,7 +1914,7 @@ vow[name_String, rank_?rankQ, opts : OptionsPattern[]] :=
 	makeStarterVowSpec[name, rank, OptionValue[Threat]];
 
 vow[args___] := (
-	Message[vow::badstarter, HoldForm[vow[args]]];
+	Message[IronLibrary`vow::badstarter, HoldForm[vow[args]]];
 	$Failed
 );
 
@@ -1928,7 +1928,7 @@ addVow[name_String, rank_?rankQ, character_String, opts : OptionsPattern[]] := M
 	ownedVows = normalizeCharacterVows[character];
 	If[ownedVows === $Failed, Return[$Failed]];
 	If[KeyExistsQ[ownedVows, name],
-		Message[vow::duplicate, name, character];
+		Message[IronLibrary`vow::duplicate, name, character];
 		Return[$Failed]
 	];
 	ownedVow = makeOwnedVow[name, rank, OptionValue[Threat]];
@@ -1941,7 +1941,7 @@ getVow[name_String, character_ : $soloCharacter] := Module[
 	{ownedVow},
 	ownedVow = vowByName[name, character];
 	If[!AssociationQ[ownedVow],
-		Message[vow::unknown, name, character];
+		Message[IronLibrary`vow::unknown, name, character];
 		Return[$Failed]
 	];
 	ownedVow
@@ -1962,7 +1962,7 @@ removeVow[name_String, character_ : $soloCharacter] := Module[
 	ownedVows = normalizeCharacterVows[character];
 	If[ownedVows === $Failed, Return[$Failed]];
 	If[!KeyExistsQ[ownedVows, name],
-		Message[vow::unknown, name, character];
+		Message[IronLibrary`vow::unknown, name, character];
 		Return[$Failed]
 	];
 	removed = ownedVows[name];
@@ -1974,7 +1974,7 @@ setThreat[vowName_String, threatSpec_, character_ : $soloCharacter] := Module[
 	{ownedVow, normalizedThreat},
 	ownedVow = vowByName[vowName, character];
 	If[!AssociationQ[ownedVow],
-		Message[vow::unknown, vowName, character];
+		Message[IronLibrary`vow::unknown, vowName, character];
 		Return[$Failed]
 	];
 	normalizedThreat = normalizeThreatSpec[threatSpec];
@@ -1999,13 +1999,13 @@ clearThreatProgress[vowName_String, character_ : $soloCharacter] := Module[
 	$state[character, "vows", vowName, "Threat"]
 ];
 
-vow::badstarter = "`1` is not a valid vow spec. Use vow[name, Extreme | Epic] or {vowName, Extreme | Epic}.";
-vow::badbackgroundrank = "Background vow rank must be Extreme or Epic, not `1`.";
-vow::badthreat = "`1` is not a valid threat spec. Use Threat -> {threatName, threatGoal}.";
-vow::nochar = "No character named `1` exists in the current state.";
-vow::unknown = "Character `2` does not have a vow named `1`.";
-vow::duplicate = "Character `2` already has a vow named `1`.";
-vow::nothreat = "Vow `1` does not have an attached threat.";
+IronLibrary`vow::badstarter = "`1` is not a valid vow spec. Use vow[name, Extreme | Epic] or {vowName, Extreme | Epic}.";
+IronLibrary`vow::badbackgroundrank = "Background vow rank must be Extreme or Epic, not `1`.";
+IronLibrary`vow::badthreat = "`1` is not a valid threat spec. Use Threat -> {threatName, threatGoal}.";
+IronLibrary`vow::nochar = "No character named `1` exists in the current state.";
+IronLibrary`vow::unknown = "Character `2` does not have a vow named `1`.";
+IronLibrary`vow::duplicate = "Character `2` already has a vow named `1`.";
+IronLibrary`vow::nothreat = "Vow `1` does not have an attached threat.";
 
 
 (* ::Subsection::Closed:: *)
@@ -2025,7 +2025,7 @@ asset[name_String, abilitySpec : (_Integer | {__Integer}), fieldRules : __Rule] 
 	makeStarterAssetSpec[name, abilitySpec, {fieldRules}];
 
 asset[args___] := (
-	Message[asset::badasset, HoldForm[asset[args]]];
+	Message[IronLibrary`asset::badasset, HoldForm[asset[args]]];
 	$Failed
 );
 
@@ -2058,7 +2058,7 @@ drawAssets[n_Integer?Positive] :=
 drawAssets[n_Integer?Positive, All] := Module[
 	{names},
 	If[n > Length[assetNames[]],
-		Message[asset::drawcount, n, Length[assetNames[]]];
+		Message[IronLibrary`asset::drawcount, n, Length[assetNames[]]];
 		Return[$Failed]
 	];
 	names = RandomSample[assetNames[], n];
@@ -2068,12 +2068,12 @@ drawAssets[n_Integer?Positive, All] := Module[
 drawAssets[n_Integer?Positive, category_String] := Module[
 	{pool, names},
 	If[!MemberQ[assetCategories[], category],
-		Message[asset::badcategory, category, StringRiffle[assetCategories[], ", "]];
+		Message[IronLibrary`asset::badcategory, category, StringRiffle[assetCategories[], ", "]];
 		Return[$Failed]
 	];
 	pool = Select[assetNames[], assetRecord[#]["Category"] === category &];
 	If[n > Length[pool],
-		Message[asset::drawcount, n, Length[pool]];
+		Message[IronLibrary`asset::drawcount, n, Length[pool]];
 		Return[$Failed]
 	];
 	names = RandomSample[pool, n];
@@ -2081,14 +2081,14 @@ drawAssets[n_Integer?Positive, category_String] := Module[
 ];
 
 drawAssets[args___] := (
-	Message[asset::baddraw, HoldForm[drawAssets[args]]];
+	Message[IronLibrary`asset::baddraw, HoldForm[drawAssets[args]]];
 	$Failed
 );
 
 addAssetFromSpec[assetSpec_, character_] := Module[
 	{ownedAssets, owned, name},
 	If[!characterExistsQ[character],
-		Message[asset::nochar, character];
+		Message[IronLibrary`asset::nochar, character];
 		Return[$Failed]
 	];
 	ownedAssets = normalizeCharacterAssets[character];
@@ -2097,7 +2097,7 @@ addAssetFromSpec[assetSpec_, character_] := Module[
 	If[owned === $Failed, Return[$Failed]];
 	name = owned["Name"];
 	If[MemberQ[Lookup[ownedAssets, "Name", Missing["NoName"]], name],
-		Message[asset::duplicate, name, character];
+		Message[IronLibrary`asset::duplicate, name, character];
 		Return[$Failed]
 	];
 	If[!requireExperience[character, 5], Return[$Failed]];
@@ -2131,7 +2131,7 @@ addAsset[name_String, abilitySpec : (_Integer | {__Integer}), character_String, 
 	addAssetFromSpec[makeStarterAssetSpec[name, abilitySpec, {fieldRules}], character];
 
 addAsset[args___] := (
-	Message[asset::badaddasset, HoldForm[addAsset[args]]];
+	Message[IronLibrary`asset::badaddasset, HoldForm[addAsset[args]]];
 	$Failed
 );
 
@@ -2148,12 +2148,12 @@ upgradeAsset[name_String, ability_Integer, character_, opts : OptionsPattern[]] 
 	owned = context["Owned"];
 	valid = assetAbilityIndices[record];
 	If[!MemberQ[valid, ability],
-		Message[asset::badability, ability, name, Length[valid]];
+		Message[IronLibrary`asset::badability, ability, name, Length[valid]];
 		Return[$Failed]
 	];
 	selected = Lookup[owned, "Abilities", {}];
 	If[MemberQ[selected, ability],
-		Message[asset::selected, ability, name];
+		Message[IronLibrary`asset::selected, ability, name];
 		Return[$Failed]
 	];
 	If[!requireExperience[character, 3], Return[$Failed]];
@@ -2207,7 +2207,7 @@ setIroncladArmor[choice_, character_String, opts : OptionsPattern[]] := Module[
 	{normalized, context, owned, fields, updated},
 	normalized = normalizeIroncladArmorChoice[choice];
 	If[normalized === $Failed,
-		Message[asset::badironcladarmor, choice];
+		Message[IronLibrary`asset::badironcladarmor, choice];
 		Return[$Failed]
 	];
 	context = ownedAssetContext[$ironcladArmorAssetName, character];
@@ -2309,28 +2309,28 @@ addRarity[assetName_String, rarityName_, character_, opts : OptionsPattern[]] :=
 	{record, rarity, cost, context, owned, updated},
 	record = assetRecord[assetName];
 	If[!AssociationQ[record],
-		Message[asset::unknown, assetName];
+		Message[IronLibrary`asset::unknown, assetName];
 		Return[$Failed]
 	];
 	rarity = normalizeRarityName[rarityName];
 	If[rarity === $Failed,
-		Message[asset::badrarity, rarityName];
+		Message[IronLibrary`asset::badrarity, rarityName];
 		Return[$Failed]
 	];
 	If[Lookup[record, "Category", ""] === "Companion",
-		Message[asset::raritycompanion, assetName];
+		Message[IronLibrary`asset::raritycompanion, assetName];
 		Return[$Failed]
 	];
 	cost = assetRarityCost[record];
 	If[!IntegerQ[cost],
-		Message[asset::noraritycost, assetName];
+		Message[IronLibrary`asset::noraritycost, assetName];
 		Return[$Failed]
 	];
 	context = ownedAssetContext[assetName, character];
 	If[context === $Failed, Return[$Failed]];
 	owned = context["Owned"];
 	If[Lookup[owned, "Rarity", None] =!= None,
-		Message[asset::rarityduplicate, assetName, Lookup[owned, "Rarity", None]];
+		Message[IronLibrary`asset::rarityduplicate, assetName, Lookup[owned, "Rarity", None]];
 		Return[$Failed]
 	];
 	If[!requireExperience[character, cost], Return[$Failed]];
@@ -2352,7 +2352,7 @@ removeRarity[assetName_String, character_, opts : OptionsPattern[]] := Module[
 	If[context === $Failed, Return[$Failed]];
 	owned = context["Owned"];
 	If[Lookup[owned, "Rarity", None] === None,
-		Message[asset::norarity, assetName];
+		Message[IronLibrary`asset::norarity, assetName];
 		Return[$Failed]
 	];
 	updated = Association[owned];
@@ -2362,41 +2362,41 @@ removeRarity[assetName_String, character_, opts : OptionsPattern[]] := Module[
 	updated
 ];
 
-asset::unknown = "Unknown asset `1`. Use the exact canonical asset name.";
-asset::nodefault = "Asset `1` has no printed default selected ability. Use asset[`1`, abilityIndex].";
-asset::badability = "Ability `1` is not available for asset `2`. Valid ability indices are 1 through `3`.";
-asset::badabilities = "Asset `1` requires a non-empty integer ability selection.";
-asset::dupeability = "Ability `1` was selected more than once for asset `2`.";
-asset::badfield = "Field `1` is not defined for asset `2`.";
-asset::badfields = "Fields for asset `1` must be trailing rules keyed by asset field symbols, such as Name -> \"Asha\". String field keys are not supported.";
-asset::badasset = "`1` is not a valid asset spec. Use asset[name], asset[name, abilityOrAbilities], or asset[name, abilityOrAbilities, field -> value, ...].";
-asset::badaddasset = "`1` is not a valid addAsset call. Use addAsset[name, ...] directly; addAsset[asset[...]] is not supported.";
-asset::badstoredassets = "The stored assets for character `1` could not be migrated to structured asset state.";
-asset::nochar = "No character named `1` exists in the current state.";
-asset::notowned = "Character `2` does not own asset `1`.";
-asset::duplicate = "Character `2` already owns asset `1`.";
-asset::xp = "Character `1` needs `2` available experience, but only has `3`.";
-asset::selected = "Ability `1` is already selected for asset `2`.";
-asset::track = "Track `1` is not defined for asset `2`.";
-asset::notrack = "Asset `1` does not have a track.";
-asset::multitrack = "Asset `1` has multiple tracks (`2`); specify track handling before updating it.";
-asset::badcategory = "Unknown asset category `1`. Use one of: `2`.";
-asset::drawcount = "Cannot draw `1` distinct assets from a pool of `2`.";
-asset::baddraw = "`1` is not a valid drawAssets call.";
-asset::badrarity = "Rarity name must be a non-empty string, not `1`.";
-asset::raritycompanion = "Companion asset `1` cannot be augmented with a rarity.";
-asset::noraritycost = "Asset `1` is not eligible for rarity augmentation.";
-asset::rarityduplicate = "Asset `1` already has rarity `2`.";
-asset::norarity = "Asset `1` does not have a rarity to remove.";
-asset::notcompanion = "Asset `1` is not a companion.";
-asset::badironcladarmor = "Ironclad armor choice `1` is not valid. Use \"Unequipped\", \"Lightly armored\", or \"Geared for war\".";
+IronLibrary`asset::unknown = "Unknown asset `1`. Use the exact canonical asset name.";
+IronLibrary`asset::nodefault = "Asset `1` has no printed default selected ability. Use asset[`1`, abilityIndex].";
+IronLibrary`asset::badability = "Ability `1` is not available for asset `2`. Valid ability indices are 1 through `3`.";
+IronLibrary`asset::badabilities = "Asset `1` requires a non-empty integer ability selection.";
+IronLibrary`asset::dupeability = "Ability `1` was selected more than once for asset `2`.";
+IronLibrary`asset::badfield = "Field `1` is not defined for asset `2`.";
+IronLibrary`asset::badfields = "Fields for asset `1` must be trailing rules keyed by asset field symbols, such as Name -> \"Asha\". String field keys are not supported.";
+IronLibrary`asset::badasset = "`1` is not a valid asset spec. Use asset[name], asset[name, abilityOrAbilities], or asset[name, abilityOrAbilities, field -> value, ...].";
+IronLibrary`asset::badaddasset = "`1` is not a valid addAsset call. Use addAsset[name, ...] directly; addAsset[asset[...]] is not supported.";
+IronLibrary`asset::badstoredassets = "The stored assets for character `1` could not be migrated to structured asset state.";
+IronLibrary`asset::nochar = "No character named `1` exists in the current state.";
+IronLibrary`asset::notowned = "Character `2` does not own asset `1`.";
+IronLibrary`asset::duplicate = "Character `2` already owns asset `1`.";
+IronLibrary`asset::xp = "Character `1` needs `2` available experience, but only has `3`.";
+IronLibrary`asset::selected = "Ability `1` is already selected for asset `2`.";
+IronLibrary`asset::track = "Track `1` is not defined for asset `2`.";
+IronLibrary`asset::notrack = "Asset `1` does not have a track.";
+IronLibrary`asset::multitrack = "Asset `1` has multiple tracks (`2`); specify track handling before updating it.";
+IronLibrary`asset::badcategory = "Unknown asset category `1`. Use one of: `2`.";
+IronLibrary`asset::drawcount = "Cannot draw `1` distinct assets from a pool of `2`.";
+IronLibrary`asset::baddraw = "`1` is not a valid drawAssets call.";
+IronLibrary`asset::badrarity = "Rarity name must be a non-empty string, not `1`.";
+IronLibrary`asset::raritycompanion = "Companion asset `1` cannot be augmented with a rarity.";
+IronLibrary`asset::noraritycost = "Asset `1` is not eligible for rarity augmentation.";
+IronLibrary`asset::rarityduplicate = "Asset `1` already has rarity `2`.";
+IronLibrary`asset::norarity = "Asset `1` does not have a rarity to remove.";
+IronLibrary`asset::notcompanion = "Asset `1` is not a companion.";
+IronLibrary`asset::badironcladarmor = "Ironclad armor choice `1` is not valid. Use \"Unequipped\", \"Lightly armored\", or \"Geared for war\".";
 
 
 (* ::Subsection::Closed:: *)
 (*Action roll*)
 
 
-actionRoll::badadds = "Adds must be a list of rules with integer bonus values, such as {Aid -> 1}, not `1`.";
+IronLibrary`actionRoll::badadds = "Adds must be a list of rules with integer bonus values, such as {Aid -> 1}, not `1`.";
 
 Options[actionRoll] = {Adds -> {}, Display -> False};
 
@@ -2451,18 +2451,18 @@ burnMomentum[roll_Association, opts:OptionsPattern[]] := Module[
 	If[
 		!actionRollQ[roll] ||
 		!AllTrue[{"character", "momentum", "result", "match"}, KeyExistsQ[roll, #] &],
-		Message[burnMomentum::badroll];
+		Message[IronLibrary`burnMomentum::badroll];
 		Return[$Failed]
 	];
 	momentum = roll["momentum"];
 	If[momentum <= 0,
-		Message[burnMomentum::momentum, momentum];
+		Message[IronLibrary`burnMomentum::momentum, momentum];
 		Return[$Failed]
 	];
 	challengeDice = roll["challengeDice"];
 	challengeDiceCancelled = # < momentum & /@ challengeDice;
 	If[!AnyTrue[challengeDiceCancelled, TrueQ],
-		Message[burnMomentum::nocancel, momentum];
+		Message[IronLibrary`burnMomentum::nocancel, momentum];
 		Return[$Failed]
 	];
 	beatCount = Total[
@@ -2473,7 +2473,7 @@ burnMomentum[roll_Association, opts:OptionsPattern[]] := Module[
 	];
 	result = rollResultFromBeatCount[beatCount];
 	If[rollResultRank[result] <= rollResultRank[roll["result"]],
-		Message[burnMomentum::nobenefit, roll["result"], result];
+		Message[IronLibrary`burnMomentum::nobenefit, roll["result"], result];
 		Return[$Failed]
 	];
 	burn = Association[
@@ -2491,14 +2491,14 @@ burnMomentum[roll_Association, opts:OptionsPattern[]] := Module[
 ];
 
 burnMomentum[roll_, opts:OptionsPattern[]] := (
-	Message[burnMomentum::badroll];
+	Message[IronLibrary`burnMomentum::badroll];
 	$Failed
 );
 
-burnMomentum::badroll = "burnMomentum can only be used on an action roll.";
-burnMomentum::momentum = "Cannot burn momentum because roll momentum is not positive (`1`).";
-burnMomentum::nocancel = "Cannot burn momentum because no challenge die is less than momentum `1`.";
-burnMomentum::nobenefit = "Cannot burn momentum because the result would not improve (`1` -> `2`).";
+IronLibrary`burnMomentum::badroll = "burnMomentum can only be used on an action roll.";
+IronLibrary`burnMomentum::momentum = "Cannot burn momentum because roll momentum is not positive (`1`).";
+IronLibrary`burnMomentum::nocancel = "Cannot burn momentum because no challenge die is less than momentum `1`.";
+IronLibrary`burnMomentum::nobenefit = "Cannot burn momentum because the result would not improve (`1` -> `2`).";
 
 
 (* ::Subsection::Closed:: *)
@@ -2510,11 +2510,11 @@ Options[rarityDieSix] = {Display -> False};
 rarityDieSix[roll_Association, opts : OptionsPattern[]] := Module[
 	{newRoll},
 	If[!actionRollQ[roll],
-		Message[rarityDieSix::badroll];
+		Message[IronLibrary`rarityDieSix::badroll];
 		Return[$Failed]
 	];
 	If[Lookup[roll, "actionDie", Missing["NoActionDie"]] =!= 6,
-		Message[rarityDieSix::notSix, Lookup[roll, "actionDie", Missing["NoActionDie"]]];
+		Message[IronLibrary`rarityDieSix::notSix, Lookup[roll, "actionDie", Missing["NoActionDie"]]];
 		Return[$Failed]
 	];
 	newRoll = Association[roll];
@@ -2527,12 +2527,12 @@ rarityDieSix[roll_Association, opts : OptionsPattern[]] := Module[
 ];
 
 rarityDieSix[roll_, opts : OptionsPattern[]] := (
-	Message[rarityDieSix::badroll];
+	Message[IronLibrary`rarityDieSix::badroll];
 	$Failed
 );
 
-rarityDieSix::badroll = "rarityDieSix can only be used on an action roll.";
-rarityDieSix::notSix = "rarityDieSix can only be used when the action die is 6, not `1`.";
+IronLibrary`rarityDieSix::badroll = "rarityDieSix can only be used on an action roll.";
+IronLibrary`rarityDieSix::notSix = "rarityDieSix can only be used when the action die is 6, not `1`.";
 
 
 (* ::Subsection::Closed:: *)
@@ -2590,26 +2590,26 @@ reroll[roll_Association, dice_List, opts : OptionsPattern[]] := Module[
 	},
 
 	If[!rollQ[roll],
-		Message[reroll::badroll, roll];
+		Message[IronLibrary`reroll::badroll, roll];
 		Return[$Failed]
 	];
 
 	selection = normalizeRerollSelection[dice];
 
 	If[selection === {},
-		Message[reroll::empty];
+		Message[IronLibrary`reroll::empty];
 		Return[$Failed]
 	];
 
 	invalid = Select[selection, !rerollSelectionQ[#] &];
 
 	If[invalid =!= {},
-		Message[reroll::baddie, First[invalid]];
+		Message[IronLibrary`reroll::baddie, First[invalid]];
 		Return[$Failed]
 	];
 
 	If[progressRollQ[roll] && MemberQ[selection, ActionDie],
-		Message[reroll::actiondieprogress];
+		Message[IronLibrary`reroll::actiondieprogress];
 		Return[$Failed]
 	];
 
@@ -2619,7 +2619,7 @@ reroll[roll_Association, dice_List, opts : OptionsPattern[]] := Module[
 	challengeIndices = rerollChallengeDieIndices[selection, oldChallengeDice];
 
 	If[!VectorQ[challengeIndices, MemberQ[{1, 2}, #] &],
-		Message[reroll::badchallenge, selection];
+		Message[IronLibrary`reroll::badchallenge, selection];
 		Return[$Failed]
 	];
 
@@ -2692,7 +2692,7 @@ sufferResource[adjuster_, n_Integer?Negative, character_] :=
 	adjuster[n, character];
 
 sufferResource[_, n_, _] := (
-	Message[resource::badsuffer, n];
+	Message[IronLibrary`resource::badsuffer, n];
 	$Failed
 );
 
@@ -2700,7 +2700,7 @@ takeResource[adjuster_, n_Integer?Positive, character_] :=
 	adjuster[n, character];
 
 takeResource[_, n_, _] := (
-	Message[resource::badtake, n];
+	Message[IronLibrary`resource::badtake, n];
 	$Failed
 );
 
@@ -2728,8 +2728,8 @@ sufferSupply[n_, character_ : $soloCharacter] :=
 takeSupply[n_, character_ : $soloCharacter] :=
 	takeResource[adjustSupply, n, character];
 
-resource::badsuffer = "Suffer functions require a negative integer, not `1`.";
-resource::badtake = "Take functions require a positive integer, not `1`.";
+IronLibrary`resource::badsuffer = "Suffer functions require a negative integer, not `1`.";
+IronLibrary`resource::badtake = "Take functions require a positive integer, not `1`.";
 
 recover[] :=
 	recover[$soloCharacter];
@@ -2816,7 +2816,7 @@ markProgress[ThreatTrack[vowName_String, handleCharacter_String]] :=
 	markProgress[ThreatTrack[vowName, handleCharacter], 1, Automatic];
 
 markProgress[_String | _ThreatTrack, n_Integer?Negative, character_ : $soloCharacter] := (
-	Message[progress::badunits, n];
+	Message[IronLibrary`progress::badunits, n];
 	$Failed
 );
 
@@ -2835,7 +2835,7 @@ clearProgress[track_String, n_Integer?NonNegative, character_ : $soloCharacter] 
 	];
 
 clearProgress[_String | _ThreatTrack, n_Integer?Negative, character_ : $soloCharacter] := (
-	Message[progress::badunits, n];
+	Message[IronLibrary`progress::badunits, n];
 	$Failed
 );
 
@@ -2881,11 +2881,11 @@ raiseProgressRank[track_String, character_ : $soloCharacter] :=
 		raiseTargetRank[#1, #2] &
 	];
 
-markProgress::notrack = "No vow, threat, delve, scene, journey, foe, failures, or bonds track named `1` exists for character `2`.";
-progress::badunits = "Progress units must be a non-negative integer, got `1`.";
-progress::clamped = "Progress for `1` on character `2` was clamped from `3` to `4`.";
-progress::epic = "Progress track `1` for character `2` is already Epic and cannot be raised.";
-progress::badrank = "`1` is not a valid progress rank.";
+IronLibrary`markProgress::notrack = "No vow, threat, delve, scene, journey, foe, failures, or bonds track named `1` exists for character `2`.";
+IronLibrary`progress::badunits = "Progress units must be a non-negative integer, got `1`.";
+IronLibrary`progress::clamped = "Progress for `1` on character `2` was clamped from `3` to `4`.";
+IronLibrary`progress::epic = "Progress track `1` for character `2` is already Epic and cannot be raised.";
+IronLibrary`progress::badrank = "`1` is not a valid progress rank.";
 
 
 (* ::Subsection::Closed:: *)
@@ -2943,7 +2943,7 @@ beginJourney[name_String, rank_?rankQ, character_ : $soloCharacter] := Module[
 	ownedJourney = normalizeCharacterJourney[character];
 	If[ownedJourney === $Failed, Return[$Failed]];
 	If[AssociationQ[ownedJourney],
-		Message[journey::duplicate, ownedJourney["Name"], character];
+		Message[IronLibrary`journey::duplicate, ownedJourney["Name"], character];
 		Return[$Failed]
 	];
 	object = makeProgressObject[name, rank];
@@ -2952,7 +2952,7 @@ beginJourney[name_String, rank_?rankQ, character_ : $soloCharacter] := Module[
 ];
 
 beginJourney[name_String, rank_, character_ : $soloCharacter] /; !rankQ[rank] := (
-	Message[progress::badrank, rank];
+	Message[IronLibrary`progress::badrank, rank];
 	$Failed
 );
 
@@ -2977,14 +2977,14 @@ addFoe[name_String, rank_?rankQ, character_ : $soloCharacter] :=
 	addProgressObjectToCollection[
 		"foes",
 		normalizeCharacterFoes,
-		Function[{objectName, objectCharacter}, Message[foe::duplicate, objectName, objectCharacter]],
+		Function[{objectName, objectCharacter}, Message[IronLibrary`foe::duplicate, objectName, objectCharacter]],
 		name,
 		rank,
 		character
 	];
 
 addFoe[name_String, rank_, character_ : $soloCharacter] /; !rankQ[rank] := (
-	Message[progress::badrank, rank];
+	Message[IronLibrary`progress::badrank, rank];
 	$Failed
 );
 
@@ -2992,7 +2992,7 @@ foe[name_String, character_ : $soloCharacter] := Module[
 	{ownedFoe},
 	ownedFoe = foeByName[name, character];
 	If[!AssociationQ[ownedFoe],
-		Message[foe::unknown, name, character];
+		Message[IronLibrary`foe::unknown, name, character];
 		Return[$Failed]
 	];
 	ownedFoe
@@ -3012,7 +3012,7 @@ removeFoe[name_String, character_ : $soloCharacter] :=
 	removeProgressObjectFromCollection[
 		"foes",
 		normalizeCharacterFoes,
-		Function[{objectName, objectCharacter}, Message[foe::unknown, objectName, objectCharacter]],
+		Function[{objectName, objectCharacter}, Message[IronLibrary`foe::unknown, objectName, objectCharacter]],
 		name,
 		character
 	];
@@ -3037,11 +3037,11 @@ bondProgress[character_] := Module[
 	track
 ];
 
-journey::duplicate = "Character `2` already has a journey named `1`. Remove it before adding another.";
-journey::unknown = "Character `2` does not have a journey named `1`.";
-journey::nocurrent = "`1` does not have a journey.";
-foe::duplicate = "Character `2` already has a foe named `1`.";
-foe::unknown = "Character `2` does not have a foe named `1`.";
+IronLibrary`journey::duplicate = "Character `2` already has a journey named `1`. Remove it before adding another.";
+IronLibrary`journey::unknown = "Character `2` does not have a journey named `1`.";
+IronLibrary`journey::nocurrent = "`1` does not have a journey.";
+IronLibrary`foe::duplicate = "Character `2` already has a foe named `1`.";
+IronLibrary`foe::unknown = "Character `2` does not have a foe named `1`.";
 
 
 (* ::Subsection::Closed:: *)
@@ -3051,7 +3051,7 @@ foe::unknown = "Character `2` does not have a foe named `1`.";
 normalizeCharacterBonds[character_] := Module[
 	{ownedBonds},
 	If[!characterExistsQ[character],
-		Message[bond::nochar, character];
+		Message[IronLibrary`bond::nochar, character];
 		Return[$Failed]
 	];
 	ownedBonds = Lookup[$state[character], "bonds", {}];
@@ -3069,7 +3069,7 @@ addBond[name_String, character_ : $soloCharacter] := Module[
 	ownedBonds = normalizeCharacterBonds[character];
 	If[ownedBonds === $Failed, Return[$Failed]];
 	If[MemberQ[ownedBonds, name],
-		Message[bond::duplicate, name, character];
+		Message[IronLibrary`bond::duplicate, name, character];
 		Return[$Failed]
 	];
 	progressResult = markProgress["Bonds", 1, character];
@@ -3095,7 +3095,7 @@ removeBond[name_String, character_ : $soloCharacter] := Module[
 	If[ownedBonds === $Failed, Return[$Failed]];
 	position = FirstPosition[ownedBonds, name, Missing["UnknownBond"]];
 	If[!ListQ[position],
-		Message[bond::unknown, name, character];
+		Message[IronLibrary`bond::unknown, name, character];
 		Return[$Failed]
 	];
 	updated = Delete[ownedBonds, position];
@@ -3104,9 +3104,9 @@ removeBond[name_String, character_ : $soloCharacter] := Module[
 	updated
 ];
 
-bond::nochar = "No character named `1` exists in the current state.";
-bond::duplicate = "Character `2` already has a bond with `1`.";
-bond::unknown = "Character `2` does not have a bond with `1`.";
+IronLibrary`bond::nochar = "No character named `1` exists in the current state.";
+IronLibrary`bond::duplicate = "Character `2` already has a bond with `1`.";
+IronLibrary`bond::unknown = "Character `2` does not have a bond with `1`.";
 
 
 (* ::Subsection::Closed:: *)
@@ -3118,7 +3118,7 @@ beginScene[name_String, rank_?rankQ, character_ : $soloCharacter] := Module[
 	ownedScene = normalizeCharacterScene[character];
 	If[ownedScene === $Failed, Return[$Failed]];
 	If[AssociationQ[ownedScene],
-		Message[scene::active, character, ownedScene["Name"]];
+		Message[IronLibrary`scene::active, character, ownedScene["Name"]];
 		Return[$Failed]
 	];
 	newScene = Association[
@@ -3132,7 +3132,7 @@ beginScene[name_String, rank_?rankQ, character_ : $soloCharacter] := Module[
 ];
 
 beginScene[name_String, rank_, character_ : $soloCharacter] /; !rankQ[rank] := (
-	Message[progress::badrank, rank];
+	Message[IronLibrary`progress::badrank, rank];
 	$Failed
 );
 
@@ -3144,7 +3144,7 @@ scene[character_] := Module[
 	ownedScene = normalizeCharacterScene[character];
 	If[ownedScene === $Failed, Return[$Failed]];
 	If[ownedScene === None,
-		Message[scene::none, character];
+		Message[IronLibrary`scene::none, character];
 		Return[$Failed]
 	];
 	ownedScene
@@ -3158,7 +3158,7 @@ endScene[character_] := Module[
 	ownedScene = normalizeCharacterScene[character];
 	If[ownedScene === $Failed, Return[$Failed]];
 	If[ownedScene === None,
-		Message[scene::none, character];
+		Message[IronLibrary`scene::none, character];
 		Return[$Failed]
 	];
 	$state[character, "scene"] = None;
@@ -3176,34 +3176,34 @@ markSceneCountdown[n_Integer?NonNegative, character_] := Module[
 	ownedScene = normalizeCharacterScene[character];
 	If[ownedScene === $Failed, Return[$Failed]];
 	If[ownedScene === None,
-		Message[scene::none, character];
+		Message[IronLibrary`scene::none, character];
 		Return[$Failed]
 	];
 	previous = ownedScene["Countdown"];
 	requested = previous + n;
 	clamped = clampValue[requested, {0, 4}];
 	If[!TrueQ[requested == clamped],
-		Message[scene::clamped, ownedScene["Name"], character, requested, clamped]
+		Message[IronLibrary`scene::clamped, ownedScene["Name"], character, requested, clamped]
 	];
 	$state[character, "scene", "Countdown"] = clamped;
 	ownedScene = $state[character, "scene"];
 	If[previous < 4 && clamped >= 4,
-		Message[scene::filled, ownedScene["Name"]]
+		Message[IronLibrary`scene::filled, ownedScene["Name"]]
 	];
 	clamped
 ];
 
 markSceneCountdown[n_Integer?Negative, character_ : $soloCharacter] := (
-	Message[scene::badcount, n];
+	Message[IronLibrary`scene::badcount, n];
 	$Failed
 );
 
-scene::nochar = "No character named `1` exists in the current state.";
-scene::active = "Character `1` already has an active scene named `2`.";
-scene::none = "Character `1` does not have an active scene.";
-scene::filled = "Scene countdown for `1` is filled.";
-scene::clamped = "Scene countdown for `1` on character `2` was clamped from `3` to `4`.";
-scene::badcount = "Scene countdown marks must be a non-negative integer, got `1`.";
+IronLibrary`scene::nochar = "No character named `1` exists in the current state.";
+IronLibrary`scene::active = "Character `1` already has an active scene named `2`.";
+IronLibrary`scene::none = "Character `1` does not have an active scene.";
+IronLibrary`scene::filled = "Scene countdown for `1` is filled.";
+IronLibrary`scene::clamped = "Scene countdown for `1` on character `2` was clamped from `3` to `4`.";
+IronLibrary`scene::badcount = "Scene countdown marks must be a non-negative integer, got `1`.";
 
 
 (* ::Subsection::Closed:: *)
@@ -3226,7 +3226,7 @@ addDelve[name_String, rank_?rankQ, themeSpec_, domainSpec_, denizenSpec_, charac
 	ownedDelves = normalizeCharacterDelves[character];
 	If[ownedDelves === $Failed, Return[$Failed]];
 	If[KeyExistsQ[ownedDelves, name],
-		Message[delve::duplicate, name, character];
+		Message[IronLibrary`delve::duplicate, name, character];
 		Return[$Failed]
 	];
 	ownedDelve = makeDelve[name, rank, themeSpec, domainSpec, OptionValue[Objective], denizenSpec];
@@ -3236,7 +3236,7 @@ addDelve[name_String, rank_?rankQ, themeSpec_, domainSpec_, denizenSpec_, charac
 ];
 
 addDelve[name_String, rank_, ___] /; !rankQ[rank] := (
-	Message[progress::badrank, rank];
+	Message[IronLibrary`progress::badrank, rank];
 	$Failed
 );
 
@@ -3277,7 +3277,7 @@ removeDelve[name_String, character_ : $soloCharacter] := Module[
 	ownedDelves = normalizeCharacterDelves[character];
 	If[ownedDelves === $Failed, Return[$Failed]];
 	If[!KeyExistsQ[ownedDelves, name],
-		Message[delve::unknown, name, character];
+		Message[IronLibrary`delve::unknown, name, character];
 		Return[$Failed]
 	];
 	$state[character, "delves"] = KeyDrop[ownedDelves, name];
@@ -3424,14 +3424,14 @@ setDenizen[delveName_String, slot_Integer, name_] :=
 setDenizen[delveName_String, slot_Integer, name_, character_] := Module[
 	{ownedDelve, normalized, denizenList},
 	If[!Between[{1, 12}][slot],
-		Message[delve::badslot, slot];
+		Message[IronLibrary`delve::badslot, slot];
 		Return[$Failed]
 	];
 	ownedDelve = requireDelve[delveName, character];
 	If[ownedDelve === $Failed, Return[$Failed]];
 	normalized = normalizeDenizenSlot[name];
 	If[normalized === $Failed,
-		Message[delve::baddenizen, name];
+		Message[IronLibrary`delve::baddenizen, name];
 		Return[$Failed]
 	];
 	denizenList = ownedDelve["Denizens"];
@@ -3452,18 +3452,18 @@ clearDenizen[delveName_String, slot_Integer] :=
 clearDenizen[delveName_String, slot_Integer, character_] :=
 	setDenizen[delveName, slot, None, character];
 
-delve::nochar = "No character named `1` exists in the current state.";
-delve::nocurrent = "Character `1` does not have a current delve.";
-delve::unknown = "Character `2` does not have a delve named `1`.";
-delve::duplicate = "Character `2` already has a delve named `1`.";
-delve::badtheme = "Unknown delve theme `1`. Use one of: `2`.";
-delve::baddomain = "Unknown delve domain `1`. Use one of: `2`.";
-delve::badcards = "Delve `1` cards must be a string or a one- or two-string list.";
-delve::toomanycards = "A delve can have two themes or two domains, but not both.";
-delve::badobjective = "Delve objective must be None or a string, not `1`.";
-delve::baddenizens = "Denizens must be a 12-item list of strings or None.";
-delve::baddenizen = "Denizen must be a non-empty string or None, not `1`.";
-delve::badslot = "Denizen slot must be an integer from 1 to 12, not `1`.";
+IronLibrary`delve::nochar = "No character named `1` exists in the current state.";
+IronLibrary`delve::nocurrent = "Character `1` does not have a current delve.";
+IronLibrary`delve::unknown = "Character `2` does not have a delve named `1`.";
+IronLibrary`delve::duplicate = "Character `2` already has a delve named `1`.";
+IronLibrary`delve::badtheme = "Unknown delve theme `1`. Use one of: `2`.";
+IronLibrary`delve::baddomain = "Unknown delve domain `1`. Use one of: `2`.";
+IronLibrary`delve::badcards = "Delve `1` cards must be a string or a one- or two-string list.";
+IronLibrary`delve::toomanycards = "A delve can have two themes or two domains, but not both.";
+IronLibrary`delve::badobjective = "Delve objective must be None or a string, not `1`.";
+IronLibrary`delve::baddenizens = "Denizens must be a 12-item list of strings or None.";
+IronLibrary`delve::baddenizen = "Denizen must be a non-empty string or None, not `1`.";
+IronLibrary`delve::badslot = "Denizen slot must be an integer from 1 to 12, not `1`.";
 
 
 (* ::Subsection::Closed:: *)

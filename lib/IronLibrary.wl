@@ -1439,8 +1439,8 @@ displayMoveForPublic[name_String, moveKey_String, expectedRoll_, roll_] := Modul
 	If[expectedRoll =!= None && !moveRollRequirement[expectedRoll, roll],
 		actual = rollKindDescription[roll];
 		If[expectedRoll === "Action",
-			Message[displayMoveForPublic::badactionroll, name, actual],
-			Message[displayMoveForPublic::badprogressroll, name, actual]
+			Message[IronLibrary`displayMoveForPublic::badactionroll, name, actual],
+			Message[IronLibrary`displayMoveForPublic::badprogressroll, name, actual]
 		];
 		Return[$Failed]
 	];
@@ -1450,10 +1450,10 @@ displayMoveForPublic[name_String, moveKey_String, expectedRoll_, roll_] := Modul
 displayMoveForPublic[moveKey_String, roll_Association] :=
 	displayMoveForPublic[moveKey, moveKey, moveRollExpectation[moveKey], roll];
 
-displayMoveForPublic::badactionroll =
+IronLibrary`displayMoveForPublic::badactionroll =
 "`1`[roll] requires an action roll, not `2`.";
 
-displayMoveForPublic::badprogressroll =
+IronLibrary`displayMoveForPublic::badprogressroll =
 "`1`[roll] requires a progress roll, not `2`.";
 
 installMoveHeaderWrapper[name_String, moveKey_String] :=
@@ -1571,7 +1571,7 @@ endTheFight[] :=
 endTheFightWithRoll[roll_, initiative_] := Module[
 	{transformed},
 	If[!moveRollRequirement["Progress", roll],
-		Message[displayMoveForPublic::badprogressroll, "endTheFight", rollKindDescription[roll]];
+		Message[IronLibrary`displayMoveForPublic::badprogressroll, "endTheFight", rollKindDescription[roll]];
 		Return[$Failed]
 	];
 	transformed = endTheFightRoll[roll, initiative];
@@ -1590,17 +1590,17 @@ learnFromYourFailures[] :=
 learnFromYourFailuresWithRoll[roll_] := Module[
 	{trackName, progressScore},
 	If[!moveRollRequirement["Progress", roll],
-		Message[displayMoveForPublic::badprogressroll, "learnFromYourFailures", rollKindDescription[roll]];
+		Message[IronLibrary`displayMoveForPublic::badprogressroll, "learnFromYourFailures", rollKindDescription[roll]];
 		Return[$Failed]
 	];
 	trackName = Lookup[roll, "trackName", None];
 	progressScore = Lookup[roll, "progressScore", Missing["NoProgressScore"]];
 	If[trackName =!= "Failures",
-		Message[learnFromYourFailures::badroll, trackName];
+		Message[IronLibrary`learnFromYourFailures::badroll, trackName];
 		Return[$Failed]
 	];
 	If[!NumericQ[progressScore] || progressScore < 6,
-		Message[learnFromYourFailures::threshold, progressScore];
+		Message[IronLibrary`learnFromYourFailures::threshold, progressScore];
 		Return[$Failed]
 	];
 	displayMoveForPublic["learnFromYourFailures", roll]
@@ -1612,8 +1612,8 @@ learnFromYourFailures[roll_Association] :=
 learnFromYourFailures[roll_] :=
 	learnFromYourFailuresWithRoll[roll];
 
-learnFromYourFailures::badroll = "learnFromYourFailures[roll] requires a progress roll against Failures, not `1`.";
-learnFromYourFailures::threshold = "learnFromYourFailures[roll] requires the Failures progress score to be at least 6, not `1`.";
+IronLibrary`learnFromYourFailures::badroll = "learnFromYourFailures[roll] requires a progress roll against Failures, not `1`.";
+IronLibrary`learnFromYourFailures::threshold = "learnFromYourFailures[roll] requires the Failures progress score to be at least 6, not `1`.";
 
 
 (* ::Subsection::Closed:: *)
@@ -1658,7 +1658,7 @@ Options[endChapter] = {Display -> True};
 endChapter[opts : OptionsPattern[]] := Module[{state, result},
 	state = IronLibrary`MechanicsHelpers`getIronState[];
 	If[!AssociationQ[state],
-		Message[endChapter::nostate];
+		Message[IronLibrary`endChapter::nostate];
 		Return[$Failed]
 	];
 	result = IronLibrary`FileHelpers`endChapter[state];
@@ -1666,7 +1666,7 @@ endChapter[opts : OptionsPattern[]] := Module[{state, result},
 	result
 ];
 
-endChapter::nostate = "No IronLibrary state is loaded.";
+IronLibrary`endChapter::nostate = "No IronLibrary state is loaded.";
 
 
 (* ::Subsection::Closed:: *)
@@ -2015,11 +2015,11 @@ getDelves[args___] := Module[{normalizedArgs, ownedDelves, empty},
 	ownedDelves
 ];
 
-getVows::empty = "`1` does not have any vows.";
-getAssets::empty = "`1` does not have any assets.";
-getFoes::empty = "`1` does not have any foes.";
-getBonds::empty = "`1` does not have any bonds.";
-getDelves::empty = "`1` does not have any delves.";
+IronLibrary`getVows::empty = "`1` does not have any vows.";
+IronLibrary`getAssets::empty = "`1` does not have any assets.";
+IronLibrary`getFoes::empty = "`1` does not have any foes.";
+IronLibrary`getBonds::empty = "`1` does not have any bonds.";
+IronLibrary`getDelves::empty = "`1` does not have any delves.";
 
 getRiskZone[] :=
 	displayDelveRiskZone[IronLibrary`MechanicsHelpers`currentDelveData[]];

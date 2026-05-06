@@ -80,7 +80,7 @@ normalizeName[s_String] := Module[{name},
 normalizeStoryName[s_String] := Module[{name},
 	name = normalizeName[s];
 	If[name === "",
-		Message[beginStory::emptyname];
+		Message[IronLibrary`beginStory::emptyname];
 		Return[$Failed]
 	];
 	name
@@ -89,7 +89,7 @@ normalizeStoryName[s_String] := Module[{name},
 normalizeArcName[s_String] := Module[{name},
 	name = normalizeName[s];
 	If[name === "",
-		Message[beginChapter::emptyarc];
+		Message[IronLibrary`beginChapter::emptyarc];
 		Return[$Failed]
 	];
 	name
@@ -115,25 +115,25 @@ currentNotebookObject[] :=
 currentNotebookDirectory[] := Module[{dir},
 	dir = NotebookDirectory[];
 	If[dir === $Failed,
-		Message[currentNotebookDirectory::unsaved];
+		Message[IronLibrary`currentNotebookDirectory::unsaved];
 		Return[$Failed]
 	];
 	dir
 ];
 
-currentNotebookDirectory::unsaved =
+IronLibrary`currentNotebookDirectory::unsaved =
 "The current notebook must be saved before its directory can be determined.";
 
 currentNotebookFile[] := Module[{file},
 	file = NotebookFileName[];
 	If[file === $Failed,
-		Message[currentNotebookFile::unsaved];
+		Message[IronLibrary`currentNotebookFile::unsaved];
 		Return[$Failed]
 	];
 	file
 ];
 
-currentNotebookFile::unsaved =
+IronLibrary`currentNotebookFile::unsaved =
 "The current notebook must be saved before its file name can be determined.";
 
 currentNotebookBase[] := Module[{file},
@@ -179,7 +179,7 @@ parseNotebookBase[name_String] := Module[{match},
 				{"$1", ToExpression["$2"], "$3", ToExpression["$4"]}
 		];
 	If[match === {},
-		Message[parseNotebookBase::badname, name];
+		Message[IronLibrary`parseNotebookBase::badname, name];
 		Return[$Failed]
 	];
 	AssociationThread[
@@ -188,7 +188,7 @@ parseNotebookBase[name_String] := Module[{match},
 	]
 ];
 
-parseNotebookBase::badname =
+IronLibrary`parseNotebookBase::badname =
 "Notebook name `1` does not match the expected form story-chapter-arc-arcchapter.";
 
 makeNotebookBase[data_Association] :=
@@ -317,7 +317,7 @@ checkedCreateDirectory[path_String] := Module[{result},
 			]
 		];
 	If[result === $Failed,
-		Message[fileOperation::mkdir, path]
+		Message[IronLibrary`fileOperation::mkdir, path]
 	];
 	result
 ];
@@ -325,7 +325,7 @@ checkedCreateDirectory[path_String] := Module[{result},
 checkedExport[path_String, expr_, format_String] := Module[{result},
 	result = Quiet[Check[Export[path, expr, format], $Failed]];
 	If[result === $Failed,
-		Message[fileOperation::export, path]
+		Message[IronLibrary`fileOperation::export, path]
 	];
 	result
 ];
@@ -333,7 +333,7 @@ checkedExport[path_String, expr_, format_String] := Module[{result},
 checkedImport[path_String, format_String] := Module[{data},
 	data = Quiet[Check[Import[path, format], $Failed]];
 	If[data === $Failed,
-		Message[fileOperation::import, path]
+		Message[IronLibrary`fileOperation::import, path]
 	];
 	data
 ];
@@ -341,7 +341,7 @@ checkedImport[path_String, format_String] := Module[{data},
 checkedNotebookSave[nb_] := Module[{result},
 	result = Quiet[Check[NotebookSave[nb], $Failed]];
 	If[result === $Failed,
-		Message[fileOperation::nbsave]
+		Message[IronLibrary`fileOperation::nbsave]
 	];
 	result
 ];
@@ -349,7 +349,7 @@ checkedNotebookSave[nb_] := Module[{result},
 checkedNotebookSave[nb_, path_String] := Module[{result},
 	result = Quiet[Check[NotebookSave[nb, path], $Failed]];
 	If[result === $Failed,
-		Message[fileOperation::nbsaveas, path]
+		Message[IronLibrary`fileOperation::nbsaveas, path]
 	];
 	result
 ];
@@ -357,7 +357,7 @@ checkedNotebookSave[nb_, path_String] := Module[{result},
 checkedDeleteFile[path_String] := Module[{result},
 	result = Quiet[Check[DeleteFile[path], $Failed]];
 	If[result === $Failed,
-		Message[fileOperation::delete, path]
+		Message[IronLibrary`fileOperation::delete, path]
 	];
 	result
 ];
@@ -365,7 +365,7 @@ checkedDeleteFile[path_String] := Module[{result},
 checkedRenameFile[source_String, target_String] := Module[{result},
 	result = Quiet[Check[RenameFile[source, target], $Failed]];
 	If[result === $Failed,
-		Message[fileOperation::rename, source, target]
+		Message[IronLibrary`fileOperation::rename, source, target]
 	];
 	result
 ];
@@ -373,30 +373,30 @@ checkedRenameFile[source_String, target_String] := Module[{result},
 checkedRenameDirectory[source_String, target_String] := Module[{result},
 	result = Quiet[Check[RenameDirectory[source, target], $Failed]];
 	If[result === $Failed,
-		Message[fileOperation::rename, source, target]
+		Message[IronLibrary`fileOperation::rename, source, target]
 	];
 	result
 ];
 
-fileOperation::mkdir =
+IronLibrary`fileOperation::mkdir =
 "Could not create directory `1`.";
 
-fileOperation::export =
+IronLibrary`fileOperation::export =
 "Could not write file `1`.";
 
-fileOperation::import =
+IronLibrary`fileOperation::import =
 "Could not read file `1`.";
 
-fileOperation::nbsave =
+IronLibrary`fileOperation::nbsave =
 "Could not save the current notebook.";
 
-fileOperation::nbsaveas =
+IronLibrary`fileOperation::nbsaveas =
 "Could not save the current notebook to `1`.";
 
-fileOperation::delete =
+IronLibrary`fileOperation::delete =
 "Could not delete file `1`.";
 
-fileOperation::rename =
+IronLibrary`fileOperation::rename =
 "Could not rename `1` to `2`.";
 
 ensureDirectoryForPath[path_String] := Module[{dir},
@@ -416,22 +416,22 @@ saveExpressionToPath[path_String, expr_] := Module[{},
 
 loadStateFromPath[path_String] := Module[{state},
 	If[!FileExistsQ[path],
-		Message[loadStateFromPath::nofile, path];
+		Message[IronLibrary`loadStateFromPath::nofile, path];
 		Return[$Failed]
 	];
 	state = checkedImport[path, "WXF"];
 	If[state === $Failed, Return[$Failed]];
 	If[!AssociationQ[state],
-		Message[loadStateFromPath::badstate, path];
+		Message[IronLibrary`loadStateFromPath::badstate, path];
 		Return[$Failed]
 	];
 	state
 ];
 
-loadStateFromPath::nofile =
+IronLibrary`loadStateFromPath::nofile =
 "No state file exists at `1`.";
 
-loadStateFromPath::badstate =
+IronLibrary`loadStateFromPath::badstate =
 "State file `1` did not contain an association.";
 
 
@@ -452,12 +452,12 @@ loadChapterOverrides[storyDir_String] := Module[{path, data},
 	If[data === $Failed, Return[Association[]]];
 	If[AssociationQ[data],
 		data,
-		Message[loadChapterOverrides::badfile, path];
+		Message[IronLibrary`loadChapterOverrides::badfile, path];
 		Association[]
 	]
 ];
 
-loadChapterOverrides::badfile =
+IronLibrary`loadChapterOverrides::badfile =
 "Chapter override file `1` did not contain an association; ignoring it.";
 
 saveChapterOverrides[storyDir_String, overrides_Association] :=
@@ -504,7 +504,7 @@ chapterSeedFromBase[base_String] :=
 
 seedChapter[state_Association] := Module[{seed},
 	If[!KeyExistsQ[state, "seed"],
-		Message[seedChapter::noseed];
+		Message[IronLibrary`seedChapter::noseed];
 		Return[$Failed]
 	];
 	seed = state["seed"];
@@ -512,7 +512,7 @@ seedChapter[state_Association] := Module[{seed},
 	seed
 ];
 
-seedChapter::noseed =
+IronLibrary`seedChapter::noseed =
 "The current state does not contain a seed.";
 
 seedStoryState[base_String, state_:Automatic] := Module[{seed, storyState},
@@ -886,7 +886,7 @@ renameChapterDirectoryForStory[
 	newStory_String
 ] := Module[{oldBase, data, newBase, parent, newDir, paths},
 	oldBase = FileNameTake[chapterDir];
-	data = Quiet[parseNotebookBase[oldBase], parseNotebookBase::badname];
+	data = Quiet[parseNotebookBase[oldBase], IronLibrary`parseNotebookBase::badname];
 	If[data === $Failed, Return[$Failed]];
 	If[data["Story"] =!= oldStory, Return[chapterDir]];
 
@@ -897,7 +897,7 @@ renameChapterDirectoryForStory[
 	parent = DirectoryName[chapterDir];
 	newDir = FileNameJoin[{parent, newBase}];
 	If[DirectoryQ[newDir],
-		Message[beginStory::direxists, newDir];
+		Message[IronLibrary`beginStory::direxists, newDir];
 		Return[$Failed]
 	];
 
@@ -937,7 +937,7 @@ renameChapterDirectoryForArc[
 		paths
 	},
 	oldBase = FileNameTake[chapterDir];
-	data = Quiet[parseNotebookBase[oldBase], parseNotebookBase::badname];
+	data = Quiet[parseNotebookBase[oldBase], IronLibrary`parseNotebookBase::badname];
 	If[data === $Failed, Return[$Failed]];
 
 	If[data["ChapterNumber"] <= currentChapterNumber, Return[chapterDir]];
@@ -960,7 +960,7 @@ renameChapterDirectoryForArc[
 	storyDir = DirectoryName[chapterDir];
 	newDir = FileNameJoin[{storyDir, newBase}];
 	If[DirectoryQ[newDir],
-		Message[beginChapter::direxists, newDir];
+		Message[IronLibrary`beginChapter::direxists, newDir];
 		Return[$Failed]
 	];
 
@@ -1023,7 +1023,7 @@ chapterNotebookQ[] := Module[{base},
 	If[!StringQ[base], Return[False]];
 	Quiet[
 		parseNotebookBase[base] =!= $Failed,
-		parseNotebookBase::badname
+		IronLibrary`parseNotebookBase::badname
 	]
 ];
 
@@ -1032,13 +1032,13 @@ chapterNotebookQ[] := Module[{base},
 (*Chapter arc rename*)
 
 
-beginChapter::notchapter =
+IronLibrary`beginChapter::notchapter =
 "beginChapter[ArcName -> arc] can only rename a chapter notebook.";
 
-beginChapter::direxists =
+IronLibrary`beginChapter::direxists =
 "Cannot rename chapter because the target chapter directory already exists: `1`.";
 
-beginChapter::nostate =
+IronLibrary`beginChapter::nostate =
 "No state is loaded, and no current chapter state file exists to load.";
 
 stateForChapterRename[state_, oldStatePath_String] := Module[{chapterState},
@@ -1051,7 +1051,7 @@ stateForChapterRename[state_, oldStatePath_String] := Module[{chapterState},
 		Return[chapterState]
 	];
 
-	Message[beginChapter::nostate];
+	Message[IronLibrary`beginChapter::nostate];
 	$Failed
 ];
 
@@ -1063,7 +1063,7 @@ renameCurrentChapterArc[newArc_String, state_:Automatic] := Module[
 		newNotebookPath, newStatePath, chapterState
 	},
 	If[!chapterNotebookQ[],
-		Message[beginChapter::notchapter];
+		Message[IronLibrary`beginChapter::notchapter];
 		Return[$Failed]
 	];
 
@@ -1126,7 +1126,7 @@ renameCurrentChapterArc[newArc_String, state_:Automatic] := Module[
 
 	newDir = chapterDirectoryPath[storyDir, newBase];
 	If[DirectoryQ[newDir],
-		Message[beginChapter::direxists, newDir];
+		Message[IronLibrary`beginChapter::direxists, newDir];
 		Return[$Failed]
 	];
 
@@ -1207,10 +1207,10 @@ renameCurrentChapterArc[newArc_String, state_:Automatic] := Module[
 (*Story rename*)
 
 
-beginStory::notfirstchapter =
+IronLibrary`beginStory::notfirstchapter =
 "beginStory[name] can only rename an already-started story from chapter 1.";
 
-beginStory::storydirexists =
+IronLibrary`beginStory::storydirexists =
 "Cannot rename story because the target story directory already exists: `1`.";
 
 renameCurrentStory[storyName_String, state_:Automatic] := Module[
@@ -1227,7 +1227,7 @@ renameCurrentStory[storyName_String, state_:Automatic] := Module[
 	data = parseNotebookBase[oldBase];
 	If[data === $Failed, Return[$Failed]];
 	If[data["ChapterNumber"] =!= 1,
-		Message[beginStory::notfirstchapter];
+		Message[IronLibrary`beginStory::notfirstchapter];
 		Return[$Failed]
 	];
 
@@ -1276,7 +1276,7 @@ renameCurrentStory[storyName_String, state_:Automatic] := Module[
 	];
 
 	If[DirectoryQ[newStoryDir] && !samePathQ[newStoryDir, oldStoryDir],
-		Message[beginStory::storydirexists, newStoryDir];
+		Message[IronLibrary`beginStory::storydirexists, newStoryDir];
 		Return[$Failed]
 	];
 
@@ -1289,7 +1289,7 @@ renameCurrentStory[storyName_String, state_:Automatic] := Module[
 
 	If[!samePathQ[newChapterDir, plannedOldChapterDir] &&
 		DirectoryQ[newChapterDir],
-		Message[beginStory::direxists, newChapterDir];
+		Message[IronLibrary`beginStory::direxists, newChapterDir];
 		Return[$Failed]
 	];
 
@@ -1358,7 +1358,7 @@ renameCurrentStory[storyName_String, state_:Automatic] := Module[
 
 
 beginStory[] := (
-	Message[beginStory::missing];
+	Message[IronLibrary`beginStory::missing];
 	$Failed
 );
 
@@ -1393,7 +1393,7 @@ beginStory[name_String, state_:Automatic] := Module[
 	If[oldNotebookFile === $Failed, Return[$Failed]];
 
 	If[DirectoryQ[chapterDir],
-		Message[beginStory::direxists, chapterDir];
+		Message[IronLibrary`beginStory::direxists, chapterDir];
 		Return[$Failed]
 	];
 
@@ -1422,20 +1422,20 @@ beginStory[name_String, state_:Automatic] := Module[
 ];
 
 beginStory[name_] := (
-	Message[beginStory::badname, name];
+	Message[IronLibrary`beginStory::badname, name];
 	$Failed
 );
 
-beginStory::missing =
+IronLibrary`beginStory::missing =
 "beginStory requires an explicit story name: beginStory[name].";
 
-beginStory::badname =
+IronLibrary`beginStory::badname =
 "Story name `1` is not a string.";
 
-beginStory::emptyname =
+IronLibrary`beginStory::emptyname =
 "Story name must contain at least one non-separator character.";
 
-beginStory::direxists =
+IronLibrary`beginStory::direxists =
 "Cannot begin story because the target chapter directory already exists: `1`.";
 
 Options[beginChapter] =
@@ -1452,7 +1452,7 @@ beginChapter[OptionsPattern[]] := Module[{path, loaded, arcName, renamed},
 	arcName = OptionValue[IronLibrary`ArcName];
 	If[arcName =!= Automatic,
 		If[!StringQ[arcName],
-			Message[beginChapter::badarc, arcName];
+			Message[IronLibrary`beginChapter::badarc, arcName];
 			Return[$Failed]
 		];
 		renamed = renameCurrentChapterArc[arcName, loaded];
@@ -1463,10 +1463,10 @@ beginChapter[OptionsPattern[]] := Module[{path, loaded, arcName, renamed},
 	loaded
 ];
 
-beginChapter::badarc =
+IronLibrary`beginChapter::badarc =
 "ArcName must be Automatic or a string, not `1`.";
 
-beginChapter::emptyarc =
+IronLibrary`beginChapter::emptyarc =
 "ArcName must contain at least one non-separator character.";
 
 endChapter[state_Association] := Module[{plan, nextState, notebookResult},
