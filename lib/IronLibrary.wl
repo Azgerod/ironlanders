@@ -529,11 +529,6 @@ returnToSite::usage =
 returnToSite[delveName] rolls for the named delve for the solo character.
 returnToSite[delveName, character] rolls for the named delve for character.";
 
-getRiskZone::usage =
-"getRiskZone[] displays the current delve's risk zone and returns its default rank.
-getRiskZone[delveName] displays the named delve's risk zone and returns its default rank for the solo character.
-getRiskZone[delveName, character] displays the named delve's risk zone and returns its default rank for character.";
-
 rollDenizen::usage =
 "rollDenizen[] rolls on the current delve's denizens matrix.
 rollDenizen[delveName] rolls on the named delve's denizens matrix for the solo character.
@@ -1602,16 +1597,6 @@ installStateFromFileResult[result_] := Module[{state},
 	KeyDrop[result, "State"]
 ];
 
-displayDelveRiskZone[delveData_] := Module[{zone},
-	If[!AssociationQ[delveData], Return[$Failed]];
-	zone = IronLibrary`MechanicsHelpers`riskZoneData[delveData];
-	If[!AssociationQ[zone], Return[$Failed]];
-	IronLibrary`DisplayHelpers`displayRiskZoneCard[delveData, zone];
-	zone["Rank"]
-];
-
-
-
 (* ::Subsection::Closed:: *)
 (*Direct helper APIs*)
 
@@ -2301,17 +2286,6 @@ IronLibrary`getAssets::empty = "`1` does not have any assets.";
 IronLibrary`getFoes::empty = "`1` does not have any foes.";
 IronLibrary`getBonds::empty = "`1` does not have any bonds.";
 IronLibrary`getDelves::empty = "`1` does not have any delves.";
-
-getRiskZone[] :=
-	displayDelveRiskZone[IronLibrary`MechanicsHelpers`currentDelveData[]];
-
-getRiskZone[delveName_String] :=
-	displayDelveRiskZone[IronLibrary`MechanicsHelpers`delve[normalizePublicString[delveName]]];
-
-getRiskZone[delveName_String, character_] := Module[{normalizedArgs},
-	normalizedArgs = normalizePublicCallArguments["getRiskZone", {delveName, character}];
-	displayDelveRiskZone[IronLibrary`MechanicsHelpers`delve @@ normalizedArgs]
-];
 
 returnToSite[args___] := Module[{normalizedArgs, roll},
 	normalizedArgs = normalizePublicCallArguments["returnToSite", {args}];

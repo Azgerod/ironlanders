@@ -54,7 +54,6 @@ displayScene::usage = "displayScene is part of the internal DisplayHelpers API u
 displayDelveCard::usage = "displayDelveCard is part of the internal DisplayHelpers API used by IronLibrary.wl.";
 displayDelve::usage = "displayDelve is part of the internal DisplayHelpers API used by IronLibrary.wl.";
 displayDelves::usage = "displayDelves is part of the internal DisplayHelpers API used by IronLibrary.wl.";
-displayRiskZoneCard::usage = "displayRiskZoneCard is part of the internal DisplayHelpers API used by IronLibrary.wl.";
 displayDenizenRoll::usage = "displayDenizenRoll is part of the internal DisplayHelpers API used by IronLibrary.wl.";
 displayReturnToSiteRoll::usage = "displayReturnToSiteRoll is part of the internal DisplayHelpers API used by IronLibrary.wl.";
 
@@ -1399,6 +1398,8 @@ sheetExperienceColumns = 20;
 sheetExperienceRows = 3;
 sheetExperienceDotRadius = 5;
 sheetExperienceRowGap = 18;
+sheetExperienceEarnedXInsetScale = 0.68;
+sheetExperienceEarnedXThickness = 1.2;
 sheetVowLabelBaseWidth = 206;
 sheetVowNameBaseHorizontalMargin = 14;
 sheetVowNameBaseGlyphPadding = 2;
@@ -1830,6 +1831,42 @@ sheetFailurePanel[characterData_Association, topY_:86] := Module[
 	sheetFullWidthProgressPanel["Failures", failures["Progress"], topY]
 ];
 
+sheetExperienceEmptyDot[{cx_, cy_}, radius_] :=
+	{
+		FaceForm[White],
+		EdgeForm[Directive[sheetInk, AbsoluteThickness[1.0]]],
+		Disk[{cx, cy}, radius]
+	};
+
+sheetExperienceSpentDot[{cx_, cy_}, radius_] :=
+	{
+		FaceForm[sheetInk],
+		EdgeForm[Directive[sheetInk, AbsoluteThickness[1.0]]],
+		Disk[{cx, cy}, radius]
+	};
+
+sheetExperienceEarnedDot[{cx_, cy_}, radius_] := Module[
+	{inset},
+	inset = radius sheetExperienceEarnedXInsetScale;
+	{
+		FaceForm[White],
+		EdgeForm[Directive[sheetInk, AbsoluteThickness[1.0]]],
+		Disk[{cx, cy}, radius],
+		sheetInk,
+		AbsoluteThickness[sheetExperienceEarnedXThickness],
+		CapForm["Round"],
+		Line[{{cx - inset, cy - inset}, {cx + inset, cy + inset}}],
+		Line[{{cx - inset, cy + inset}, {cx + inset, cy - inset}}]
+	}
+];
+
+sheetExperienceDot[index_Integer, spent_Integer, earned_Integer, center_, radius_] :=
+	Which[
+		index <= spent, sheetExperienceSpentDot[center, radius],
+		index <= earned, sheetExperienceEarnedDot[center, radius],
+		True, sheetExperienceEmptyDot[center, radius]
+	];
+
 sheetExperiencePanel[characterData_Association, topY_:821] := Module[
 	{earned, spent, total, columns, rows, radius, x, y, width, rowGap, colGap},
 	earned = Clip[Lookup[characterData, "earnedExperience", 0], {0, 60}];
@@ -1847,21 +1884,12 @@ sheetExperiencePanel[characterData_Association, topY_:821] := Module[
 		sheetLabelBand["Experience", {x, sheetSectionHeaderY[topY]}, {width, sheetSectionBannerHeight}],
 		Flatten[
 			Table[
-				Module[{index, cx, cy, fill},
+				Module[{index, cx, cy},
 					index = (row - 1) columns + col;
 					If[index > total, Nothing,
 					cx = x + radius + (col - 1) colGap;
 					cy = y + (rows - row) rowGap;
-					fill = Which[
-						index <= spent, sheetInk,
-						index <= earned, sheetMid,
-						True, White
-					];
-					{
-						FaceForm[fill],
-						EdgeForm[Directive[sheetInk, AbsoluteThickness[1.0]]],
-						Disk[{cx, cy}, radius]
-					}]
+					sheetExperienceDot[index, spent, earned, {cx, cy}, radius]]
 				],
 				{row, rows},
 				{col, columns}
@@ -3757,42 +3785,31 @@ delveObjectiveRows[objective_String] /; StringLength[StringTrim[objective]] == 0
 delveObjectiveRows[objective_] :=
 	{displayLineHeaderBlock["Objective", objective]};
 
-displayDelveCard[delveData_Association, status_:None] := Module[
-	{rows, objective, denizenList},
-	objective = Lookup[delveData, "Objective", None];
-	denizenList = Lookup[delveData, "Denizens", emptyDenizenSlots[]];
-	rows = {
-		header[delveCardTitle[delveData, status], delveCardSubtitle[delveData]]
-	};
-	rows = Join[
-		rows,
-		{
-			displayTrackLineHeaderStack[
-				{progressTrackGraphic[delveData["Progress"]]},
-				Join[
-					delveObjectiveRows[objective],
-					{denizenMatrixGrid[denizenList]}
-				]
-			]
-		}
-	];
-	ironFramed[
-		Column[
-			rows,
-			Spacings -> displayCardSectionGap,
-			Alignment -> Left
-		]
-	]
+displayRankIndex[rank_] := Module[
+	{rankNames, position},
+	rankNames = ToString /@ progressRanks;
+	position = FirstPosition[rankNames, ToString[rank], Missing["UnknownRank"]];
+	If[MissingQ[position], Infinity, First[position]]
 ];
 
-displayDelve[delveData_Association, status_:None] :=
-	printAndReturn[displayDelveCard[delveData, status], delveData];
-
-displayDelves[delves_Association] :=
-	displayDelves[Values[delves]];
-
-displayDelves[delves_List] :=
-	displayExpressionList[displayDelveCard /@ delves];
+riskZoneDataForDelve[delveData_Association] := Module[
+	{progress, ranks, name, rank},
+	progress = Lookup[delveData, "Progress", 0];
+	{name, ranks} = Which[
+		progress < 4,
+			{"Low Risk", {Troublesome, Dangerous}},
+		progress < 8,
+			{"Medium Risk", {Dangerous, Formidable}},
+		True,
+			{"High Risk", {Formidable, Extreme}}
+	];
+	rank = If[
+		displayRankIndex[Lookup[delveData, "Rank", Dangerous]] <= displayRankIndex[Dangerous],
+		First[ranks],
+		Last[ranks]
+	];
+	<|"Name" -> name, "Ranks" -> ranks, "Rank" -> rank|>
+];
 
 riskZoneTitle[zone_Association] :=
 	StringJoin[zone["Name"], " Zone"];
@@ -3822,22 +3839,52 @@ riskZoneSuggestedRanksText[zone_Association] := Module[
 	]
 ];
 
-displayRiskZoneCard[delveData_Association, zone_Association] :=
-	Print[
-		ironFramed[
-			Column[
-				{
-					header[riskZoneTitle[zone], delveData["Name"]],
-					displayTrackLineHeaderStack[
-						{progressTrackGraphic[delveData["Progress"]]},
-						{displayLineHeaderBlock["Suggested Ranks", riskZoneSuggestedRanksText[zone]]}
-					]
-				},
-				Spacings -> displayCardSectionGap,
-				Alignment -> Left
+riskZoneSuggestedRanksSentence[zone_Association] :=
+	StringJoin["Suggested ranks: ", riskZoneSuggestedRanksText[zone]];
+
+delveRiskZoneRows[delveData_Association] := Module[
+	{zone},
+	zone = riskZoneDataForDelve[delveData];
+	{displayLineHeaderBlock[riskZoneTitle[zone], riskZoneSuggestedRanksSentence[zone]]}
+];
+
+displayDelveCard[delveData_Association, status_:None] := Module[
+	{rows, objective, denizenList},
+	objective = Lookup[delveData, "Objective", None];
+	denizenList = Lookup[delveData, "Denizens", emptyDenizenSlots[]];
+	rows = {
+		header[delveCardTitle[delveData, status], delveCardSubtitle[delveData]]
+	};
+	rows = Join[
+		rows,
+		{
+			displayTrackLineHeaderStack[
+				{progressTrackGraphic[delveData["Progress"]]},
+				Join[
+					delveObjectiveRows[objective],
+					{denizenMatrixGrid[denizenList]},
+					delveRiskZoneRows[delveData]
+				]
 			]
-		]
+		}
 	];
+	ironFramed[
+		Column[
+			rows,
+			Spacings -> displayCardSectionGap,
+			Alignment -> Left
+		]
+	]
+];
+
+displayDelve[delveData_Association, status_:None] :=
+	printAndReturn[displayDelveCard[delveData, status], delveData];
+
+displayDelves[delves_Association] :=
+	displayDelves[Values[delves]];
+
+displayDelves[delves_List] :=
+	displayExpressionList[displayDelveCard /@ delves];
 
 denizenRollFrequencySlotNumber[slot_Integer, frequency_String] := Module[
 	{matchingSlots, position},
